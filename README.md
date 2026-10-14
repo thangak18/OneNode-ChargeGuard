@@ -33,6 +33,8 @@ The ingestion service also emits observability signals to **Datadog** (logs, met
 
 See [Architecture](docs/ARCHITECTURE.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
 
+**Preparation status (14 Oct 2026):** [Preparation report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). The only added Python code is a **standalone offline research utility** at `scripts/research/inspect_acn.py`. No historical sessions have been downloaded or inspected through this preparation task yet, and cloud resources remain unverified.
+
 ## Dataset candidates (not yet ingested)
 - [ACN-Data (Caltech)](https://ev.caltech.edu/dataset)
 - [ACN-Data Static](https://github.com/tongxin-li/ACN-Data-Static)

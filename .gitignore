@@ -1,0 +1,23 @@
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local dataset samples: no redistribution rights established
+data/raw/
+
+# Python research utility artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.DS_Store
+
+# Node tooling once build period begins
+node_modules/
+.next/
+dist/

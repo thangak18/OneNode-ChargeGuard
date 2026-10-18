@@ -3,7 +3,7 @@
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> Status: **Preparation only; updated 18 October 2026.** The judged core implementation is scheduled for **17–31 October 2026** in accordance with organizer guidance. This repository does not yet contain an implemented MVP.
+> **Status (18 October 2026): Phase A telemetry backend implemented and tested against MongoDB Atlas.** Datadog observability, the Next.js dashboard and the complete Detect → Investigate → Resolve demonstration remain future phases. Judged development runs **17–31 October 2026**.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.
@@ -26,16 +26,68 @@ ChargeGuard is a monitoring and incident-response prototype for EV charging stat
 
 **Non-goals for MVP:** real charger control, production integrations, a trained failure-prediction model, deployment to safety-critical equipment.
 
-## Proposed architecture
-`Historical dataset → replay/fault simulator → TypeScript ingestion API → MongoDB time-series + incidents → Next.js dashboard`
+## Architecture
+`Local ACN CSV.gz → bounded replay adapter → authenticated NestJS API → MongoDB Atlas time-series + ingestion receipts → aggregation endpoints → future Next.js dashboard`
 
-The ingestion service also emits observability signals to **Datadog** (logs, metrics, optional APM). The Datadog monitor is a separate part of the incident demonstration.
+The Datadog integration (logs, metrics and monitors) is planned for Phase B. Only five virtual connectors have been seeded; no physical charger data stream is connected.
 
 See [Architecture](docs/ARCHITECTURE.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
 
-**Preparation status (18 Oct 2026):** [Preparation report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). The only added Python code is a **standalone offline research utility** at `scripts/research/inspect_acn.py`. Five static sessions (20,228 rows) have now been downloaded and inspected locally. Current, exported state and resetting energy are populated; pilot/voltage/power columns are entirely empty in this subset. Raw samples stay ignored; redistribution rights are unresolved. Atlas sign-in failed and connection verification remains blocked. This task does not implement the core MVP.
+**Project evidence:** [Preparation and verified Atlas report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). Five static sessions (20,228 source rows) were inspected locally; those raw files remain Git-ignored. The latest authenticated connection checks pass. Historical connectivity failures are retained in the preparation report with timestamps, not current blockers.
 
-## Dataset candidates (not yet ingested)
+## Phase A local setup
+
+Use **Node.js 24 LTS** (supported range `>=22.12 <25`) and npm. From the repository root:
+
+```bash
+nvm install 24
+nvm use 24
+npm --prefix apps/api ci
+cp .env.example .env     # only if .env does not already exist; never overwrite real credentials
+```
+
+Edit the repository-root `.env` privately. Required: `MONGODB_URI` (Atlas `mongodb+srv://` with the existing scoped `chargeguard_dev` account), `MONGODB_DATABASE=chargeguard`, and a random `INGEST_API_KEY` **at least 24 characters** long. An optional `PORT` defaults to `3001`. On the previously diagnosed iPhone hotspot, SRV lookups in Node 24 returned `EBADRESP`; set `MONGODB_DNS_SERVERS=1.1.1.1,8.8.8.8` in your local process/environment only if that failure recurs. Do not disable TLS or open Atlas IP access broadly. No Datadog credentials are needed for Phase A.
+
+```bash
+npm --prefix apps/api run db:init       # repeatable: five domain/technical collections + telemetry time-series
+npm --prefix apps/api run db:seed       # idempotent: one virtual station + five virtual connectors
+npm --prefix apps/api run verify:atlas  # read-only checks of ping, role, schema, indexes and virtual assets
+npm --prefix apps/api run dev
+```
+
+API base: `http://127.0.0.1:3001/api/v1`. Swagger: `http://127.0.0.1:3001/docs` (OpenAPI JSON: `/docs-json`). The ingestion key is sent as the `x-api-key` request header; do not put it in query strings or documentation. Read endpoints currently have no authentication: keep the development server bound to trusted local interfaces/networks and add access controls before deployment.
+
+### Implemented endpoints
+
+| Method | Path (under `/api/v1`) | Purpose |
+| --- | --- | --- |
+| GET | `/health/live`, `/health/ready` | Process liveness and authenticated MongoDB readiness |
+| POST | `/telemetry` | Validate and ingest one event, requiring `x-api-key` |
+| POST | `/telemetry/batch` | Up to 100 events sequentially; partial progress on server failure |
+| GET | `/telemetry/history?chargerId=...&from=...&to=...` | Bounded history, max 500 readings per request |
+| GET | `/analytics/latest` | Latest reading by charger within a bounded range |
+| GET | `/analytics/current-averages?chargerId=...&bucketMinutes=5` | Mean charging current by time bucket |
+| GET | `/analytics/states` | Event-count distribution of derived charging states |
+| GET | `/analytics/activity?windowMinutes=15` | Recent telemetry presence, not physical device health |
+| GET | `/analytics/stations/:stationId/summary` | Virtual station/connector operational summary |
+
+Timestamp queries accept timezone-qualified ISO 8601 strings, with a maximum 31-day query span. Default lookback is 24 hours. Query limits and index-backed time ranges help protect the Atlas Free tier. API responses label source fields through `provenance` and use sanitized error messages.
+
+### Reproducible replay and tests
+
+```bash
+npm --prefix apps/api run typecheck
+npm --prefix apps/api run build
+npm --prefix apps/api test
+npm --prefix apps/api run test:integration
+npm --prefix apps/api run replay:acn -- --max-events 15 --min-interval-seconds 60
+```
+
+Replay defaults to **dry-run**, reading the ignored local `data/raw/acn/sample_01.csv.gz`, validating bounded downsampled events without uploading source readings. Explicit `--execute --start-time <ISO-8601-with-timezone>` sends batches to a running local API **only after source reuse authorization is resolved**. The same session label, virtual asset, transform parameters and fixed replay start time must be retained across retries to satisfy idempotency fingerprints. All five source sessions originate from a convenience sample associated with the same source connector; mapping them to virtual assets does **not** establish five physical chargers. Current is source-measured; source state/energy are reported fields; application charging state is derived from current `>0.5 A` and disclosed. Voltage, power and temperature are omitted when unavailable; energy resets carry `ENERGY_COUNTER_DECREASE` flags.
+
+MongoDB `telemetry` is a time-series collection with BSON `ts` and `meta.{stationId,chargerId}`; five regular collections hold assets, incidents, actions and unique `ingestion_receipts`. Both telemetry and receipts have seven-day retention. Receipt IDs and payload fingerprints prevent straightforward duplicate retries; an interrupted insert can leave a `PENDING` receipt that is reconciled from existing telemetry or requires operator review if unresolved. A batch is **not atomic**; retry the same event IDs with identical payloads. Receipts can expire, so this is a seven-day idempotency window, not permanent exactly-once delivery. This prototype is not a production billing or safety system.
+
+## Dataset sources (raw sessions held locally, not uploaded)
 - [ACN-Data (Caltech)](https://ev.caltech.edu/dataset)
 - [ACN-Data Static](https://github.com/tongxin-li/ACN-Data-Static)
 

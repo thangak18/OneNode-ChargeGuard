@@ -1,18 +1,20 @@
 # Solo build plan — OneNode
 
-> Before 17 October: design and research only. Judged core features begin 17 October, with commits and disclosures. Dates ICT.
+> Preparation preceded 17 October; Phase A implementation began within the judged 17–31 October build window. Dates ICT. Completion below reflects **18 October 2026**.
 
 ## Preparation (14–16 Oct)
-- [ ] Verify dataset license and inspect a small sample
-- [ ] Finalize architecture, technology scope, acceptance tests
+- [ ] Verify dataset reuse/redistribution rights (five local samples inspected; permission outstanding)
+- [x] Finalize architecture, technology scope, acceptance tests
 - [ ] Prepare dev accounts; request trial activation support if needed
 - [ ] Break implementation into GitHub Issues
 
 ## Phase A — Ingest & model (17–20 Oct)
-- [ ] Initialize TypeScript backend and configuration templates
-- [ ] Implement MongoDB time-series ingestion and aggregation
-- [ ] Create deterministic dataset replay with provenance tags
-- [ ] Seed 5–10 virtual connectors and test persistence
+- [x] Initialize NestJS/TypeScript backend, validated environment and authenticated ingestion
+- [x] Implement MongoDB time-series ingestion, indexes, idempotency and bounded aggregation
+- [x] Create deterministic local ACN replay adapter/CLI with provenance and dry-run validation
+- [x] Seed five virtual connectors and verify Atlas persistence and synthetic HTTP smoke tests
+
+**Phase A test evidence (18 Oct):** 9 unit + 8 integration tests PASS; build and typecheck PASS; real Atlas init/seed and authenticated synthetic HTTP smoke PASS. Replay of 15 downsampled real-source readings validated locally in dry-run mode; uploading ACN source data awaits source-use permission. Datadog and Next.js have not been implemented.
 
 ## Phase B — Observability (21–24 Oct)
 - [ ] Emit structured logs/metrics to Datadog

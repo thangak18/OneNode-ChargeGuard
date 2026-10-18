@@ -1,13 +1,38 @@
-# Architecture proposal (planning; not implemented)
+# ChargeGuard architecture — Phase A implemented, later phases planned
 
-## Services
+## Implemented Phase A (18 October 2026)
+
+```text
+Local ACN-Data static CSV.gz (ignored)
+   └── LocalAcnCsvAdapter (stream, downsample, event-time mapping, provenance)
+        └── replay-acn CLI (dry-run default; --execute explicitly required)
+             └── POST /api/v1/telemetry[/batch] · x-api-key
+                    ├── validate event, timestamp, units, station/charger IDs
+                    ├── ingestion_receipts (ordinary collection, unique _id)
+                    └── telemetry (MongoDB time-series, BSON ts, meta stationId/chargerId)
+                           └── GET history, latest, averages, states, activity, station summary
+```
+
+Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js driver). A singleton MongoDB connection is established and pinged at startup, closed on shutdown, and checked by `/api/v1/health/ready`. Swagger lives at `/docs`; all API error responses are sanitized. `MONGODB_DATABASE` must equal `chargeguard`, and the ingestion API requires `INGEST_API_KEY` outside test environments.
+
+`db:init` is repeatable and initializes `stations`, `chargers`, `incidents`, `incident_actions`, `ingestion_receipts`, and time-series `telemetry` (time field `ts`, meta field `meta`, granularity `seconds`, TTL 604800s). Regular collections provide unique `_id` receipt enforcement and operational indexes; telemetry uses non-unique compound indexes on `meta.chargerId`/`ts` and `meta.stationId`/`ts`. The five virtual charger records are seeded via upsert, retaining existing data. The dedicated `chargeguard_dev` database account has the scoped `chargeguard_rw` role.
+
+**Idempotency:** SHA-256 digest of `stationId`, `chargerId` and `eventId` identifies a receipt. The canonicalized payload fingerprint rejects reuse of the same key for different values. The receipt is inserted before time-series telemetry, then marked committed. On a retry for `PENDING`, the API checks for an already-inserted time-series reading before resolving it. Unknown outcomes intentionally remain `PENDING` to avoid duplicating time-series writes; they can require operational reconciliation. Time-series uniqueness is not assumed. Receipt TTL yields a seven-day deduplication horizon, with partial success possible in sequential batch ingestion.
+
+**Aggregation:** all telemetry lookups bound `ts` to a finite date range (default last 24h, max 31d). `chargerId`/`stationId` filters and query limits are available; a demo-scale cap of 500 assets is imposed where full asset lists are needed. `active` means recently *observed by telemetry*, not a guarantee a charger is electrically available. Current average excludes rows missing `currentA`, and charging-state distribution counts recorded events rather than elapsed time.
+
+**Data integrity:** `sourceEventAt` retains historical timestamps while replay `ts` reflects demonstration time; `provenance.fields` explicitly separates MEASURED, SOURCE_REPORTED, DERIVED and SYNTHETIC. Missing sensor channels stay missing. The current threshold used to derive app charging state is a demonstration assumption. Detected energy counter decreases are flagged. Session IDs are pseudonymous; the raw file path and source identifiers are never sent to Atlas by the adapter.
+
+**Verified:** 9 unit tests, 8 integration tests; MongoDB Atlas creation, initialization, virtual seeding and authenticated synthetic HTTP smoke checks passed on 18 October 2026. See [preparation report](PREPARATION_REPORT.md) for exact evidence and remaining rights/Datadog limitations. The five static source files were used only for a local dry-run.
+
+## Planned Phase B/C services
 - **Telemetry Replay / Fault Simulator:** replays historical charger readings with explicit event-time versus ingestion-time; injects labeled synthetic sensor/fault events.
-- **TypeScript API/Worker (proposed NestJS):** validates telemetry, writes data, issues incident actions, emits Datadog logs/metrics.
+- **NestJS API:** Phase A handles telemetry and queries; later work adds incident actions and Datadog logs/metrics.
 - **MongoDB Atlas:** time-series telemetry plus ordinary collections for stations, chargers, incidents, incident_actions. Use Aggregation Pipeline for rolling power and station summaries.
 - **Next.js UI:** station overview, connector detail, incident timeline; refresh via WebSocket or SSE if practical.
 - **Datadog:** monitoring dashboard, metric/log monitor, correlated investigation logs; APM as stretch.
 
-## Data model (draft)
+## Initial conceptual domain model
 ```text
 stations(_id, name, capacityKW, location?)
 chargers(_id, stationId, connectorId, ratedPowerKW, status)

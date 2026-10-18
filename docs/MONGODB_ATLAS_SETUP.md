@@ -1,6 +1,16 @@
-# MongoDB Atlas Free setup (preparation only) — 2026-10-14
+# MongoDB Atlas Free setup (preparation only) — updated 2026-10-18
 
 **Status: NOT PROVISIONED / NOT VERIFIED.** No authenticated Atlas management interface, approved cluster-creation request or local secure connection configuration has been established in this preparation session. No cloud resources or paid services were created. Provisioning requires the owner's explicit approval and interactive Atlas authentication; the steps here are for the owner to perform.
+
+## Verified local preparation status — 2026-10-18
+
+Opened the official Atlas URL in Chrome. The sign-in callback displayed: “There was a problem signing you into your identity provider. Please contact your administrator for help.” No authenticated Atlas project/deployment UI was reached. Do not retry around MFA or change identity-provider permissions; the owner must resolve the official login flow. No cloud provisioning was attempted or approved.
+
+Local checks: repository `.env` absent; `atlas` CLI and `mongosh` absent from PATH; `/Applications/MongoDB Compass.app` absent. No credentials were read or displayed. **Connection verification is BLOCKED**: no secure local URI, confirmed deployment or working authenticated management session. No DNS/SRV/TLS/database ping test was performed against a cluster; no cluster hostname is configured. Public HTTPS dataset downloads working does not prove MongoDB network connectivity.
+
+Current official [Free limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/) list MongoDB 8.0, one Free cluster per project, no aggregation disk spill and at most 50 pipeline stages. [AWS region documentation](https://www.mongodb.com/docs/atlas/reference/amazon-aws/) lists Singapore `ap-southeast-1`; Free eligibility/zero-cost choices must still be confirmed in the account UI before approval. Newer manual features must be checked against the deployed server version. Do not enable paid add-ons.
+
+Manual next step: owner resolves Atlas sign-in, then follows the reviewed configuration below and gives explicit approval before resource creation or permission changes. The existing placeholder `.env.example` remains suitable; no unrelated dependency installation is required for the research utility.
 
 ## Intended configuration (subject to choices actually offered in the Atlas UI)
 
@@ -53,12 +63,12 @@ Potential connection blockers: cluster not created/ready, password mismatch, SRV
 
 | Check | Status | Evidence |
 | --- | --- | --- |
-| Authenticated Atlas account | **UNVERIFIED** | No authenticated management session provided |
+| Authenticated Atlas account | **UNVERIFIED** | Official sign-in callback failed; no project UI reached on 18 Oct |
 | Project and Free cluster created | **NOT ATTEMPTED** | Explicit pre-provision approval required |
 | AWS Singapore eligible for Free | **UNVERIFIED** | Verify region options within UI |
 | Database user created | **NOT ATTEMPTED** | Owner must provision securely |
 | Restricted IP access list | **NOT ATTEMPTED** | Owner must check public IP |
-| Compass / mongosh connectivity | **BLOCKED** | Requires cluster, network rule and credentials |
+| Compass / mongosh connectivity | **BLOCKED** | No local .env, mongosh/Compass or authenticated cluster configuration |
 | `ping`, database enumeration, permissions | **BLOCKED** | No authenticated connection established |
 
 After the owner completes setup, update this file with sanitized date/time, selected free region, connection method, result and any error **without exposing hosts that should remain private, credentials or identifying IP addresses**.

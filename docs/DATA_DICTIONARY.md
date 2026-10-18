@@ -1,6 +1,6 @@
-# Data dictionary — proposed mapping (2026-10-14)
+# Data dictionary — updated 2026-10-18
 
-**Legend:** `SOURCE-DOC` = field reported in published ACN documentation, **not locally inspected**; `DERIVED` = computed with declared assumptions; `SYNTHETIC` = future simulator output. Empty/missing means unknown, not zero. Types below are **documented or proposed types**, not observed parser results.
+**Legend:** `SOURCE-OBSERVED` = present in the five inspected static files; `SOURCE-DOC` = official API documentation only, **not locally inspected**; `DERIVED` = computed with declared assumptions; `SYNTHETIC` = future simulator output. Empty/missing means unknown, not zero. Types are labeled separately as official API documentation, observed static-file types, or proposed application types.
 
 ## ACN official API — session objects
 
@@ -28,9 +28,21 @@ Official `userInputs` fields documented: `WhPerMile` (float), `kWhRequested` (fl
 
 The official time-series docs name `timestamps` (list of datetime values) and the corresponding current/pilot list of floats. Validate actual nesting against authorized API JSON; this table must not be treated as a validated JSON schema.
 
-## Static CSV export — README claims only
+## Static CSV export — observed in 5 files / 20,228 rows
 
-Reference: https://github.com/tongxin-li/ACN-Data-Static/blob/main/README.md . Each session is described as `.csv.gz` with a timestamp first column. The README names `Charging Current (A)` (float-like) and `Actual Pilot (A)` (float-like). **Exact first-column header, all additional columns, null representation and timezone offset are UNVERIFIED** until downloaded files are inspected. Do not rename columns in data or add inferred metrics without marking the transform.
+Pinned source: [static README](https://github.com/tongxin-li/ACN-Data-Static/blob/abb7cf15cc7108913e965d4375cc7270d532b65f/README.md). All CSV cells are text on disk; numeric values below parse as finite Python floats / proposed BSON doubles.
+
+| Exact header | Observed type | Missing / 20,228 | Meaning and evidence |
+| --- | --- | ---: | --- |
+| `""` (unnamed first column) | ISO 8601 datetime string, `+00:00` | 0 | Original source time; parse explicitly as UTC. |
+| `Charging Current (A)` | Numeric string → double | 0 | Source-described measured current, range 0–30.8 A. |
+| `Actual Pilot (A)` | Empty string only | 20,228 | No observed numeric type/limit in this subset. |
+| `Voltage (V)` | Empty string only | 20,228 | No usable source voltage. |
+| `Charging State` | String | 0 | Exported READY / ADAPTIVE / NOT CHARGING / IDLE / UNPLUGGED; physical/derived origin unverified. |
+| `Energy Delivered (kWh)` | Numeric string → double | 0 | Exported counter, 0–11.5212047222 kWh; decreases/resets, final row 0 in all 5. Not validated session total. |
+| `Power (kW)` | Empty string only | 20,228 | No usable source power. |
+
+No sample JSON was downloaded. Official API objects above remain documentation-derived. No temperature, fault or incident columns observed.
 
 ## ChargeGuard planned telemetry fields — not implemented
 
@@ -43,10 +55,12 @@ Reference: https://github.com/tongxin-li/ACN-Data-Static/blob/main/README.md . E
 | `sessionId` | string | Pseudonymous source session reference; optional. |
 | `currentA` | double/null | `ACN_REPLAY`: measured in source, if present. |
 | `pilotA` | double/null | `ACN_REPLAY`: source pilot limit, if present. |
-| `voltageV` | double/null | Absent from verified source docs; only present if `DERIVED` assumption or `SYNTHETIC`, explicitly labeled. |
+| `voltageV` | double/null | Static header exists but sample values are all empty; only supply an explicitly declared assumption or synthetic value. |
 | `powerKW` | double/null | `DERIVED`: formula must name volts, phase count, power factor; not a measurement. |
 | `temperatureC` | double/null | `SYNTHETIC` for overheat scenario. |
-| `chargingState` | string/null | `SYNTHETIC` or clearly tagged `DERIVED` heuristic; no measured source state confirmed. |
+| `chargingState` | string/null | Simulated app status or labeled heuristic; separate from exported state. |
+| `sourceChargingState` | string/null | `SOURCE-OBSERVED` exported state label; semantics unverified. |
+| `sourceEnergyKWh` | double/null | `SOURCE-OBSERVED` exported counter, preserve resets; no assertion of independent meter accuracy. |
 | `faultCode` | string/null | `SYNTHETIC`; never misrepresented as real ACN faults. |
 | `provenance.sourceType` | enum/string | `ACN_REPLAY`, `DERIVED`, or `SYNTHETIC`. |
 | `provenance.syntheticFields` | array<string> | Explicit list of generated field names. |
@@ -54,4 +68,4 @@ Reference: https://github.com/tongxin-li/ACN-Data-Static/blob/main/README.md . E
 | `provenance.sourceUrl` | string | Direct link to source record or repository root as permitted. |
 | `provenance.transformVersion` | string | Future script/version used to map source to telemetry. |
 
-**Sampling interval:** unknown until direct inspection. **Type inference:** no actual numeric or timestamp type assertions have been made from raw samples. **Power note:** `P(kW) = V × I / 1000` is only valid for a suitable single-phase DC/AC case with appropriate power factor; AC three-phase needs a different formula. Source ACN current alone cannot establish delivered power accurately.
+**Observed spacing:** median 4 seconds in each sample, range 1–69 seconds; no uniform cadence guaranteed. **Types:** static observations above; API types remain documentation only. **Power note:** `P(kW) = V × I / 1000` is only valid for a suitable single-phase DC/AC case with appropriate power factor; AC three-phase needs a different formula. Source ACN current alone cannot establish delivered power accurately.

@@ -1,10 +1,10 @@
 # ChargeGuard MongoDB data design (proposal; not created)
 
-**Preparation on 2026-10-14; implementation begins no earlier than 2026-10-17.** Atlas database `chargeguard`, AWS Free/M0 if permitted. Type names below follow MongoDB BSON conventions. Object IDs may be app-stable strings for prototype simplicity; a consistent choice must be made during implementation.
+**Initial design 2026-10-14; preparation audit updated 2026-10-18. No implementation performed in this task.** Atlas database `chargeguard`, AWS Free/M0 if permitted. Type names below follow MongoDB BSON conventions. Object IDs may be app-stable strings for prototype simplicity; a consistent choice must be made during implementation.
 
 ## Existing architecture and naming reconciliation
 
-`docs/ARCHITECTURE.md` currently calls the asset collection **`connectors`**. The requested preparation specification calls it **`chargers`**. This design proposes one **`chargers`** collection with a `connectorId` per virtual EVSE; a separate `connectors` collection should **not** be silently introduced as a duplicate. Freeze the chosen name when coding starts. No existing architecture documents have been overwritten during this preparation.
+After reviewing the existing architecture, collection naming is reconciled to the requested **`chargers`**, representing virtual connector assets. `connectorId` remains a label on each charger; `meta.chargerId` identifies telemetry. `ARCHITECTURE.md` uses the same names. This is documentation alignment only: no services, collections or indexes created and no stack change.
 
 ## Planned collections and fields
 
@@ -56,10 +56,12 @@ db.createCollection("telemetry", {
 | `currentA`, `pilotA` | double/null | Source currents if observed, with provenance. |
 | `voltageV`, `powerKW` | double/null | Optional; derived/synthetic with explicit assumptions. |
 | `temperatureC` | double/null | Synthetic fault demo signal. |
-| `chargingState`, `faultCode` | string/null | Synthetic/inferred (never claimed ACN-measured). |
+| `chargingState`, `faultCode` | string/null | Synthetic application status/fault, separate from source labels. |
+| `sourceChargingState` | string/null | Exported source label; origin semantics unverified. |
+| `sourceEnergyKWh` | double/null | Exported energy counter; preserve decreases/resets and quality flags. |
 | `provenance` | object | Source type (`ACN_REPLAY`, `DERIVED`, `SYNTHETIC`), source URL, optional synthetic/derived field lists, transform version. |
 
-Indexes: typical MongoDB-created clustered/time-series metadata+time index depends on server version. Evaluate `{'meta.stationId':1,'meta.chargerId':1,ts:-1}` for time-window requests and avoid unnecessary indexes on M0. No unique index on time-series measurements. Query recent readings via filters on `meta` and bounded `ts`; avoid cross-collection `$lookup` until measured need.
+Indexes: MongoDB 6.3+ creates a default compound meta/time index for new time-series collections; this is not the ordinary unique `_id` index. Inspect the actual server/index list before adding indexes. Evaluate `{'meta.stationId':1,'meta.chargerId':1,ts:-1}` for time-window requests and avoid unnecessary indexes on M0. No unique index on time-series measurements. Query recent readings via filters on `meta` and bounded `ts`; avoid cross-collection `$lookup` until measured need.
 
 Limitations (official https://www.mongodb.com/docs/manual/core/timeseries/timeseries-limitations/): time-series collections **do not support change streams, unique indexes, ordinary schema validation rules, or arbitrary updates to measurements**; writes are append-oriented. Time-series creation parameters determine grouping; transaction writes are unsupported. Do not design Datadog notifications around watching this collection via Change Streams. Incident updates and notifications belong in normal collections/events/logs. TTL cleanup is not an SLA; it may lag expiry.
 
@@ -135,4 +137,12 @@ After the build window starts, a server-side TypeScript worker/API authenticates
 
 ## Questions for 17 Oct
 
-Choose `chargers` versus legacy `connectors` naming; verify exact source cadence and mapping from session to virtual charger; fix dataset usage rights; confirm Atlas database role permits collection/index operations in M0; adjust indexes/TTL after profiling. No synthetic measurement is described as a real charger observation.
+Naming aligned to `chargers`; validate mapping from sampled sessions to virtual chargers; fix dataset usage rights; confirm Atlas database role permits collection/index operations in M0; adjust indexes/TTL after profiling. No synthetic measurement is described as a real charger observation.
+
+## 18 October audit: sampling, storage and compatibility
+
+The inspected source traces have median spacing **4 seconds**, not a guaranteed 60-second cadence. If replayed continuously at one document per 4 seconds, 5–10 connectors imply **108,000–216,000 documents/day**, **756,000–1,512,000/week**, approximately **151–1,058 MB/week** at the illustrative 200–700 bytes/document before indexes/compression. This can exceed the Free storage budget. The existing 60-second design is an explicit future downsampling choice, not a source fact; define the aggregation/gap policy during build, then measure storage. Short full-resolution research demos are another option. Neither method is implemented here.
+
+Pilot, voltage and power columns are entirely empty in the five samples. Exported energy resets, so do not map its final row to session energy. Use optional `sourceEnergyKWh` and `sourceChargingState` only with explicit source-field provenance. Keep field-level source/derived/synthetic attribution rather than relying on one document-wide category.
+
+Verify the actual Atlas MongoDB version before using manual examples. [Free limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/) currently list MongoDB 8.0 and no aggregation disk spill; the proposed short pipelines fit the documented 50-stage cap. See [8.0 time-series limitations](https://www.mongodb.com/docs/v8.0/core/timeseries/timeseries-limitations/) and [secondary indexes](https://www.mongodb.com/docs/v8.0/core/timeseries/timeseries-secondary-index/). No commands have been executed on a server; features/index effectiveness remain deployment verification tasks.

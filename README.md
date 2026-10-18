@@ -3,7 +3,7 @@
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> Status: **Planning only (14–16 October 2026).** The judged core implementation is scheduled for **17–31 October 2026** in accordance with organizer guidance. This repository does not yet contain an implemented MVP.
+> Status: **Preparation only; updated 18 October 2026.** The judged core implementation is scheduled for **17–31 October 2026** in accordance with organizer guidance. This repository does not yet contain an implemented MVP.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.
@@ -33,7 +33,7 @@ The ingestion service also emits observability signals to **Datadog** (logs, met
 
 See [Architecture](docs/ARCHITECTURE.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
 
-**Preparation status (14 Oct 2026):** [Preparation report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). The only added Python code is a **standalone offline research utility** at `scripts/research/inspect_acn.py`. No historical sessions have been downloaded or inspected through this preparation task yet, and cloud resources remain unverified.
+**Preparation status (18 Oct 2026):** [Preparation report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). The only added Python code is a **standalone offline research utility** at `scripts/research/inspect_acn.py`. Five static sessions (20,228 rows) have now been downloaded and inspected locally. Current, exported state and resetting energy are populated; pilot/voltage/power columns are entirely empty in this subset. Raw samples stay ignored; redistribution rights are unresolved. Atlas sign-in failed and connection verification remains blocked. This task does not implement the core MVP.
 
 ## Dataset candidates (not yet ingested)
 - [ACN-Data (Caltech)](https://ev.caltech.edu/dataset)

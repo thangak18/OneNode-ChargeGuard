@@ -22,3 +22,7 @@
 
 ## Data quality risks
 Missing samples, mixed time zones, nonuniform sampling, session gaps, uncertain rated capacity. Document assumptions explicitly. Synthetic faults must never be presented as observed hardware failures.
+
+## Verified preparation follow-up — 18 October 2026
+
+Five pinned static sessions, 20,228 rows inspected locally. Current/state/energy populated; pilot/voltage/power completely missing in these samples. Source state is separate from app status; energy resets prevent using the last row as session energy. Median timestamp spacing 4 s with gaps to 69 s. See [analysis](DATASET_ANALYSIS.md), [dictionary](DATA_DICTIONARY.md) and [provenance](DATA_PROVENANCE.md). Raw data remain local and ignored; usage permissions unresolved. No replay or simulator implemented.

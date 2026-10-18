@@ -12,3 +12,5 @@ Do not commit real customer data, personal data, credentials, Datadog keys or da
 ## Official sources
 - Competition rules: https://mini-hackathon-sep-2026.mugvn.com/terms
 - Organizer support: mugvnleaders@gmail.com
+
+AI-assisted preparation follow-up completed on 18 October 2026: local sample acquisition, offline inspection-script corrections, schema naming alignment and factual documentation/GitHub progress updates. No backend, replay, simulator, frontend, incident logic or observability integration was implemented in this task. Original preparation dates are historical; this follow-up is dated after the official 17 October start and does not backdate work.

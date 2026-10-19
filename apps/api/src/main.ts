@@ -8,6 +8,6 @@ async function main(){
   await app.listen(cfg.port,'127.0.0.1');
 }
 void main().catch(()=>{
-  console.error('ChargeGuard startup failed; check local configuration and database connectivity.');
+  process.stderr.write(JSON.stringify({timestamp:new Date().toISOString(),status:'error',service:'chargeguard-api',message:'application.startup_failed'})+'\n');
   process.exitCode=1;
 });

@@ -1,3 +1,4 @@
+import { ObservabilityService } from '../observability/observability.service';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { MongoServerError } from 'mongodb';
@@ -13,7 +14,7 @@ const digest = (value:string) => createHash('sha256').update(value).digest('hex'
 
 @Injectable()
 export class TelemetryService {
-  constructor(@Inject(DatabaseService) private readonly database:DatabaseService) {}
+  constructor(@Inject(DatabaseService) private readonly database:DatabaseService, @Inject(ObservabilityService) private readonly obs:ObservabilityService) {}
 
   validate(raw:unknown): TelemetryInput {
     const parsed = telemetrySchema.safeParse(raw);
@@ -23,6 +24,12 @@ export class TelemetryService {
 
   async ingest(raw:unknown): Promise<{eventId:string;duplicate:boolean}> {
     const input = this.validate(raw);
+    const result=await this.persist(input);
+    this.obs.accepted(input,result.duplicate);
+    return result;
+  }
+
+  private async persist(input:TelemetryInput):Promise<{eventId:string;duplicate:boolean}> {
     const {stationId, chargerId} = input.meta;
     try {
       const [station,charger] = await Promise.all([

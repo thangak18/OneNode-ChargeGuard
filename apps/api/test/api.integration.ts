@@ -1,18 +1,21 @@
+import {configureApplication} from '../src/bootstrap';
+import {ObservabilityService} from '../src/observability/observability.service';
 import 'reflect-metadata';
 import {before, after, test} from 'node:test';
 import assert from 'node:assert/strict';
 import {MongoMemoryServer} from 'mongodb-memory-server';
 import {MongoClient, Db} from 'mongodb';
 import {Test} from '@nestjs/testing';
-import {VersioningType, INestApplication} from '@nestjs/common';
+import {INestApplication} from '@nestjs/common';
 import request from 'supertest';
 import {AppModule} from '../src/app.module';
 import {DatabaseService} from '../src/database/database.service';
 import {APP_CONFIG} from '../src/config/tokens';
 import {initializeCollections} from '../src/database/initialize';
-import {SanitizedExceptionFilter} from '../src/common/http-exception.filter';
 
 let mongod:MongoMemoryServer;let client:MongoClient;let db:Db;let app:INestApplication;let ready=true;let failAssetLookup=false;
+const observedRequests:Array<{status:number;duration:number;batch:boolean}>=[];
+const observedEvents:Array<{duplicate:boolean}>=[];
 const stationId='test-station';const chargerId='test-charger';
 const ts=new Date(Date.now()-120000).toISOString();
 const from=new Date(Date.now()-3600000).toISOString();
@@ -26,8 +29,8 @@ before(async()=>{
   await db.collection<{_id:string;name:string}>('stations').insertOne({_id:stationId,name:'Unit test station'});
   await db.collection<{_id:string;stationId:string;connectorId:string;status:string}>('chargers').insertOne({_id:chargerId,stationId,connectorId:'1',status:'AVAILABLE'});
   const fakeDb={db:()=>db,collection:(name:string)=>{if(failAssetLookup && name==='stations') throw new Error('Sensitive database implementation details');return db.collection(name);},ping:async()=>ready};
-  const module=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(DatabaseService).useValue(fakeDb).overrideProvider(APP_CONFIG).useValue({mongoUri:'ignored',mongoDatabase:'chargeguard',nodeEnv:'test',port:3001,ingestApiKey:'local-test-ingest-key-abcdefghijkl'}).compile();
-  app=module.createNestApplication();app.setGlobalPrefix('api');app.enableVersioning({type:VersioningType.URI,defaultVersion:'1'});app.useGlobalFilters(new SanitizedExceptionFilter());await app.init();
+  const module=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(ObservabilityService).useValue({record:()=>{},ingestionRequest:(status:number,duration:number,batch:boolean)=>observedRequests.push({status,duration,batch}),accepted:(_input:unknown,duplicate:boolean)=>observedEvents.push({duplicate})}).overrideProvider(DatabaseService).useValue(fakeDb).overrideProvider(APP_CONFIG).useValue({mongoUri:'ignored',mongoDatabase:'chargeguard',nodeEnv:'test',port:3001,ingestApiKey:'local-test-ingest-key-abcdefghijkl'}).compile();
+  app=configureApplication(module.createNestApplication());await app.init();
 });
 after(async()=>{if(app)await app.close();if(client)await client.close();if(mongod)await mongod.stop();});
 
@@ -50,6 +53,10 @@ test('health live and database readiness endpoints',async()=>{
 test('POST validation and API key requirements',async()=>{
   const s=app.getHttpServer();
   await request(s).post('/api/v1/telemetry').send(event('auth')).expect(401);
+  const before=observedRequests.length;
+  await request(s).post('/api/v1/telemetry').set('Content-Type','application/json').send('{').expect(400);
+  assert.equal(observedRequests.length,before+1);
+  assert.equal(observedRequests.at(-1)?.status,400);
   await request(s).post('/api/v1/telemetry').set('x-api-key','local-test-ingest-key-abcdefghijkl').send({...event('bad'),currentA:-5}).expect(400);
   await request(s).post('/api/v1/telemetry').set('x-api-key','local-test-ingest-key-abcdefghijkl').send({...event('no-charger'),meta:{stationId,chargerId:'absent'}}).expect(404);
 });
@@ -109,4 +116,14 @@ test('database failures return sanitized service errors',async()=>{
     assert.equal(res.body.message,'Asset lookup unavailable');
     assert.equal(JSON.stringify(res.body).includes('Sensitive database implementation details'),false);
   } finally {failAssetLookup=false;}
+});
+
+test('observability covers authentication/validation/database failures and deduplicated/batch ingestion',()=>{
+  assert.ok(observedRequests.some(r=>r.status===401));
+  assert.ok(observedRequests.some(r=>r.status===400 && r.batch));
+  assert.ok(observedRequests.some(r=>r.status===503));
+  assert.ok(observedRequests.some(r=>r.status===201 && r.batch));
+  assert.ok(observedRequests.every(r=>r.duration>=0));
+  assert.ok(observedEvents.some(r=>r.duplicate));
+  assert.ok(observedEvents.some(r=>!r.duplicate));
 });

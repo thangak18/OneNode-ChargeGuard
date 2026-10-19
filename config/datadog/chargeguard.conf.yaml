@@ -1,0 +1,8 @@
+# Use a host log directory: the macOS Agent cannot read this checkout on a removable volume.
+logs:
+  - type: file
+    path: /usr/local/var/log/chargeguard/api.jsonl
+    service: chargeguard-api
+    source: nodejs
+    tags:
+      - env:dev

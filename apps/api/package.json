@@ -17,7 +17,8 @@
     "db:seed": "tsx scripts/seed-virtual.ts",
     "replay:acn": "tsx scripts/replay-acn.ts",
     "smoke:atlas": "tsx scripts/smoke-atlas.ts",
-    "verify:atlas": "tsx scripts/verify-atlas.ts"
+    "verify:atlas": "tsx scripts/verify-atlas.ts",
+    "smoke:observability": "tsx scripts/smoke-observability.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

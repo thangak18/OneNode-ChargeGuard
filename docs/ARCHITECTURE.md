@@ -30,7 +30,7 @@ Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js d
 - **NestJS API:** Phase A handles telemetry and queries; later work adds incident actions and Datadog logs/metrics.
 - **MongoDB Atlas:** time-series telemetry plus ordinary collections for stations, chargers, incidents, incident_actions. Use Aggregation Pipeline for rolling power and station summaries.
 - **Next.js UI:** station overview, connector detail, incident timeline; refresh via WebSocket or SSE if practical.
-- **Datadog:** monitoring dashboard, metric/log monitor, correlated investigation logs; APM as stretch.
+- **Datadog:** application metrics/JSON logs implemented; final monitoring dashboard and metric/log monitor remain planned; APM is a future stretch.
 
 ## Initial conceptual domain model
 ```text
@@ -54,3 +54,11 @@ Time-series options: `timeField: ts`, `metaField: meta`, appropriate granularity
 Ingest 5–10 virtual connectors; achieve reproducible alerts for two faults; show one full Detect → Investigate → Resolve narrative with timestamps and traceable evidence. Do not claim physical device safety or real-time production guarantees.
 
 Preparation audit 2026-10-18: collection naming aligned to `chargers` and `meta.chargerId` in the requested schema design. Services and stack unchanged. Static samples contain usable current, exported state and resetting energy; pilot/voltage/power are entirely missing. See [dataset analysis](DATASET_ANALYSIS.md) before selecting future transforms.
+
+## Phase B observability implementation — 19 October 2026
+
+The global ObservabilityModule provides a single best-effort UDP DogStatsD socket and a sanitized JSON event sink. HTTP middleware times POST telemetry requests and counts their final status, covering guard and validation failures as well as batch responses. TelemetryService emits committed-event metrics after persistence; recognized duplicates increment only the duplicate counter. Current/state/fault metrics are per new event and carry explicit provenance. One-hot reported status resets all six state series on each update.
+
+Datagrams go only to the existing Agent on 127.0.0.1:8125; the app never handles Datadog credentials. The Agent forwards the standard-host JSON log file `/usr/local/var/log/chargeguard/api.jsonl` to US1 as service chargeguard-api/source nodejs. Field allowlisting omits raw payloads, headers, URLs, errors and arbitrary IDs. Static demo assets alone receive ID tags; other assets collapse into a bounded aggregate category. This is demonstration instrumentation, with UDP loss and stale/out-of-order gauge limitations.
+
+14 unit and 9 integration tests pass. Actual application metrics and logs were independently observed in US1 using NestJS HTTP requests and a disposable MongoDB fixture. Atlas DNS/TCP passed on 19 Oct but remote TLS alerts blocked the new Atlas smoke before authentication; do not conflate this local-database verification with a currently successful Atlas path. See [Datadog evidence](DATADOG_PREPARATION.md). Final dashboards/monitors and frontend remain unimplemented.

@@ -1,3 +1,4 @@
+import { ObservabilityModule } from './observability/observability.module';
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
@@ -9,7 +10,7 @@ import { AnalyticsService } from './analytics/analytics.service';
 import { AnalyticsController } from './analytics/analytics.controller';
 
 @Module({
-  imports:[AppConfigModule,DatabaseModule],
+  imports:[AppConfigModule,ObservabilityModule,DatabaseModule],
   providers:[
     TelemetryService,AnalyticsService,IngestGuard
   ],

@@ -1,41 +1,90 @@
 # ChargeGuard project status
 
-**Updated:** 19 October 2026. This is a local development/demo application, not a production charger-control or safety system.
+**Updated:** 19 October 2026. This is a local development/demo application, not a production charger-control or safety system. **The critical Phase D incident lifecycle is verified; submission packaging remains.**
 
 ## Implemented
 
-- **Phase A:** NestJS telemetry ingestion, bounded analytics, MongoDB time-series storage, provenance, and replay tooling.
-- **Phase B:** opt-in DogStatsD instrumentation and sanitized JSON logs. Dated Datadog US1 dashboard/monitor and incident verification evidence is retained in [Datadog preparation](DATADOG_PREPARATION.md); current live account/monitor state was not rechecked during this validation.
-- **Phase C:** Next.js overview, charger detail, incident queue/timeline, and demo control center; charger, station, incident, and synthetic demo endpoints.
+- **Phase A:** NestJS telemetry ingestion, bounded MongoDB aggregation, MongoDB time-series storage, provenance, and replay tooling.
+- **Phase B:** opt-in DogStatsD metrics, sanitized JSON logs, a dashboard, and two monitors. Historic US1 observations and current Phase D checks are distinguished in [Datadog preparation](DATADOG_PREPARATION.md).
+- **Phase C:** Next.js operations overview, charger detail, incident queue/timeline, and demo control center; charger, station, incident, and synthetic demo endpoints.
 - **Local BFF boundary:** explicit route/method allowlist, same-origin loopback-only development mutations, 8 KB body limit and schema validation, server-side API key, and mutation denial in production. This is not operator authentication; public or remote deployment is blocked.
 
-## Validation recorded 19 October 2026
+## Copilot baseline verification — before this resumption
+
+Node **v24.22.0** was acquired from the official macOS ARM64 distribution and checksum-verified. Tests/builds below used that runtime.
 
 | Area | Result |
 | --- | --- |
-| API unit tests | 21 passed |
+| API unit tests | 23 passed |
 | API integration tests | 10 passed |
 | API typecheck and build | Passed |
-| Web lint and TypeScript check | Passed |
+| Web lint | Passed |
 | Web BFF policy tests | 2 passed |
+| Web TypeScript check | Passed |
 | Web production build | Passed |
-| Browser routes `/`, `/chargers`, `/incidents`, `/demo` | HTTP 200 at 1440, 1024, 768, and 390 px; no horizontal document overflow |
-| Live API readiness | `ready`, `database: connected` |
-| Development BFF checks | Missing Origin: 403; invalid mutation body: 400; unsupported route: 404 |
-| Direct API mutation without key | 401 |
-| Production-build BFF mutation | 403, including a same-origin request |
 
-Automated API integration tests use an isolated database fixture. Live checks during this validation were read-only; mutation probes were rejected before reaching the API, so no new incident or telemetry records were intentionally written. The readiness response confirms the running service's database connection at that time; it is not an independent audit of Atlas roles, certificates, or current account configuration. Earlier Atlas transport failures and successful verification runs remain timestamped in [the preparation report](PREPARATION_REPORT.md).
+API tests use isolated fixtures. The production build was run after stopping the dev server to avoid `.next` output races.
 
-The host used Node.js 25.2.1 for these checks, while the API declares `>=22.12 <25`. The tests and builds passed, but repeat validation under Node 24 before release.
+## Copilot UI quality checks — reported baseline, preserved screenshots
 
-## Remaining gates and limitations
+- `/`, `/chargers?id=demo-charger-01`, `/incidents`, and `/demo` returned HTTP 200 at 1440, 1024, 768 and 390 px. No document-level horizontal overflow was found.
+- H1 headings and button names were present across the routes. The mobile navigation expanded from keyboard focus with Space; the narrow charger provenance table is a labeled, focusable region with touch and Left/Right Arrow scrolling. Status/error copy uses live-region roles.
+- The overview showed **STALE** when the five latest reads were older than 60 seconds and `N/A` for aggregate active current. Zero-current is no longer treated alone as proof of a fault.
+- Missing temperature remains `N/A (Unmeasured)`; only `SIM_OVERHEAT` now writes a labeled illustrative 72 °C synthetic value. The Datadog monitor counts fault events, not a temperature threshold.
+- UI captures from this local state are in [evidence](evidence/). These screenshots are not Datadog transition evidence.
 
-- Add real operator authentication and authorization, CSRF controls, and rate limiting before any remote deployment. Read APIs are not authenticated.
-- Do not public-deploy this demo. The BFF production build blocks mutations but does not secure the unauthenticated read surface.
-- Recheck current Datadog US1 connectivity, monitor state, and notification behavior before presenting live alert status. Historic incident timings are evidence from the recorded run, not an SLA.
-- Resolve ACN dataset reuse/redistribution rights before replaying externally or packaging traces. Raw source data remains local and Git-ignored.
-- All chargers are virtual. Historical and synthetic values are labeled; the application does not control physical equipment.
-- No public deployment or hackathon submission has been made as part of this work.
+## Historical Copilot capture — partial at 05:28:37Z (superseded below)
 
-See [the local demo runbook](DEMO_RUNBOOK.md) for setup and safe operator steps.
+Run started from the loopback Next.js `/demo` UI on 19 October; the API was connected to the configured Atlas database. See timestamped machine-readable evidence in [phase-d-e2e.json](evidence/phase-d-e2e.json).
+
+| Stage | Observed result |
+| --- | --- |
+| Precondition | `GET /api/v1/incidents` returned no active incident. |
+| UI trigger | `SIM_OVERHEAT` for `demo-charger-01`; UI displayed the success status. |
+| Atlas readiness | `{"status":"ready","database":"connected"}` at 05:28:37Z. |
+| Incident | `demo-58a1983cae09`, `OPEN`, detected 05:22:54.894Z, synthetic. |
+| Telemetry | Five new synthetic readings persisted at 05:22:54.966Z; fault event has 0 A, `FAULT`, `SIMULATED_DEMO_FAULT`, and illustrative 72 °C with field-level `SYNTHETIC` provenance. Four other connectors received 8.25 A baseline readings. |
+| Application log | `demo.action` at 05:22:54.965Z plus five `telemetry.accepted` JSON events at 05:22:55.133–05:22:55.685Z. |
+| Investigation/recovery/resolution | Paused while attempting current Datadog verification; incident remains `OPEN`. |
+| Datadog metrics/logs and monitor ALERT → OK | **Not verified.** No transition is claimed. |
+
+The local Datadog Agent processes are present, but UDP 8125 had no listener at the check. The unprivileged Agent status command could not read its protected token; the browser remained at Datadog login. Ask the user to authenticate directly in the browser and start/verify the existing Agent. Never request or commit keys. Once access is restored, inspect current metric/log ingestion and the real monitor before acknowledging, recover, and resolve the still-open incident.
+
+The configured station's latest telemetry before this scenario was **synthetic baseline**, not active ACN replay. The UI and README now avoid describing this snapshot as ACN data. Dataset reuse/redistribution permission remains unresolved; do not add raw sessions to Git, Atlas or Datadog without permission.
+
+## Security and release decision
+
+- Keep API and web on loopback. Do not use a tunnel, LAN binding or public deployment.
+- The read API is unauthenticated. Production mutation blocking alone is not sufficient protection for public access. Remote deployment requires real operator authentication, authorization, CSRF protections and rate limiting.
+- API readiness proves the running service's database connection at that time; it is not an independent Atlas roles/certificates/security audit.
+- Do not activate paid services, change repository visibility or deploy publicly without owner approval.
+- The official checklist requires read access for judge accounts before the submission deadline and through 22 November 2026; keep the repository private unless the owner decides otherwise.
+
+## Handoff gates — historical, before the verified resumption
+
+- [ ] Authenticate to Datadog and verify current dashboard, metrics, logs and the same-run monitor `ALERT` then `OK` with timestamps.
+- [ ] Complete the investigation action, recovery telemetry and resolution on the existing open synthetic incident; verify audit records and final UI state.
+- [ ] Re-capture final UI screenshots after the lifecycle and keep Datadog screenshots separate from historical evidence.
+- [ ] Re-scan the exact staged file set for credentials, local datasets and restricted content; confirm fast-forward before any commit/push.
+- [ ] Fill the official submission form and team-contact fields; confirm any video/slide format the organizer specifies.
+- [ ] Keep the repository private, grant organizer-specified judges access by deadline, and do not change it after 23:59 ICT 31 October.
+
+See the [local demo runbook](DEMO_RUNBOOK.md) and [submission checklist](SUBMISSION_CHECKLIST.md). Phase D is **not complete** while live Datadog proof and the incident lifecycle remain pending.
+
+## Verified same-incident resumption — 19 October 2026
+
+**PASS:** `demo-58a1983cae09` was audited OPEN, retained its five original synthetic readings and was completed through protected HTTP APIs. Acknowledgment, one-charger recovery and resolution persisted four total actions. Direct Atlas readback confirms RESOLVED, 8.25 A SYNTHETIC CHARGING recovery telemetry and zero writes to the other four chargers during resumption. No global reset or replacement incident was used.
+
+US1 monitor `334137944` confirmed the resumed ALERT → OK cycle; exact-run Logs Explorer records include the original injection, fault, telemetry, investigation, recovery and resolved action. The timeline shows ALERT 13:47:44 and OK 13:50:44 ICT. Recorded observer detection was 166.33 s (polling-inclusive upper bound); reported-history recovery was approximately 8.53 s after accepted recovery telemetry. Timeline/clock precision prevents claiming exact internal detection latency. See [the full verification report](PHASE_D_VERIFICATION.md) and appended `liveVerification` in [phase-d-e2e.json](evidence/phase-d-e2e.json).
+
+| Current check | Verified result |
+| --- | --- |
+| API unit / integration | **24 / 11 passed** |
+| API typecheck / build | **PASS** |
+| Real Atlas TLS, scoped authentication/ping, schema/index audit, HTTP smoke | **PASS** |
+| Web lint / typecheck / production build | **PASS** |
+| Web BFF policy tests | **2 passed** |
+| Incident + action + recovery readback | **PASS, original incident RESOLVED** |
+| Current Datadog exact-run logs and fault monitor ALERT → OK | **PASS** |
+
+The source changes preserve the Copilot improvements and add guarded/idempotent lifecycle transitions, affected-charger-only recovery and sanitized incident log correlation. The existing BFF restrictions remain unchanged. The older pending gates above are retained as history; live authentication, Agent listener and current E2E evidence are now verified. Video recording, final slides, organizer form/contact details and judge access remain final release tasks. The repository stays private; no public deployment, paid upgrade or submission was performed.

@@ -1,0 +1,681 @@
+{
+  "capturedAt": "2026-10-19T05:28:37Z",
+  "run": {
+    "strategy": "Loopback-only Next.js UI and NestJS API against the configured MongoDB Atlas database",
+    "scenario": "SIM_OVERHEAT",
+    "chargerId": "demo-charger-01",
+    "initiatedFrom": "Next.js /demo page",
+    "precondition": "No active incidents were returned by GET /api/v1/incidents",
+    "uiResult": "The demo UI displayed its synthetic fault submission success status."
+  },
+  "atlas": {
+    "readiness": {
+      "result": "ready",
+      "database": "connected",
+      "observedAt": "2026-10-19T05:28:37Z"
+    },
+    "incident": {
+      "id": "demo-58a1983cae09",
+      "statusAtCapture": "OPEN",
+      "scenario": "SIM_OVERHEAT",
+      "chargerId": "demo-charger-01",
+      "detectedAt": "2026-10-19T05:22:54.894Z",
+      "detectedAtICT": "2026-10-19T12:22:54.894+07:00",
+      "synthetic": true,
+      "initialAction": {
+        "action": "fault_injected",
+        "at": "2026-10-19T05:22:54.894Z",
+        "actor": "demo-operator-ui"
+      },
+      "evidence": "Synthetic current 0 A, FAULT state, illustrative 72 \u00b0C temperature stimulus; not measured and not a hardware threshold."
+    },
+    "telemetry": {
+      "eventTime": "2026-10-19T05:22:54.966Z",
+      "eventTimeICT": "2026-10-19T12:22:54.966+07:00",
+      "expectedEvents": 5,
+      "confirmedLatestEvents": 5,
+      "faultEvent": {
+        "eventId": "b2-58a1983cae09-1-1",
+        "currentA": 0,
+        "temperatureC": 72,
+        "chargingState": "FAULT",
+        "faultCode": "SIMULATED_DEMO_FAULT",
+        "fieldProvenance": {
+          "currentA": "SYNTHETIC",
+          "temperatureC": "SYNTHETIC",
+          "chargingState": "SYNTHETIC",
+          "faultCode": "SYNTHETIC"
+        }
+      },
+      "fourOtherVirtualChargers": "Each had a new 8.25 A synthetic CHARGING reading at the same event time."
+    },
+    "applicationLog": {
+      "path": "/usr/local/var/log/chargeguard/api.jsonl",
+      "observed": [
+        "demo.action fault_injected at 2026-10-19T05:22:54.965Z",
+        "five telemetry.accepted events between 2026-10-19T05:22:55.133Z and 2026-10-19T05:22:55.685Z"
+      ],
+      "payloads": "Sanitized structured logs; no credentials or raw telemetry payloads were included in this evidence."
+    }
+  },
+  "datadog": {
+    "metricIngestion": "UNVERIFIED",
+    "logIngestion": "UNVERIFIED",
+    "alertTransition": "NOT OBSERVED",
+    "recoveryTransition": "NOT OBSERVED",
+    "agent": {
+      "processObserved": true,
+      "dogstatsdUdp8125ListenerObserved": false,
+      "statusCommand": "Could not read the protected Agent auth token as the current user."
+    },
+    "browser": "The Datadog browser page is at the login screen; authenticated access is pending. No credentials were copied into chat or repository."
+  },
+  "lifecycleAtCapture": {
+    "incident": "OPEN",
+    "investigationAction": "PENDING",
+    "recoveryTelemetry": "PENDING",
+    "resolution": "PENDING",
+    "reasonPaused": "Waiting for the user to authenticate in Datadog and restore/verify the existing local Agent before completing the monitor transition."
+  },
+  "limitations": [
+    "The UI success response and Atlas persistence do not prove Datadog metric/log ingestion or monitor state.",
+    "No actual ALERT or OK transition is claimed in this record.",
+    "All generated values and actions are synthetic and do not represent physical EVSE measurements or control."
+  ],
+  "liveVerification": {
+    "incidentId": "demo-58a1983cae09",
+    "demoRunId": "58a1983cae09",
+    "startedAt": "2026-10-19T06:47:02.896Z",
+    "steps": [
+      {
+        "action": "acknowledge",
+        "requestedAt": "2026-10-19T06:50:34.890Z",
+        "completedAt": "2026-10-19T06:50:35.008Z",
+        "status": "ACKNOWLEDGED",
+        "incidentId": "demo-58a1983cae09"
+      },
+      {
+        "action": "recover",
+        "requestedAt": "2026-10-19T06:50:35.426Z",
+        "completedAt": "2026-10-19T06:50:35.776Z",
+        "status": "RESOLVING",
+        "incidentId": "demo-58a1983cae09"
+      },
+      {
+        "action": "resolve",
+        "requestedAt": "2026-10-19T06:50:36.169Z",
+        "completedAt": "2026-10-19T06:50:36.307Z",
+        "status": "RESOLVED",
+        "incidentId": "demo-58a1983cae09"
+      }
+    ],
+    "initialAudit": {
+      "observedAt": "2026-10-19T06:47:03.944Z",
+      "incident": {
+        "id": "demo-58a1983cae09",
+        "stationId": "demo-station-01",
+        "chargerId": "demo-charger-01",
+        "status": "OPEN",
+        "detectedAt": "2026-10-19T05:22:54.894Z",
+        "synthetic": true
+      },
+      "originalTelemetry": [
+        {
+          "chargingState": "FAULT",
+          "currentA": 0,
+          "eventId": "b2-58a1983cae09-1-1",
+          "faultCode": "SIMULATED_DEMO_FAULT",
+          "meta": {
+            "chargerId": "demo-charger-01",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. 72 \u00b0C is an illustrative synthetic stimulus, not a measured value or hardware safety threshold. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC",
+              "temperatureC": "SYNTHETIC",
+              "faultCode": "SYNTHETIC"
+            }
+          },
+          "temperatureC": 72,
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-2",
+          "meta": {
+            "chargerId": "demo-charger-02",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-3",
+          "meta": {
+            "chargerId": "demo-charger-03",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-4",
+          "meta": {
+            "chargerId": "demo-charger-04",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-5",
+          "meta": {
+            "chargerId": "demo-charger-05",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        }
+      ],
+      "actions": [
+        {
+          "incidentId": "demo-58a1983cae09",
+          "actor": "demo-operator-ui",
+          "action": "fault_injected",
+          "at": "2026-10-19T05:22:54.894Z",
+          "synthetic": true
+        }
+      ],
+      "latest": {
+        "ts": "2026-10-19T05:22:54.966Z",
+        "provenance": {
+          "sourceType": "SYNTHETIC",
+          "assumptions": "Controlled synthetic monitoring demonstration. 72 \u00b0C is an illustrative synthetic stimulus, not a measured value or hardware safety threshold. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+          "fields": {
+            "currentA": "SYNTHETIC",
+            "chargingState": "SYNTHETIC",
+            "temperatureC": "SYNTHETIC",
+            "faultCode": "SYNTHETIC"
+          }
+        },
+        "currentA": 0,
+        "temperatureC": 72,
+        "faultCode": "SIMULATED_DEMO_FAULT",
+        "eventId": "b2-58a1983cae09-1-1",
+        "chargingState": "FAULT"
+      },
+      "otherChargerWritesDuringResumption": 0
+    },
+    "reemissionRequestedAt": "2026-10-19T06:47:46.603Z",
+    "firstReemittedEventAt": "2026-10-19T06:47:46.684Z",
+    "lastReemittedEventAt": "2026-10-19T06:49:39.676Z",
+    "reemittedCount": 12,
+    "datadogMonitorId": "334137944",
+    "alertObservedAt": "2026-10-19T06:50:33.013711+00:00",
+    "datadogReportedAlertAt": "2026-10-19T06:47:44Z",
+    "detectionLatencySeconds": 166.329711,
+    "latencyMeasurement": "Detection is a recorded authenticated UI confirmation upper bound and includes polling delay. Datadog alert timestamp precedes the re-emitted event by 2.684 seconds (possible interval alignment/clock skew); exact internal detection latency is not established. Recovery latency uses the seconds-precision Datadog timeline timestamp relative to persisted recovery telemetry.",
+    "datadogMetricVerified": true,
+    "datadogLogVerified": true,
+    "datadogLogQuery": "service:chargeguard-api env:dev @demo_id:58a1983cae09",
+    "finalAudit": {
+      "observedAt": "2026-10-19T07:00:43.707Z",
+      "incident": {
+        "id": "demo-58a1983cae09",
+        "stationId": "demo-station-01",
+        "chargerId": "demo-charger-01",
+        "status": "RESOLVED",
+        "detectedAt": "2026-10-19T05:22:54.894Z",
+        "acknowledgedAt": "2026-10-19T06:50:34.941Z",
+        "recoveryRequestedAt": "2026-10-19T06:50:35.474Z",
+        "recoveryTelemetryAt": "2026-10-19T06:50:35.474Z",
+        "resolvedAt": "2026-10-19T06:50:36.213Z",
+        "synthetic": true
+      },
+      "originalTelemetry": [
+        {
+          "chargingState": "FAULT",
+          "currentA": 0,
+          "eventId": "b2-58a1983cae09-1-1",
+          "faultCode": "SIMULATED_DEMO_FAULT",
+          "meta": {
+            "chargerId": "demo-charger-01",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. 72 \u00b0C is an illustrative synthetic stimulus, not a measured value or hardware safety threshold. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC",
+              "temperatureC": "SYNTHETIC",
+              "faultCode": "SYNTHETIC"
+            }
+          },
+          "temperatureC": 72,
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-2",
+          "meta": {
+            "chargerId": "demo-charger-02",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-3",
+          "meta": {
+            "chargerId": "demo-charger-03",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-4",
+          "meta": {
+            "chargerId": "demo-charger-04",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        },
+        {
+          "chargingState": "CHARGING",
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-1-5",
+          "meta": {
+            "chargerId": "demo-charger-05",
+            "stationId": "demo-station-01"
+          },
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "ts": "2026-10-19T05:22:54.966Z"
+        }
+      ],
+      "actions": [
+        {
+          "incidentId": "demo-58a1983cae09",
+          "actor": "demo-operator-ui",
+          "action": "fault_injected",
+          "at": "2026-10-19T05:22:54.894Z",
+          "synthetic": true
+        },
+        {
+          "incidentId": "demo-58a1983cae09",
+          "actor": "phase-d-operator",
+          "action": "acknowledged",
+          "at": "2026-10-19T06:50:34.941Z",
+          "synthetic": true
+        },
+        {
+          "incidentId": "demo-58a1983cae09",
+          "actor": "demo-operator-ui",
+          "action": "recovery_requested",
+          "at": "2026-10-19T06:50:35.474Z",
+          "synthetic": true
+        },
+        {
+          "incidentId": "demo-58a1983cae09",
+          "actor": "phase-d-operator",
+          "action": "resolved",
+          "at": "2026-10-19T06:50:36.213Z",
+          "synthetic": true
+        }
+      ],
+      "latest": {
+        "ts": "2026-10-19T06:50:35.474Z",
+        "provenance": {
+          "sourceType": "SYNTHETIC",
+          "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+          "fields": {
+            "currentA": "SYNTHETIC",
+            "chargingState": "SYNTHETIC"
+          }
+        },
+        "currentA": 8.25,
+        "eventId": "b2-58a1983cae09-2-1",
+        "chargingState": "CHARGING"
+      },
+      "otherChargerWritesDuringResumption": 0
+    },
+    "monitorRecoveredAt": "2026-10-19T06:50:44Z",
+    "recoveryObservedAt": "2026-10-19T06:54:49.196120+00:00",
+    "recoveryRequestedAt": "2026-10-19T06:50:35.474Z",
+    "incidentResolvedAt": "2026-10-19T06:50:36.213Z",
+    "investigationRecordedAt": "2026-10-19T06:50:34.941Z",
+    "recoveryTelemetryVerified": true,
+    "verificationStatus": "VERIFIED_ALERT_INVESTIGATE_RECOVER_RESOLVE_OK",
+    "recoveryLatencySeconds": 8.526,
+    "monitorConfiguration": {
+      "id": "334137944",
+      "query": "sum(last_1m):sum:chargeguard.fault.simulated{service:chargeguard-api,env:dev}.as_count() >= 1",
+      "evaluationDelaySeconds": 0,
+      "critical": 1,
+      "requireFullWindow": false,
+      "missingData": "Evaluate as 0",
+      "recipients": []
+    },
+    "originalSignalHistory": {
+      "alertAt": "2026-10-19T05:23:44Z",
+      "passiveCounterExpiryAt": "2026-10-19T05:24:44Z",
+      "reportedDetectionLatencySeconds": 49.034,
+      "note": "Observed in authenticated monitor history. Counter expiry preceded operator remediation and is not evidence of incident resolution."
+    },
+    "limitations": [
+      "All fault/recovery values and operator actions are synthetic.",
+      "The shared service/env monitor counts events, not incident lifecycle state or physical charger safety.",
+      "12 controlled re-emissions accepted on the existing charger; no second incident was created.",
+      "Agent metrics do not carry high-cardinality incident IDs; correlation uses run-tagged logs and timestamps.",
+      "Datadog timeline timestamps have second precision and may align to metric intervals or differ from the source clock."
+    ],
+    "forwardedLifecycleLogs": {
+      "investigate": "2026-10-19T06:50:35.007Z",
+      "recovery_requested": "2026-10-19T06:50:35.773Z",
+      "resolved": "2026-10-19T06:50:36.305Z",
+      "method": "authenticated US1 Logs Explorer, service/env plus exact demo_id query"
+    },
+    "auditHistory": [
+      {
+        "kind": "audit-final",
+        "observedAt": "2026-10-19T07:00:43.707Z",
+        "incident": {
+          "id": "demo-58a1983cae09",
+          "stationId": "demo-station-01",
+          "chargerId": "demo-charger-01",
+          "status": "RESOLVED",
+          "detectedAt": "2026-10-19T05:22:54.894Z",
+          "acknowledgedAt": "2026-10-19T06:50:34.941Z",
+          "recoveryRequestedAt": "2026-10-19T06:50:35.474Z",
+          "recoveryTelemetryAt": "2026-10-19T06:50:35.474Z",
+          "resolvedAt": "2026-10-19T06:50:36.213Z",
+          "synthetic": true
+        },
+        "originalTelemetry": [
+          {
+            "chargingState": "FAULT",
+            "currentA": 0,
+            "eventId": "b2-58a1983cae09-1-1",
+            "faultCode": "SIMULATED_DEMO_FAULT",
+            "meta": {
+              "chargerId": "demo-charger-01",
+              "stationId": "demo-station-01"
+            },
+            "provenance": {
+              "sourceType": "SYNTHETIC",
+              "assumptions": "Controlled synthetic monitoring demonstration. 72 \u00b0C is an illustrative synthetic stimulus, not a measured value or hardware safety threshold. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+              "fields": {
+                "currentA": "SYNTHETIC",
+                "chargingState": "SYNTHETIC",
+                "temperatureC": "SYNTHETIC",
+                "faultCode": "SYNTHETIC"
+              }
+            },
+            "temperatureC": 72,
+            "ts": "2026-10-19T05:22:54.966Z"
+          },
+          {
+            "chargingState": "CHARGING",
+            "currentA": 8.25,
+            "eventId": "b2-58a1983cae09-1-2",
+            "meta": {
+              "chargerId": "demo-charger-02",
+              "stationId": "demo-station-01"
+            },
+            "provenance": {
+              "sourceType": "SYNTHETIC",
+              "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+              "fields": {
+                "currentA": "SYNTHETIC",
+                "chargingState": "SYNTHETIC"
+              }
+            },
+            "ts": "2026-10-19T05:22:54.966Z"
+          },
+          {
+            "chargingState": "CHARGING",
+            "currentA": 8.25,
+            "eventId": "b2-58a1983cae09-1-3",
+            "meta": {
+              "chargerId": "demo-charger-03",
+              "stationId": "demo-station-01"
+            },
+            "provenance": {
+              "sourceType": "SYNTHETIC",
+              "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+              "fields": {
+                "currentA": "SYNTHETIC",
+                "chargingState": "SYNTHETIC"
+              }
+            },
+            "ts": "2026-10-19T05:22:54.966Z"
+          },
+          {
+            "chargingState": "CHARGING",
+            "currentA": 8.25,
+            "eventId": "b2-58a1983cae09-1-4",
+            "meta": {
+              "chargerId": "demo-charger-04",
+              "stationId": "demo-station-01"
+            },
+            "provenance": {
+              "sourceType": "SYNTHETIC",
+              "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+              "fields": {
+                "currentA": "SYNTHETIC",
+                "chargingState": "SYNTHETIC"
+              }
+            },
+            "ts": "2026-10-19T05:22:54.966Z"
+          },
+          {
+            "chargingState": "CHARGING",
+            "currentA": 8.25,
+            "eventId": "b2-58a1983cae09-1-5",
+            "meta": {
+              "chargerId": "demo-charger-05",
+              "stationId": "demo-station-01"
+            },
+            "provenance": {
+              "sourceType": "SYNTHETIC",
+              "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+              "fields": {
+                "currentA": "SYNTHETIC",
+                "chargingState": "SYNTHETIC"
+              }
+            },
+            "ts": "2026-10-19T05:22:54.966Z"
+          }
+        ],
+        "actions": [
+          {
+            "incidentId": "demo-58a1983cae09",
+            "actor": "demo-operator-ui",
+            "action": "fault_injected",
+            "at": "2026-10-19T05:22:54.894Z",
+            "synthetic": true
+          },
+          {
+            "incidentId": "demo-58a1983cae09",
+            "actor": "phase-d-operator",
+            "action": "acknowledged",
+            "at": "2026-10-19T06:50:34.941Z",
+            "synthetic": true
+          },
+          {
+            "incidentId": "demo-58a1983cae09",
+            "actor": "demo-operator-ui",
+            "action": "recovery_requested",
+            "at": "2026-10-19T06:50:35.474Z",
+            "synthetic": true
+          },
+          {
+            "incidentId": "demo-58a1983cae09",
+            "actor": "phase-d-operator",
+            "action": "resolved",
+            "at": "2026-10-19T06:50:36.213Z",
+            "synthetic": true
+          }
+        ],
+        "latest": {
+          "ts": "2026-10-19T06:50:35.474Z",
+          "provenance": {
+            "sourceType": "SYNTHETIC",
+            "assumptions": "Controlled synthetic monitoring demonstration. All readings, faults and operator actions are synthetic, not physical EV charger observations.",
+            "fields": {
+              "currentA": "SYNTHETIC",
+              "chargingState": "SYNTHETIC"
+            }
+          },
+          "currentA": 8.25,
+          "eventId": "b2-58a1983cae09-2-1",
+          "chargingState": "CHARGING"
+        },
+        "otherChargerWritesDuringResumption": 0
+      }
+    ],
+    "regression": {
+      "nodeMajor": 24,
+      "apiUnit": {
+        "passed": 24,
+        "failed": 0
+      },
+      "apiIntegration": {
+        "passed": 11,
+        "failed": 0
+      },
+      "apiTypecheck": "PASS",
+      "apiBuild": "PASS",
+      "atlasDiagnostics": "PASS_CERT_VERIFIED_ALL_3_NODES_AND_SCOPED_AUTH_PING",
+      "atlasSchemaIndexAudit": "PASS",
+      "atlasHttpSmoke": "PASS",
+      "webLint": "PASS",
+      "webTypecheck": "PASS",
+      "webProductionBuild": "PASS",
+      "webBffTests": {
+        "passed": 2,
+        "failed": 0
+      },
+      "liveBffBoundary": [
+        {
+          "path": "/",
+          "status": 200
+        },
+        {
+          "path": "/chargers?id=demo-charger-01",
+          "status": 200
+        },
+        {
+          "path": "/incidents",
+          "status": 200
+        },
+        {
+          "path": "/demo",
+          "status": 200
+        },
+        {
+          "path": "/api/v1/health/ready",
+          "status": 200
+        },
+        {
+          "case": "missing-origin",
+          "status": 403,
+          "expected": 403
+        },
+        {
+          "case": "foreign-origin",
+          "status": 403,
+          "expected": 403
+        },
+        {
+          "case": "oversized-local",
+          "status": 413,
+          "expected": 413
+        }
+      ],
+      "responsiveQaNote": "Current desktop UI reviewed with no document-level overflow. The browser viewport override did not alter the existing tab; no new independent 390px result is claimed. Earlier mobile captures are preserved as Copilot baseline evidence."
+    }
+  },
+  "historicalSnapshotNote": "capturedAt, run, atlas, datadog and lifecycleAtCapture preserve the original Copilot capture. The appended liveVerification and currentResult supersede its incomplete status without erasing historical observations.",
+  "currentResult": {
+    "incidentId": "demo-58a1983cae09",
+    "status": "RESOLVED",
+    "datadogMonitorId": "334137944",
+    "monitorState": "OK",
+    "verifiedLifecycle": "FAULT_ALERT_INVESTIGATE_RECOVER_RESOLVE_OK",
+    "reference": "docs/PHASE_D_VERIFICATION.md"
+  }
+}

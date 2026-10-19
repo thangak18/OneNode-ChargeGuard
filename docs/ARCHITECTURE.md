@@ -3,7 +3,7 @@
 ## Implemented telemetry and incident path
 
 ```text
-Local ACN-Data static CSV.gz (ignored)
+Local ACN-Data static CSV.gz (ignored; replay only after rights verification)
    └── LocalAcnCsvAdapter (stream, downsample, event-time mapping, provenance)
         └── replay-acn CLI (dry-run default; --execute explicitly required)
              └── POST /api/v1/telemetry[/batch] · x-api-key
@@ -14,6 +14,42 @@ Local ACN-Data static CSV.gz (ignored)
                                   └── Next.js operations dashboard (loopback)
                                        └── allowlisted BFF routes; local-only mutations
 ```
+
+## Submission architecture diagram specification
+
+This Mermaid source is the canonical diagram specification for the submission deck/video. Keep the boundaries visible: the browser uses the same-origin BFF, the BFF keeps the API key server-side, mutation access is local-development-only, and Datadog is an observability sink rather than an incident-control API.
+
+```mermaid
+flowchart LR
+  subgraph Local["Local demo host (loopback only)"]
+    Browser["Operator browser<br/>Next.js UI"]
+    BFF["Next.js BFF<br/>allowlisted routes<br/>same-origin local mutations"]
+    API["NestJS API<br/>telemetry, incidents,<br/>demo scenarios"]
+    DB[("MongoDB Atlas<br/>time-series telemetry<br/>assets, incidents, receipts")]
+    AppLogs["Sanitized JSON logs"]
+    DogStatsD["DogStatsD UDP<br/>127.0.0.1:8125"]
+    Agent["Datadog Agent"]
+    Browser -->|"same origin"| BFF
+    BFF -->|"read requests; key only on allowed writes"| API
+    API -->|"validated bounded queries/writes"| DB
+    API --> AppLogs
+    API --> DogStatsD
+    AppLogs --> Agent
+    DogStatsD --> Agent
+  end
+  Agent -->|"HTTPS, configured account/site"| DD["Datadog US1<br/>dashboard, metrics, monitors, logs"]
+  Source["Local ignored ACN CSV.gz<br/>reuse permission unresolved"] -->|"dry-run by default;<br/>no raw trace upload"| Replay["Bounded replay adapter"]
+  Replay -->|"only if reuse is authorized"| API
+  DD -.->|"operator verifies monitor state manually"| Browser
+```
+
+### Diagram notes
+
+- The NestJS API and web development server bind to `127.0.0.1`. This runbook uses a local demo strategy; it does not present an unauthenticated remote surface as production-ready.
+- The backend ingestion key protects writes. The BFF injects it only for its explicit, validated mutation allowlist. The browser never receives it.
+- MongoDB time-series telemetry and ingestion receipts have seven-day retention. Demo baseline/reset emits new synthetic telemetry; it does not delete source data or unrelated records.
+- ACN data is historical source material and remains local/ignored until redistribution rights are resolved. Demo fault/recovery signals are generated synthetic data.
+- Datadog US1 verification evidence is historical unless a current authenticated observation is captured with timestamp and monitor ID.
 
 Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js driver) and `apps/web` (Next.js App Router). The backend includes charger and station reads, incident lifecycle actions, and synthetic demo controls. The frontend provides overview, charger detail, incident management, and demo-control screens; it polls the API through a same-origin BFF. A singleton MongoDB connection is established and pinged at startup, closed on shutdown, and checked by `/api/v1/health/ready`. Swagger lives at `/docs`; all API error responses are sanitized. `MONGODB_DATABASE` must equal `chargeguard`, and the ingestion API requires `INGEST_API_KEY` outside test environments.
 
@@ -35,7 +71,7 @@ Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js d
 - **BFF:** explicit path/method allowlist, same-origin loopback policy for development mutations, body/schema limits, server-side API key, sanitized proxy errors, and production mutation denial. It does not authenticate human operators.
 - **Datadog:** bounded DogStatsD metrics and sanitized JSON logs are implemented. Prior US1 observations are recorded in [Datadog preparation](DATADOG_PREPARATION.md), but live account, monitor, and notification state were not rechecked during the current validation. APM remains out of scope.
 
-## Initial conceptual domain model
+## Domain model summary
 ```text
 stations(_id, name, capacityKW, location?)
 chargers(_id, stationId, connectorId, ratedPowerKW, status)
@@ -43,10 +79,10 @@ telemetry(ts, meta:{stationId,chargerId}, voltageV?, currentA?, powerKW?, temper
 incidents(_id, chargerId, scenario, severity, detectedAt, acknowledgedAt?, resolvedAt?, status, evidence)
 incident_actions(_id, incidentId, actor, action, at, evidence)
 ```
-Time-series options: `timeField: ts`, `metaField: meta`, appropriate granularity. Validate indexes and collection constraints during implementation; use regular collections for mutable incident state. Do not assume Change Streams can be used on time-series collections; design events via ordinary collections, logs or application notifications as needed.
+The implemented telemetry collection uses `ts` as its time field and `meta` as its metadata field; mutable assets, incidents, incident actions, and receipts are stored in regular collections. Runtime aggregation uses bounded time ranges and explicit charger/station filters.
 
 ## Demonstration flow
-1. Replay normal historical session measurements.
+1. Show baseline synthetic data or, only after rights are resolved, authorized historical session measurements.
 2. Inject explicitly synthetic overheat or power-loss fault.
 3. Observe Datadog monitor trigger (latency measured during test).
 4. Investigate application logs and MongoDB aggregation evidence.
@@ -64,4 +100,10 @@ The global ObservabilityModule provides a single best-effort UDP DogStatsD socke
 
 Datagrams go only to the existing Agent on 127.0.0.1:8125; the app never handles Datadog credentials. The Agent forwards the standard-host JSON log file `/usr/local/var/log/chargeguard/api.jsonl` to US1 as service chargeguard-api/source nodejs. Field allowlisting omits raw payloads, headers, URLs, errors and arbitrary IDs. Static demo assets alone receive ID tags; other assets collapse into a bounded aggregate category. This is demonstration instrumentation, with UDP loss and stale/out-of-order gauge limitations.
 
-Current validation: **21 API unit tests and 10 API integration tests pass**; API typecheck/build and web lint/typecheck/two BFF policy tests/production build pass. The four web routes returned HTTP 200 at 1440, 1024, 768, and 390 px with no horizontal document overflow. API readiness returned `ready`; earlier Atlas TLS failures are historical and preserved in [the preparation report](PREPARATION_REPORT.md). Production-build mutation probes returned 403, and development BFF probes returned 403 for missing Origin, 400 for invalid input, and 404 for unsupported routes. The web and API runbooks are in [the local demo runbook](DEMO_RUNBOOK.md). The current host uses Node 25.2.1, outside the API's declared `>=22.12 <25` engine range; repeat runtime validation with Node 24 before release.
+Current Phase D test results and any live end-to-end evidence are maintained in [Project Status](PROJECT_STATUS.md) and the [Submission Checklist](SUBMISSION_CHECKLIST.md); do not interpret historical Datadog observations as current monitor state.
+
+## Verified Phase D lifecycle safeguards
+
+The existing four-screen UI and loopback BFF remain intact. Incident mutations now enforce OPEN → ACKNOWLEDGED → RESOLVING → RESOLVED. Demo recovery reserves a stable timestamp, ingests only the affected charger's SYNTHETIC reading, and marks successful recovery only after persistence. Resolution is rejected while that marker is absent. Unique regular-collection audit action IDs and stable telemetry fingerprints make ordinary HTTP retries idempotent; a failed recovery can be retried without admitting an unverified resolution. This is not a cross-collection transaction or tamper-proof audit ledger.
+
+Fault and accepted-reading logs carry validated demo/incident IDs plus bounded virtual station/charger IDs. IDs remain absent from metric tags. Datadog's shared one-minute event-count monitor is independent of the incident status: window expiry can return OK even while an incident is OPEN. The 19 October Phase D resumption verified both systems separately for the existing `demo-58a1983cae09` incident; [dated evidence and timing limitations](PHASE_D_VERIFICATION.md) are authoritative.

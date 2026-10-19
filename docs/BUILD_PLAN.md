@@ -25,16 +25,22 @@
 
 
 ## Phase C — Product & response (25–28 Oct)
-- [ ] Build Next.js operations dashboard + incident view
-- [ ] Implement synthetic faults, acknowledgment and resolution logs
+- [x] Build Next.js operations dashboard + incident view (existing Phase C UI preserved)
+- [x] Implement synthetic faults, guarded acknowledgment/recovery/resolution and correlated logs
 - [ ] Complete two end-to-end scenario tests
 
 ## Phase D — Evidence & submission (29–31 Oct)
-- [ ] Re-run demo from clean setup; sanitize repository
-- [ ] Prepare README, setup, architecture and disclosure
+- [x] Resume the original incident safely and verify Atlas/US1 end-to-end evidence; isolated integration fixtures remain reproducible
+- [x] Prepare README, setup, architecture, evidence-based runbook, storyboard/slide outline and disclosures
 - [ ] Record video, screenshots, slide deck and demo link
 - [ ] Submit before **31 Oct 23:59 ICT**; grant access per organizer guidance
 
 ## Prioritization
 **Must have:** historical replay, MongoDB time-series + Aggregation Pipeline, Datadog dashboard + alert + logs, incident narrative, runnable demo.
 **Stretch only if time:** Change Streams on supported standard collections, APM/tracing, geospatial, anomaly detection, automated load distribution suggestion.
+
+## Phase D resumption checkpoint — 19 October 2026
+
+Original incident `demo-58a1983cae09` completed its protected API lifecycle and current Datadog fault-monitor ALERT → OK verification. Atlas confirms four actions, one affected-charger-only SYNTHETIC recovery and no writes to the other four chargers during resumption. Current checks: 24 backend unit, 11 backend integration and 2 web BFF tests; API/web typecheck/build plus web lint PASS. See [Phase D verification](PHASE_D_VERIFICATION.md) for observed timing limitations.
+
+The second distinct fault-scenario rehearsal, actual video recording/final presentation export, organizer form/judge-access steps and any authorized deployment remain separate completion items. No new simulation was created merely to replace the existing incident. Preserve raw ACN exclusions; the completed demonstration is synthetic-only.

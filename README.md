@@ -3,14 +3,14 @@
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> **Status (19 October 2026):** Phase A API, Phase B metrics/logging, and the Phase C Next.js operations dashboard are implemented. The local API readiness endpoint currently reports its MongoDB connection as ready; this is an application-level check, not a fresh independent Atlas audit. Datadog account and monitor state were not re-verified in this run. The web BFF allows mutations only from its loopback development UI and rejects them in production; it does not provide operator authentication. Do not publicly deploy. Dataset redistribution rights remain unresolved.
+> **Status (19 October 2026):** The existing Phase D incident `demo-58a1983cae09` completed its verified Atlas → Datadog ALERT → investigation → recovery → RESOLVED → monitor OK lifecycle. Node 24 checks pass: API 24 unit + 11 integration tests; web lint, two BFF policy tests, typecheck and production build. See [current verification](docs/PHASE_D_VERIFICATION.md). Video recording, final slide export and organizer form/access steps remain submission preparation. Keep the app loopback-only; the BFF is not operator authentication and rejects production mutations. Raw ACN redistribution remains unresolved.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.
 
 ## Proposed solution
 ChargeGuard is a monitoring and incident-response prototype for EV charging stations:
-1. Ingest and replay charging-session telemetry from a cited public dataset.
+1. Replay cited historical charging-session telemetry only after its reuse terms are verified; otherwise use synthetic telemetry.
 2. Label and inject synthetic sensor signals and controlled failure scenarios.
 3. Store and aggregate time-series data with **MongoDB**.
 4. Visualize operational health and configure monitors with **Datadog**.
@@ -27,11 +27,12 @@ ChargeGuard is a monitoring and incident-response prototype for EV charging stat
 **Non-goals for MVP:** real charger control, production integrations, a trained failure-prediction model, deployment to safety-critical equipment.
 
 ## Architecture
-`Local ACN CSV.gz → bounded replay adapter → NestJS API → MongoDB Atlas time-series + incidents → loopback Next.js dashboard/BFF`
+`Synthetic baseline or authorized local ACN replay → bounded adapter → NestJS API → MongoDB Atlas time-series + incidents → loopback Next.js dashboard/BFF`
 
-The API includes charger views, incident lifecycle actions, and synthetic demo controls. Phase B instrumentation sends bounded DogStatsD metrics and sanitized JSON logs to the local Agent; prior US1 evidence is documented, but current Datadog monitor state is not claimed here. Only five virtual connectors are modeled; no physical charger data stream is connected.
+The API includes charger views, incident lifecycle actions, and synthetic demo controls. Phase B instrumentation sends bounded DogStatsD metrics and sanitized JSON logs to the local Agent; current same-incident US1 proof is documented in the Phase D verification report. Only five virtual connectors are modeled; no physical charger data stream is connected.
 
 See [Architecture](docs/ARCHITECTURE.md), [Project Status](docs/PROJECT_STATUS.md), [Local Demo Runbook](docs/DEMO_RUNBOOK.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
+See also the evidence-based [Submission Checklist](docs/SUBMISSION_CHECKLIST.md) for official criteria, unresolved verification gates, video/storyboard guidance, screenshot shots, and data/AI disclosures.
 
 **Project evidence:** [Preparation and Atlas history](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). Five static sessions (20,228 source rows) were inspected locally; those raw files remain Git-ignored. The preparation report preserves earlier TLS failures; the current local API readiness result supersedes them only for the running application's connection check.
 
@@ -100,7 +101,7 @@ Enable `DD_METRICS_ENABLED=true` in private `.env`; set `DD_ENV=dev` and `CHARGE
 
 **Historical verification on 19 October:** all metric families (including Agent-generated latency histogram names) and 23 application JSON logs appeared in US1. That HTTP smoke used a disposable local MongoDB database with explicitly synthetic readings after the Atlas TLS attempt in that run failed before authentication. A later local API readiness check returned `ready`; see [current project status](docs/PROJECT_STATUS.md) and the timestamped [preparation report](docs/PREPARATION_REPORT.md). To repeat the isolated smoke, use `npm --prefix apps/api run smoke:observability -- --execute --local-db`; omit `--local-db` only when intentionally retaining three synthetic test readings in Atlas. No raw ACN source data is sent by these tests.
 
-See [Datadog configuration, metric meanings, evidence and limitations](docs/DATADOG_PREPARATION.md). Metrics/status are observations from accepted telemetry, not physical availability or guaranteed event accounting. Dashboard configuration, monitor definitions, and historical US1 evidence are documented; recheck live monitor/account status before claiming a current alert. No paid-service activation was made.
+See [Datadog configuration, metric meanings, evidence and limitations](docs/DATADOG_PREPARATION.md). Metrics/status are observations from accepted telemetry, not physical availability or guaranteed event accounting. Dashboard configuration, monitor definitions, and historical US1 evidence are documented; current Phase D alert and recovery are verified separately from historical Phase B screenshots. No paid-service activation was made.
 
 ## Dataset sources (raw sessions held locally, not uploaded)
 - [ACN-Data (Caltech)](https://ev.caltech.edu/dataset)

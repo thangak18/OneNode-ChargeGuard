@@ -6,15 +6,17 @@
 
 **Status: PLANNED; no authenticated Datadog session, verified trial or integration.** All below is design only. Activation timing remains an owner task to keep any time-limited trial available during 17–31 Oct. Datadog links and supported plan features should be verified in the account once provisioned: https://www.datadoghq.com/ and https://docs.datadoghq.com/ .
 
-## Proposed minimum demo dashboard
+## Historical dashboard proposal — superseded by implementation
 
 Display 5–10 virtual chargers with simulated state and historical/replayed `currentA` (source data after field verification). Panels to add during the build window: current by charger, source-data gap count, synthetic over-temperature, active incidents by severity/status, ingestion delay, and last recovery timestamp. Display labels `ACN historical replay`, `derived` and `synthetic` prominently. Power in kW only after voltage assumptions and formula are disclosed.
 
-## Proposed monitor and evidence
+## Historical monitor proposal — not implemented
 
-**Primary monitor:** a deliberately synthetic `chargeguard.simulated_temperature_c` metric for one virtual charger exceeds an **illustrative demo threshold** (e.g., 65°C) for a defined window. The value and threshold are not hardware-safety data. Trigger a test alert during 17–31 Oct, record event time, monitor notification time and measured delay. A secondary simulated power-loss/absence alert is optional: distinguish **zero current** from **missing samples**, not conflating them.
+This proposal predates the Phase B instrumentation and is preserved only as design history. The implementation does **not** emit `chargeguard.simulated_temperature_c` and no monitor evaluates a temperature threshold. The actual bounded metric set and deployed monitor queries are documented in the implementation section below; those monitors count ingestion errors and synthetic fault events.
 
-Recommended future metric/log names: `chargeguard.charger.current_a`, `chargeguard.simulated_temperature_c`, `chargeguard.telemetry.replay_lag_seconds`, `chargeguard.incident.open`, `chargeguard.ingestion.error`; structured log keys `service`, `environment`, `station_id`, `charger_id`, `scenario`, `incident_id`, `timestamp`, `provenance_source_type`. Avoid high-cardinality user/session identifiers in metric tags; keep only sanitized trace links in logs.
+The earlier idea was to test an illustrative synthetic temperature threshold, while keeping zero-current observations distinct from missing samples. Do not cite this proposal as implemented behavior.
+
+Recommended future metric/log names in that original proposal were not all implemented. Refer to the implementation metric table later in this document for the actual metric names, types and semantics.
 
 ## Security and timing
 
@@ -160,3 +162,13 @@ Real Atlas connectivity is **FULLY RESTORED AND VERIFIED**:
 - Database reads and time-series writes: PASS
 
 All Phase B requirements are satisfied. Ready to proceed to Phase C (Operations UI).
+
+## Current Phase D proof — resumed original incident
+
+The earlier Phase D access/Agent blocker is superseded by the completed 19 October resumption. The Agent process, UDP 8125 listener and actual US1 intake were verified. Existing monitor `334137944` retained its one-minute sum, critical >=1, evaluation delay 0, no full-window requirement, Evaluate-as-0 missing-data behavior and no recipients. No monitor or notification configuration was changed.
+
+Original incident `demo-58a1983cae09` already had a history ALERT at 12:23:44 ICT, approximately 49 seconds after its initial synthetic input; its 12:24:44 automatic OK was merely count expiry. Twelve controlled re-emissions on that same charger enabled a current verified sequence: ALERT history at 13:47:44; acknowledgment at 13:50:34.941; accepted one-charger recovery at 13:50:35.474; API resolution at 13:50:36.213; monitor OK history at 13:50:44. Observer-confirmed detection upper bound was 166.33 s; reported-history recovery was approximately 8.53 s. The alert timeline predates the first re-emitted source timestamp by 2.684 s, so exact internal detection latency cannot be established (possible aggregation alignment or clock skew).
+
+US1 search `service:chargeguard-api env:dev @demo_id:58a1983cae09` returned original injection, new fault/current ingestion and all lifecycle action logs with validated incident context. Resolved log timestamp: 06:50:36.305Z. See [complete evidence](PHASE_D_VERIFICATION.md), [machine-readable record](evidence/phase-d-e2e.json), [same-run Alert](evidence/phase-d-fault-alert.png), [OK](evidence/phase-d-fault-recovered.png) and [correlated fault log](evidence/phase-d-correlated-fault-log.png). Phase B screenshots remain historical.
+
+The account banner displayed 14 trial days left; no exact expiry or final-round coverage guarantee was established. Archive these dated observations and obtain any organizer extension confirmation before the tentative November final. No paid conversion, recipients, dashboards or duplicate monitors were added during Phase D.

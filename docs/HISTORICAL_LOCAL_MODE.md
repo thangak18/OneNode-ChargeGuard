@@ -94,3 +94,24 @@ Node 24: **29 API unit tests and 11 API integration tests PASS**, API typecheck/
 Live loopback checks: valid historical read 200 with private/no-store headers, invalid aliases/path/query 400, external Origin 403 and POST 405. A local production-server test returned **403 even with CHARGEGUARD_HISTORICAL_LOCAL=true**. Twelve output tracing manifests contained zero raw source-file entries. Browser QA inspected only boolean/aggregate results: chart rendered, all three provenance descriptions present, source/replay clocks labeled, Play/Pause advanced the local cursor, session switching reset it, and no desktop document overflow. No trace screenshot or raw chart data was exported by QA.
 
 The original Phase D evidence file is byte-for-byte unchanged. A read-only check still found incident demo-58a1983cae09 RESOLVED with four actions. No cloud replay or new monitor cycle was attempted. These are local/regression checks, not a new claim of live Datadog alert delivery.
+
+## Private walkthrough checklist
+
+This walkthrough is for the owner on the local machine, not an approved recording or judge broadcast. Confirm the applicable local-analysis basis; public display remains a separate permission gate. No source screenshots are needed.
+
+1. Select Node 24 (`node --version` must report v24), run `historical:check` and the five-file dry-run above. Expected totals: 20,228 parsed, 1,246 selected, five hash matches. Do not add `--execute`. The dry-run emits only per-session counts.
+2. Start only the loopback web dev server using the command above; the dedicated historical path needs neither API nor Agent. Open `/history` at 127.0.0.1 and confirm the local-only warning and provenance panels before inspecting values.
+3. Choose sessions 1–5 in turn. Match source/selected counts to the inventory table. Every selector says the same source prefix; the local alias remains one EVSE inference, not five physical chargers. The chart is the complete selected session; the cursor highlights a point.
+4. Pause and move the replay scrubber. Read original current (A), source-reported charging state and energy counter locally. Compare exported state with the separate DERIVED application state (current >0.5 A heuristic). Do not interpret this heuristic as device fault/availability truth.
+5. Compare original UTC `sourceEventAt` with mapped `replayAt`. Play/Pause moves the cursor only. Change compression 60 → 600 → 3600: original instants/current stay the same and only mapped timing changes; session/speed selection resets playback. No live measurement is implied.
+6. Inspect the energy caveat and quality flags. Six decreases exist in the full source, but not every reset survives downsampling; do not promise every flag appears in every selected session or report a last/max counter as session energy. Voltage, power, pilot and temperature remain unavailable. The 132 long gaps and line interpolation are not repaired observations.
+7. Reload the same selection: deterministic event identity and no persisted write is the intended idempotency behavior. Integration/unit tests verify this; a page reload alone does not prove cloud idempotency. Browser requests for this path stay on `/api/historical`, never the ingestion BFF.
+8. Stop playback and close `/history` before showing synthetic pages. Use the preserved Phase D report for the cloud incident narrative; no reset or new incident is needed. Keep private session files/manifests and unapproved images off recording/export channels.
+
+A clean Git clone intentionally cannot replay raw sessions: it can run synthetic-fixture tests, and the owner must obtain authorized samples separately for local inspection. See the [unsent permission inquiry](DATASET_PERMISSION_INQUIRY.md), [two-track video storyboard](DEMO_VIDEO_STORYBOARD.md) and [judge access plan](JUDGE_ACCESS_PLAN.md).
+
+## Finalization regression — 19 October 2026
+
+Repeated on **Node v24.22.0** before synchronization: API typecheck, build, **29 unit / 11 integration tests**; web lint, TypeScript, production build and **4 policy tests** all PASS. The five-file replay dry-run again validated **1,246** events without `--execute`. All five loopback historical reads matched inventory counts/hashes, returned private/no-store responses and retained the cloud permission denial; no source values were printed or exported.
+
+A freshly built production server bound to 127.0.0.1 returned **403** for `/api/historical` with the opt-in flag explicitly true. **12** output tracing manifests contained **zero** raw source entries. The local development server was restored afterwards. The Phase D evidence JSON still matches the pre-historical baseline byte-for-byte. No new Atlas/Datadog incident or historical upload was used for these regressions.

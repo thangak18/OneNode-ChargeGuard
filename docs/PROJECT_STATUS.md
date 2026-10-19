@@ -92,3 +92,11 @@ The source changes preserve the Copilot improvements and add guarded/idempotent 
 ## Optional local historical mode — 19 October 2026
 
 The verified synthetic lifecycle remains unchanged. A separate, development-only `/history` viewer now uses the existing ACN adapter directly on checksum-verified ignored files, without historical uploads to Atlas/Datadog. Recheck: 20,228 source rows, 1,246 selected readings, five matching hashes and one exported filename prefix (physical identity unverified). Current local-mode/regression checks pass: 29 API unit, 11 API integration and 4 web policy tests, typecheck/build/lint. Production rejects historical data access even with the opt-in flag enabled; raw files are excluded from output tracing. Permission for cloud/public use remains unconfirmed and the replay CLI requires a private scope/content-specific attestation before execution. See [Historical Local Mode](HISTORICAL_LOCAL_MODE.md).
+
+## Historical finalization and submission preparation — 19 October 2026
+
+Current implementation is unchanged from the verified local historical mode: five matching hashes, 20,228 source rows, 1,246 selected points, one source filename prefix, no independent physical-EVSE identity validation. Cloud/public/redistribution permissions remain unconfirmed. Historical source rows were not uploaded to Atlas, Datadog or GitHub. The completed Phase D evidence is retained unchanged, without a fresh incident cycle.
+
+The package now has a reproducible private walkthrough, an unsent dataset-owner permission inquiry, Vietnamese hybrid video storyboard and presentation outline, and a concrete judge-access plan. Actual video recording, final slide export, dataset permission, organizer-provided judge accounts, accessible-demo approval, exact Datadog trial expiry and official form remain owner tasks. The repository is private and personal; GitHub offers no read-only collaborator role in this ownership model. No invitations, visibility changes, public deployment or submission were made.
+
+See [submission checklist](SUBMISSION_CHECKLIST.md) for the final gates. Node 24 regression and release verification results are recorded in the finalization section of [Historical Local Mode](HISTORICAL_LOCAL_MODE.md).

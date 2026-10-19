@@ -15,9 +15,9 @@ The official terms list the required submission items below. They do **not** spe
 | Solution/application architecture | Mermaid system boundary and notes in [Architecture](ARCHITECTURE.md). | Prepared; update the diagram only if deployment/runtime topology changes. |
 | MongoDB data architecture and model | Time-series `telemetry`, bounded aggregation, regular assets/incidents/actions/receipts, TTL and idempotency are documented in [Architecture](ARCHITECTURE.md) and [schema design](MONGODB_SCHEMA_DESIGN.md). | Prepared; capture final Atlas schema/architecture evidence without credentials, addresses, or personal data. |
 | Datadog observability architecture | Metrics/log flow and dated dashboard/monitor records in [Datadog preparation](DATADOG_PREPARATION.md). | Current same-incident US1 metrics/logs and monitor ALERT → OK are verified; see [Phase D report](PHASE_D_VERIFICATION.md). |
-| Source repository link and installation guide | Private GitHub repository and root [README](../README.md), plus [local demo runbook](DEMO_RUNBOOK.md). | Prepared. Grant read access to judge accounts supplied by organizers before the deadline; maintain access through 22 November 2026. |
+| Source repository link and installation guide | Private GitHub repository and root [README](../README.md), plus [local demo runbook](DEMO_RUNBOOK.md). | Prepared. Resolve the personal-repository permission limitation with owner/BTC, then grant agreed access to official judge accounts before the deadline; maintain access through 22 November 2026. See [judge access plan](JUDGE_ACCESS_PLAN.md). |
 | README: environment, deployment/configuration, tests | Node 24, private env files, loopback services and test commands documented. | Prepared for local run. No public deployment is prepared or authorized; keep the demo loopback-only unless real operator authentication, authorization, CSRF and rate limits are implemented and reviewed. |
-| Running MVP or accessible demo | Runnable local app with four UI routes and synthetic controls. | Local run path prepared. Public demo is blocked by missing operator authentication and unauthenticated read APIs; ask organizers whether a live local/screen-shared demo meets their judging process if needed. |
+| Running MVP or accessible demo | Runnable local operational UI plus a fifth, development-only historical inspection route. | Local run path prepared. Public demo is blocked by missing operator authentication and unauthenticated read APIs; ask organizers whether a live local/screen-shared demo meets their judging process if needed. |
 | Demo video | Storyboard below; use only synthetic incident input and scrub identifying account/environment details. | To record and link in the official form. No official duration, resolution, codec or host specified in the checked terms. |
 | Final-round presentation slides | Suggested slide outline below. | To create/export according to any later organizer instructions. The checked terms do not specify slide count or file format. |
 | Demonstrated operational scenario | Detect → investigate → recover → resolve with MongoDB evidence and Datadog confirmation. | Verified for original incident demo-58a1983cae09, including persisted investigation/recovery/resolution and Datadog ALERT → OK. |
@@ -72,7 +72,7 @@ If a live system is unavailable, use clearly dated screenshots/recorded logs and
 
 ## UI screenshots captured locally
 
-The following screenshots were captured from the loopback UI on 19 October 2026 at desktop (1440 px) and mobile (390 px) viewports. They contain application UI only, no account credentials. They show the dataset's historical state at capture time; they are not evidence of a current Datadog monitor state.
+The following screenshots were captured from the loopback UI on 19 October 2026 at desktop (1440 px) and mobile (390 px) viewports. They contain application UI only, no account credentials. They show synthetic operational state at capture time; they are not evidence of a current Datadog monitor state.
 
 | Screenshot | Page/state |
 | --- | --- |
@@ -117,6 +117,21 @@ Current Phase D blockers and evidence are tracked in [Project Status](PROJECT_ST
 
 ## Current technical readiness
 
-The critical Phase D lifecycle is verified for the original incident, with **24 API unit tests, 11 API integration tests, 2 web BFF tests**, typecheck/build and lint passing on Node 24. [Phase D verification](PHASE_D_VERIFICATION.md) distinguishes source/monitor/observer timestamps and preserves the initial incomplete snapshot. The private GitHub synchronization is performed only after exact-file secret review and fast-forward checks.
+The critical Phase D lifecycle is verified for the original incident, with **29 API unit tests, 11 API integration tests, 4 web policy tests**, typecheck/build and lint passing on Node 24. [Phase D verification](PHASE_D_VERIFICATION.md) distinguishes source/monitor/observer timestamps and preserves the initial incomplete snapshot. The private GitHub synchronization is performed only after exact-file secret review and fast-forward checks.
 
 Remaining submission deliverables are the actual video recording/link, final presentation export/rehearsal, team/contact/form completion, and organizer-provided judge access. The storyboard and ten-slide outline above are ready to use; their suggested duration/count are not official requirements. ACN rights do not block the synthetic-only demonstration, but raw-source replay/redistribution remains prohibited until permission is documented. No public deployment or submission is authorized here.
+
+## Final historical/submission integration — 19 October 2026
+
+The [detailed storyboard](DEMO_VIDEO_STORYBOARD.md) and [presentation outline](PRESENTATION_OUTLINE.md) supersede the abbreviated recommendations above for the hybrid narrative. Historical values stay in private local analysis; the video/deck currently use aggregate findings and architecture only. Phase D remains the dated synthetic incident reference, with no reset or new cloud test claimed.
+
+| Owner action | Ready material | Remaining gate |
+| --- | --- | --- |
+| Dataset permission | [Matrix and private walkthrough](HISTORICAL_LOCAL_MODE.md), [unsent inquiry](DATASET_PERMISSION_INQUIRY.md) | Establish local-analysis basis; obtain separate cloud/public/redistribution scopes. No grant inferred from public download. |
+| Video | Vietnamese narration and shot list | Record/export, inspect every frame; mask/review Datadog account/host labels. Do not include ACN traces without permission. |
+| Final slides | Ten-slide Vietnamese outline | Build/export/rehearse actual deck; confirm official format, attribution and permitted screenshots. |
+| Judge access | [Access plan](JUDGE_ACCESS_PLAN.md) | Obtain official usernames; current personal private repo cannot grant a Read-only collaborator role. Owner/BTC must resolve access model and accessible-MVP method. |
+| Datadog duration | Prior trial banner observation only | Confirm exact expiry and coverage through judging/final with organizer; no paid activation. |
+| Official submission | README/runbook/architecture/evidence/checklist | Owner completes contact fields/form, checks links/access and submits by 31 October 23:59 ICT; freeze final SHA afterwards. |
+
+Private status is verified, not a license to redistribute restricted data. Original Datadog images are private evidence until sanitization; no historical trace screenshot is approved. No permission inquiry, judge invitation, recording upload, public deployment or competition submission has been performed here.

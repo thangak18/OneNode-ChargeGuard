@@ -1,0 +1,191 @@
+{
+  "verifiedOn": "2026-10-19",
+  "revision": "abb7cf15cc7108913e965d4375cc7270d532b65f",
+  "exportedEvseIdentifiers": 1,
+  "physicalDeviceCountIndependentlyVerified": false,
+  "rows": 20228,
+  "samples": [
+    {
+      "sample": "sample_01",
+      "hashMatches": true,
+      "bytes": 25679,
+      "rows": 2807,
+      "columns": [
+        "",
+        "Charging Current (A)",
+        "Actual Pilot (A)",
+        "Voltage (V)",
+        "Charging State",
+        "Energy Delivered (kWh)",
+        "Power (kW)"
+      ],
+      "duplicateTimes": 0,
+      "backwardTimes": 0,
+      "medianGapSeconds": 4.0,
+      "maxGapSeconds": 30.0,
+      "gapsOver10Seconds": 17,
+      "energyDecreases": 1,
+      "missing": {
+        "Charging Current (A)": 0,
+        "Actual Pilot (A)": 2807,
+        "Voltage (V)": 2807,
+        "Charging State": 0,
+        "Energy Delivered (kWh)": 0,
+        "Power (kW)": 2807
+      },
+      "sourceEvseAlias": "local-evse-01"
+    },
+    {
+      "sample": "sample_02",
+      "hashMatches": true,
+      "bytes": 25644,
+      "rows": 3493,
+      "columns": [
+        "",
+        "Charging Current (A)",
+        "Actual Pilot (A)",
+        "Voltage (V)",
+        "Charging State",
+        "Energy Delivered (kWh)",
+        "Power (kW)"
+      ],
+      "duplicateTimes": 0,
+      "backwardTimes": 0,
+      "medianGapSeconds": 4.0,
+      "maxGapSeconds": 27.0,
+      "gapsOver10Seconds": 27,
+      "energyDecreases": 1,
+      "missing": {
+        "Charging Current (A)": 0,
+        "Actual Pilot (A)": 3493,
+        "Voltage (V)": 3493,
+        "Charging State": 0,
+        "Energy Delivered (kWh)": 0,
+        "Power (kW)": 3493
+      },
+      "sourceEvseAlias": "local-evse-01"
+    },
+    {
+      "sample": "sample_03",
+      "hashMatches": true,
+      "bytes": 9716,
+      "rows": 1078,
+      "columns": [
+        "",
+        "Charging Current (A)",
+        "Actual Pilot (A)",
+        "Voltage (V)",
+        "Charging State",
+        "Energy Delivered (kWh)",
+        "Power (kW)"
+      ],
+      "duplicateTimes": 0,
+      "backwardTimes": 0,
+      "medianGapSeconds": 4.0,
+      "maxGapSeconds": 10.0,
+      "gapsOver10Seconds": 0,
+      "energyDecreases": 1,
+      "missing": {
+        "Charging Current (A)": 0,
+        "Actual Pilot (A)": 1078,
+        "Voltage (V)": 1078,
+        "Charging State": 0,
+        "Energy Delivered (kWh)": 0,
+        "Power (kW)": 1078
+      },
+      "sourceEvseAlias": "local-evse-01"
+    },
+    {
+      "sample": "sample_04",
+      "hashMatches": true,
+      "bytes": 26631,
+      "rows": 2782,
+      "columns": [
+        "",
+        "Charging Current (A)",
+        "Actual Pilot (A)",
+        "Voltage (V)",
+        "Charging State",
+        "Energy Delivered (kWh)",
+        "Power (kW)"
+      ],
+      "duplicateTimes": 0,
+      "backwardTimes": 0,
+      "medianGapSeconds": 4.0,
+      "maxGapSeconds": 31.0,
+      "gapsOver10Seconds": 21,
+      "energyDecreases": 1,
+      "missing": {
+        "Charging Current (A)": 0,
+        "Actual Pilot (A)": 2782,
+        "Voltage (V)": 2782,
+        "Charging State": 0,
+        "Energy Delivered (kWh)": 0,
+        "Power (kW)": 2782
+      },
+      "sourceEvseAlias": "local-evse-01"
+    },
+    {
+      "sample": "sample_05",
+      "hashMatches": true,
+      "bytes": 34684,
+      "rows": 10068,
+      "columns": [
+        "",
+        "Charging Current (A)",
+        "Actual Pilot (A)",
+        "Voltage (V)",
+        "Charging State",
+        "Energy Delivered (kWh)",
+        "Power (kW)"
+      ],
+      "duplicateTimes": 0,
+      "backwardTimes": 0,
+      "medianGapSeconds": 4.0,
+      "maxGapSeconds": 69.0,
+      "gapsOver10Seconds": 67,
+      "energyDecreases": 2,
+      "missing": {
+        "Charging Current (A)": 0,
+        "Actual Pilot (A)": 10068,
+        "Voltage (V)": 10068,
+        "Charging State": 0,
+        "Energy Delivered (kWh)": 0,
+        "Power (kW)": 10068
+      },
+      "sourceEvseAlias": "local-evse-01"
+    }
+  ],
+  "downsampledReadings": [
+    172,
+    215,
+    68,
+    172,
+    619
+  ],
+  "totalDownsampledReadings": 1246,
+  "cloudHistoricalRowsSent": 0,
+  "permissionsConfirmed": false,
+  "additionalMetadata": {
+    "revision": "abb7cf15cc7108913e965d4375cc7270d532b65f",
+    "metadataOnly": true,
+    "location": "caltech/LIGO_01",
+    "listedCsvFiles": 229,
+    "distinctExportedPrefixes": 8,
+    "listingAtApiCap": false,
+    "downloadedSessions": 0,
+    "reusePermissionConfirmed": false
+  },
+  "verificationScope": "This local integration task only; no historical cloud replay",
+  "checks": {
+    "nodeMajor": 24,
+    "apiUnitPassed": 29,
+    "apiIntegrationPassed": 11,
+    "webPolicyTestsPassed": 4,
+    "typecheckBuildLint": "PASS",
+    "productionHistoricalReadWithOptInFlag": 403,
+    "rawSourceEntriesInOutputTracing": 0,
+    "outputTracingManifestsChecked": 12,
+    "browserQa": "Boolean-only chart/provenance/two-clock/playback/session-switch/overflow checks passed; no trace screenshots captured"
+  }
+}

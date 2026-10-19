@@ -88,3 +88,7 @@ US1 monitor `334137944` confirmed the resumed ALERT → OK cycle; exact-run Logs
 | Current Datadog exact-run logs and fault monitor ALERT → OK | **PASS** |
 
 The source changes preserve the Copilot improvements and add guarded/idempotent lifecycle transitions, affected-charger-only recovery and sanitized incident log correlation. The existing BFF restrictions remain unchanged. The older pending gates above are retained as history; live authentication, Agent listener and current E2E evidence are now verified. Video recording, final slides, organizer form/contact details and judge access remain final release tasks. The repository stays private; no public deployment, paid upgrade or submission was performed.
+
+## Optional local historical mode — 19 October 2026
+
+The verified synthetic lifecycle remains unchanged. A separate, development-only `/history` viewer now uses the existing ACN adapter directly on checksum-verified ignored files, without historical uploads to Atlas/Datadog. Recheck: 20,228 source rows, 1,246 selected readings, five matching hashes and one exported filename prefix (physical identity unverified). Current local-mode/regression checks pass: 29 API unit, 11 API integration and 4 web policy tests, typecheck/build/lint. Production rejects historical data access even with the opt-in flag enabled; raw files are excluded from output tracing. Permission for cloud/public use remains unconfirmed and the replay CLI requires a private scope/content-specific attestation before execution. See [Historical Local Mode](HISTORICAL_LOCAL_MODE.md).

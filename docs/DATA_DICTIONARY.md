@@ -1,4 +1,4 @@
-# Data dictionary — updated 2026-10-18
+# Data dictionary — updated 2026-10-19
 
 **Legend:** `SOURCE-OBSERVED` = present in the five inspected static files; `SOURCE-DOC` = official API documentation only, **not locally inspected**; `DERIVED` = computed with declared assumptions; `SYNTHETIC` = future simulator output. Empty/missing means unknown, not zero. Types are labeled separately as official API documentation, observed static-file types, or proposed application types.
 
@@ -44,7 +44,7 @@ Pinned source: [static README](https://github.com/tongxin-li/ACN-Data-Static/blo
 
 No sample JSON was downloaded. Official API objects above remain documentation-derived. No temperature, fault or incident columns observed.
 
-## ChargeGuard planned telemetry fields — not implemented
+## Original proposed telemetry model — historical design, superseded by current field notes below
 
 | Target field | Proposed MongoDB type | Meaning / provenance |
 | --- | --- | --- |
@@ -69,3 +69,9 @@ No sample JSON was downloaded. Official API objects above remain documentation-d
 | `provenance.transformVersion` | string | Future script/version used to map source to telemetry. |
 
 **Observed spacing:** median 4 seconds in each sample, range 1–69 seconds; no uniform cadence guaranteed. **Types:** static observations above; API types remain documentation only. **Power note:** `P(kW) = V × I / 1000` is only valid for a suitable single-phase DC/AC case with appropriate power factor; AC three-phase needs a different formula. Source ACN current alone cannot establish delivered power accurately.
+
+## Local historical follow-up — 19 October 2026
+
+The historical preparation/proposal statements above are preserved as dated context. The existing ACN adapter now powers an isolated opt-in local read-only UI at `/history`. Current implementation and permission findings are recorded in [Historical Local Mode](HISTORICAL_LOCAL_MODE.md). All five hashes were rechecked: 20,228 rows parsed and 1,246 readings selected at ≥60-second spacing. One exported prefix remains, with no independently confirmed physical-device identity. No historical records were sent to Atlas/Datadog; raw files/mappings remain ignored. Eight candidate prefixes were found in 229 public LIGO filename metadata entries, without downloading additional sessions.
+
+Actual field provenance uses `provenance.fields` (MEASURED, SOURCE_REPORTED, DERIVED, SYNTHETIC) and `provenance.assumptions`, rather than the older proposed syntheticFields/derivedFields lists. Local points retain normalized original UTC `sourceEventAt` and explicitly mapped `replayAt`. Current is source-described measured; source state/energy are reported; application charging state is derived from current >0.5 A. No local voltage, power, temperature or physical fault channel is generated. The official registration restricts use to education/research; public traces, redistribution and third-party processing grants have not been established.

@@ -132,3 +132,11 @@ The final dataset subset, schema and usage permissions must be verified. Histori
 Never commit credentials, connection strings, customer/production data, personal information or secrets. Keep `.env` local; use placeholders and secret management in the build phase. Distinguish measured source data, derived fields and synthetic faults in code and demo.
 
 **Official rules:** https://mini-hackathon-sep-2026.mugvn.com/terms
+
+## Isolated local historical mode
+
+`/history` provides read-only inspection of the five existing ignored ACN sessions using the existing adapter. It keeps original UTC timestamps and separately labels a compressed demonstration clock. Current is historical/source-described measured; application charging state is DERIVED; SYNTHETIC incident controls remain separate. No voltage, power, temperature or physical fault is invented in this view.
+
+On Node 24, run `npm --prefix apps/api run historical:check` for aggregate-only verification and start the web dev server with `CHARGEGUARD_HISTORICAL_LOCAL=true`. Open `http://127.0.0.1:3000/history`. This opt-in loopback route never loads Atlas/Datadog clients and always denies production access. Raw files are not included in Git or deployment tracing.
+
+Verified local result: 20,228 source rows, 1,246 selected readings at ≥60-second source spacing, five matching hashes, one distinct exported EVSE prefix. Physical identity is not independently verified. Public visualization and Atlas/Datadog processing permission remain unconfirmed; the cloud replay CLI now requires an ignored, content-scoped permission record before `--execute`. Use the existing synthetic flow for public demonstration. See [local mode, quality audit and permission gates](docs/HISTORICAL_LOCAL_MODE.md).

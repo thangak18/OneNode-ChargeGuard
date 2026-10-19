@@ -1,6 +1,6 @@
-# ACN-Data research and feasibility — updated 2026-10-18
+# ACN-Data research and feasibility — updated 2026-10-19
 
-**Scope:** preparation only; no MVP implementation. The original 14 October review acquired no samples. This follow-up downloaded and inspected **5 complete static per-session CSV gzip files (20,228 rows)**. Official API JSON has **not** been downloaded: a registered token is required.
+**Historical baseline (18 October):** the original preparation audit below preceded the local viewer. The current isolated read-only implementation and permission gates are documented in [Historical Local Mode](HISTORICAL_LOCAL_MODE.md). The original 14 October review acquired no samples. This follow-up downloaded and inspected **5 complete static per-session CSV gzip files (20,228 rows)**. Official API JSON has **not** been downloaded: a registered token is required.
 
 ## Sources and access paths
 
@@ -60,3 +60,9 @@ Public pinned GitHub raw URLs returned real gzip CSV without authentication; no 
 The pinned static repository root has no standalone license file, and its README directs readers to official terms before redistribution. A specific license permitting demo reuse or redistribution is still **unverified**. Keep samples local; obtain permission/clarification before embedding raw traces in fixtures, public demos or third-party services. Cite Lee, Li and Low, *ACN-Data: Analysis and Applications of an Open EV Charging Dataset*, ACM e-Energy 2019. See [provenance](DATA_PROVENANCE.md).
 
 Unresolved: source-state semantics, energy lineage/resets, wider-site coverage, valid pilot samples, permission scope, and validation against authorized official session JSON. Findings describe only these five files.
+
+## Local historical follow-up — 19 October 2026
+
+The historical preparation/proposal statements above are preserved as dated context. The existing ACN adapter now powers an isolated opt-in local read-only UI at `/history`. Current implementation and permission findings are recorded in [Historical Local Mode](HISTORICAL_LOCAL_MODE.md). All five hashes were rechecked: 20,228 rows parsed and 1,246 readings selected at ≥60-second spacing. One exported prefix remains, with no independently confirmed physical-device identity. No historical records were sent to Atlas/Datadog; raw files/mappings remain ignored. Eight candidate prefixes were found in 229 public LIGO filename metadata entries, without downloading additional sessions.
+
+Actual field provenance uses `provenance.fields` (MEASURED, SOURCE_REPORTED, DERIVED, SYNTHETIC) and `provenance.assumptions`, rather than the older proposed syntheticFields/derivedFields lists. Local points retain normalized original UTC `sourceEventAt` and explicitly mapped `replayAt`. Current is source-described measured; source state/energy are reported; application charging state is derived from current >0.5 A. No local voltage, power, temperature or physical fault channel is generated. The official registration restricts use to education/research; public traces, redistribution and third-party processing grants have not been established.

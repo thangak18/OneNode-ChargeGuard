@@ -1,4 +1,4 @@
-# Dataset provenance, permitted use and privacy — updated 2026-10-18
+# Dataset provenance, permitted use and privacy — updated 2026-10-19
 
 ## Source inventory
 
@@ -38,3 +38,9 @@ Exclude source `userID`, `userInputs`, user-requested departure times and any di
 Dataset research notes, dictionary proposal, safety conditions and offline inspection script were drafted with AI assistance on 2026-10-14; no generated sensor measurement is represented as observed ACN data. Later application work must separately disclose AI assistance and differentiate development-window commits.
 
 AI-assisted follow-up on 2026-10-18: actual sample acquisition, offline quality inspection, inspector repair and documentation updates. No generated sensor values or core application logic added.
+
+## Local historical follow-up — 19 October 2026
+
+The historical preparation/proposal statements above are preserved as dated context. The existing ACN adapter now powers an isolated opt-in local read-only UI at `/history`. Current implementation and permission findings are recorded in [Historical Local Mode](HISTORICAL_LOCAL_MODE.md). All five hashes were rechecked: 20,228 rows parsed and 1,246 readings selected at ≥60-second spacing. One exported prefix remains, with no independently confirmed physical-device identity. No historical records were sent to Atlas/Datadog; raw files/mappings remain ignored. Eight candidate prefixes were found in 229 public LIGO filename metadata entries, without downloading additional sessions.
+
+Actual field provenance uses `provenance.fields` (MEASURED, SOURCE_REPORTED, DERIVED, SYNTHETIC) and `provenance.assumptions`, rather than the older proposed syntheticFields/derivedFields lists. Local points retain normalized original UTC `sourceEventAt` and explicitly mapped `replayAt`. Current is source-described measured; source state/energy are reported; application charging state is derived from current >0.5 A. No local voltage, power, temperature or physical fault channel is generated. The official registration restricts use to education/research; public traces, redistribution and third-party processing grants have not been established.

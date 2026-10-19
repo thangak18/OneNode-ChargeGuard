@@ -25,7 +25,6 @@ flowchart LR
     Browser["Operator browser<br/>Next.js UI"]
     BFF["Next.js BFF<br/>allowlisted routes<br/>same-origin local mutations"]
     API["NestJS API<br/>telemetry, incidents,<br/>demo scenarios"]
-    DB[("MongoDB Atlas<br/>time-series telemetry<br/>assets, incidents, receipts")]
     AppLogs["Sanitized JSON logs"]
     DogStatsD["DogStatsD UDP<br/>127.0.0.1:8125"]
     Agent["Datadog Agent"]
@@ -37,6 +36,7 @@ flowchart LR
     AppLogs --> Agent
     DogStatsD --> Agent
   end
+  DB[("MongoDB Atlas cloud<br/>time-series telemetry<br/>assets, incidents, receipts")]
   Agent -->|"HTTPS, configured account/site"| DD["Datadog US1<br/>dashboard, metrics, monitors, logs"]
   Source["Local ignored ACN CSV.gz<br/>reuse permission unresolved"] -->|"dry-run by default;<br/>no raw trace upload"| Replay["Bounded replay adapter"]
   Replay -->|"only if reuse is authorized"| API
@@ -107,3 +107,7 @@ Current Phase D test results and any live end-to-end evidence are maintained in 
 The existing four-screen UI and loopback BFF remain intact. Incident mutations now enforce OPEN → ACKNOWLEDGED → RESOLVING → RESOLVED. Demo recovery reserves a stable timestamp, ingests only the affected charger's SYNTHETIC reading, and marks successful recovery only after persistence. Resolution is rejected while that marker is absent. Unique regular-collection audit action IDs and stable telemetry fingerprints make ordinary HTTP retries idempotent; a failed recovery can be retried without admitting an unverified resolution. This is not a cross-collection transaction or tamper-proof audit ledger.
 
 Fault and accepted-reading logs carry validated demo/incident IDs plus bounded virtual station/charger IDs. IDs remain absent from metric tags. Datadog's shared one-minute event-count monitor is independent of the incident status: window expiry can return OK even while an incident is OPEN. The 19 October Phase D resumption verified both systems separately for the existing `demo-58a1983cae09` incident; [dated evidence and timing limitations](PHASE_D_VERIFICATION.md) are authoritative.
+
+## Isolated local historical path
+
+The optional `/history` client calls only the dedicated development-only `GET /api/historical` route. Its server-only bridge imports the existing pure ACN adapter and checksum-verified local reader, with no NestJS bootstrap, MongoDB client, API key or DogStatsD/logger dependency. Original `sourceEventAt` and mapped `replayAt` remain separate; a browser-only cursor animates the demonstration clock. Unknown routes, methods, aliases, remote origins and production reads are denied. Next traces exclude raw source files. The synthetic operational pages and Phase D evidence remain unchanged. See [permission and quality boundaries](HISTORICAL_LOCAL_MODE.md).

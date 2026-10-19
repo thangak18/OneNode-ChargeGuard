@@ -123,3 +123,9 @@ If a one-shot pulse ages out before you investigate, its automatic OK does not c
 ### Evidence and cleanup
 
 Read [Phase D verification](PHASE_D_VERIFICATION.md) before recording. The JSON retains the original partial capture and appends the completed result. Keep same-run screenshots, actual log/monitor timestamps and direct Atlas action/readback evidence. No database records were deleted for cleanup; telemetry/receipt TTL handles retention, and the incident/actions remain auditable. Stop only helper/server processes you started. Do not delete unrelated records or run a global reset during a resumed incident. Keep raw ACN files local/ignored; the verified demo contains only synthetic input.
+
+## Optional private historical inspection
+
+Use [Historical Local Mode](HISTORICAL_LOCAL_MODE.md) for the exact dry-run command and permission matrix. With Node 24 and the already-held ignored files, run `npm --prefix apps/api run historical:check`, then start the loopback web dev server with `CHARGEGUARD_HISTORICAL_LOCAL=true`. `/history` displays historical current/source state/energy and separately labels derived state and the mapped replay clock. Play/Pause/scrubbing never ingest data. No NestJS API, Atlas or Agent is required for this dedicated path.
+
+The five sessions share one exported prefix, shown as one local EVSE alias; they are not five physical chargers. Missing sensor channels stay unavailable, and energy resets are not corrected into invented totals. Keep the view private while public-display/reuse permissions remain unconfirmed. Do not put source traces in the submission video or replay them into cloud telemetry. The existing `--execute` replay path is blocked until an owner-reviewed ignored permission record covers both third-party sinks and every selected content hash. Use SYNTHETIC operational pages for the verified public-facing incident narrative.

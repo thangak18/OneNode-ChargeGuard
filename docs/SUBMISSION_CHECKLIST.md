@@ -1,7 +1,7 @@
 # MUGVN Hackathon 2026 — submission readiness
 
-**Deadline:** 23:59 ICT, 31 October 2026.  
-**Last checked against official pages:** 19 October 2026.  
+**Deadline:** 23:59 ICT, 31 October 2026.
+**Last checked against official pages:** 19 October 2026.
 **Official sources:** [Terms](https://mini-hackathon-sep-2026.mugvn.com/terms), [Hackathon overview and minimum technical requirements](https://mini-hackathon-sep-2026.mugvn.com/#requirements).
 
 The official terms list the required submission items below. They do **not** specify video duration, resolution, file format, slide count/file type, or an upload/hosting platform in the text reviewed. The suggested storyboard and deck below are team recommendations, not organizer requirements. Confirm any later submission-form instructions before recording/finalizing.

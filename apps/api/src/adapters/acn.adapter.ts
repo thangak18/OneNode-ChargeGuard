@@ -21,6 +21,8 @@ export interface ReplayOptions {
   /** Sample no more often than this many source seconds. */
   minIntervalSeconds: number;
   maxEvents: number;
+  /** Local audit only. Called after each source timestamp/current/energy row is validated. */
+  onSourceRow?: (sourceEventAt:string)=>void;
 }
 
 export interface HistoricalTelemetryAdapter {
@@ -52,7 +54,7 @@ function numberOrUndefined(value:string, field:string):number|undefined {
   return parsed;
 }
 
-/** Streams locally authorized CSV.gz files without bundling the dataset. */
+/** Streams local CSV.gz inputs. Processing permission is enforced separately at any cloud boundary. */
 export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
   readonly source='ACN_REPLAY' as const;
 
@@ -67,7 +69,14 @@ export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
     const sessionLabel=reference.sessionLabel??basename(localPath,'.csv.gz');
     const sessionId=`acn-${createHash('sha256').update(sessionLabel).digest('hex').slice(0,24)}`;
     await access(localPath).catch(()=>{throw new Error('Local ACN file is unavailable');});
-    const rows=createInterface({input:createReadStream(localPath).pipe(createGunzip()),crlfDelay:Infinity});
+    const source=createReadStream(localPath);
+    const decoded=createGunzip();
+    source.on('error',error=>decoded.destroy(error));
+    const rows=createInterface({input:source.pipe(decoded),crlfDelay:Infinity});
+    let streamFailed=false;
+    decoded.on('error',()=>{streamFailed=true;rows.close();});
+    let columnCount=0;
+    let sourceRows=0;
     let columns:Record<string,number>|undefined;
     let firstSourceTime:number|undefined;
     let previousSourceTime:number|undefined;
@@ -80,6 +89,8 @@ export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
         if(!columns) {
           const headers=csvFields(line.replace(/^\uFEFF/,''));
           const headerIndexes=Object.fromEntries(headers.map((header,i)=>[header.trim(),i]));
+          if(new Set(headers).size!==headers.length) throw new Error('Duplicate ACN CSV headers');
+          columnCount=headers.length;
           columns=headerIndexes;
           if(!['','Charging Current (A)','Charging State','Energy Delivered (kWh)'].every(key=>key in headerIndexes))
             throw new Error('Missing expected ACN CSV columns');
@@ -87,11 +98,12 @@ export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
         }
         if(!line.trim()) continue;
         const values=csvFields(line);
-        if(values.length<Object.keys(columns).length) throw new Error('Incomplete ACN CSV row');
+        if(values.length!==columnCount) throw new Error('Malformed ACN CSV row width');
+        if(++sourceRows>100000) throw new Error('ACN source row limit exceeded');
         const columnIndexes=columns;
         const read=(column:string)=>values[columnIndexes[column]]?.trim()??'';
         const sourceTime=Date.parse(read(''));
-        if(!Number.isFinite(sourceTime) || !/[zZ]|[+-]\d\d:\d\d$/.test(read('')))
+        if(!Number.isFinite(sourceTime) || !/(?:[zZ]|[+-]\d\d:\d\d)$/.test(read('')))
           throw new Error('ACN timestamp requires an explicit timezone');
         if(previousSourceTime!==undefined && sourceTime<=previousSourceTime)
           throw new Error('ACN timestamps must be strictly increasing');
@@ -101,9 +113,9 @@ export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
         if(energy!==undefined && previousEnergy!==undefined && energy<previousEnergy)
           resetSinceEmission=true;
         if(energy!==undefined) previousEnergy=energy;
-        if(lastEmittedTime!==undefined && sourceTime-lastEmittedTime<options.minIntervalSeconds*1000) continue;
-
         const current=numberOrUndefined(read('Charging Current (A)'),'current');
+        options.onSourceRow?.(new Date(sourceTime).toISOString());
+        if(lastEmittedTime!==undefined && sourceTime-lastEmittedTime<options.minIntervalSeconds*1000) continue;
         const sourceState=read('Charging State');
         const fields:TelemetryInput['provenance']['fields']={};
         const event:TelemetryInput={
@@ -127,7 +139,8 @@ export class LocalAcnCsvAdapter implements HistoricalTelemetryAdapter {
         yield event;
         if(++emitted>=options.maxEvents) break;
       }
-    } finally {rows.close();}
+      if(streamFailed) throw new Error('Unreadable ACN gzip stream');
+    } finally {rows.close();source.destroy();decoded.destroy();}
     if(!columns) throw new Error('Empty ACN CSV');
   }
 }

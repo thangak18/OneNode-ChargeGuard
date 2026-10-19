@@ -1,3 +1,4 @@
+import {requireAcnCloudPermission} from '../src/adapters/acn-permission';
 import {isAbsolute,resolve} from 'node:path';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {LocalAcnCsvAdapter, ReplayOptions} from '../src/adapters/acn.adapter';
@@ -47,6 +48,7 @@ async function main() {
   const adapter=new LocalAcnCsvAdapter();
   let apiKey:string|undefined;
   if(args.execute) {
+    await requireAcnCloudPermission(resolve(__dirname,'../../../data/raw/acn/cloud-permission.local.json'),args.files.map(file=>isAbsolute(file)?file:resolve(__dirname,'../../..',file)));
     loadLocalEnv();
     apiKey=process.env.INGEST_API_KEY;
     if(!apiKey || apiKey.length<24) throw new Error('Set INGEST_API_KEY locally before executing replay');

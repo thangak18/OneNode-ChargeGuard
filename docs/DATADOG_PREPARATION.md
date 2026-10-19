@@ -1,6 +1,6 @@
 # Datadog observability — integration and preparation history
 
-**Current status (19 October 2026):** Phase B (metrics, structured JSON logs, operations dashboard, and monitors) is fully verified in Datadog US1 and MongoDB Atlas; see the implementation and evidence sections below. The next section preserves the original preparation snapshot.
+**Status note (19 October 2026):** The implementation and verification records below include timestamped evidence from Datadog US1 and MongoDB Atlas. They describe the state observed during those runs; live Datadog account, monitor, and notification state was not rechecked during the latest local UI validation. The next section preserves the original preparation snapshot.
 
 ## Preparation snapshot — 14 October 2026
 
@@ -26,7 +26,7 @@ No Datadog library installation, key deployment, metric emission or monitor conf
 
 ## Implemented integration and verified US1 results — 19 October 2026
 
-This section supersedes the historical preparation-only status above. The NestJS Phase A backend exists and passes its automated tests. Phase B application instrumentation is now implemented; final dashboards and monitors remain planned. The authenticated US1 browser session displayed **14 days left in the existing trial**; no subscription, paid upgrade, extra host, APM activation or billing-setting change was made.
+This section supersedes the historical preparation-only status above. The NestJS Phase A backend and Phase B application instrumentation are implemented. The dashboard configuration, monitor definitions, and dated US1 verification evidence are recorded below. The authenticated US1 browser session displayed **14 days left in the existing trial** at the time; no subscription, paid upgrade, extra host, APM activation or billing-setting change was made.
 
 ### Application configuration
 

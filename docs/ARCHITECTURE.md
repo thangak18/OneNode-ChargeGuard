@@ -1,6 +1,6 @@
-# ChargeGuard architecture — Phase A implemented, later phases planned
+# ChargeGuard architecture — Phases A–C implemented locally
 
-## Implemented Phase A (18 October 2026)
+## Implemented telemetry and incident path
 
 ```text
 Local ACN-Data static CSV.gz (ignored)
@@ -11,9 +11,11 @@ Local ACN-Data static CSV.gz (ignored)
                     ├── ingestion_receipts (ordinary collection, unique _id)
                     └── telemetry (MongoDB time-series, BSON ts, meta stationId/chargerId)
                            └── GET history, latest, averages, states, activity, station summary
+                                  └── Next.js operations dashboard (loopback)
+                                       └── allowlisted BFF routes; local-only mutations
 ```
 
-Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js driver). A singleton MongoDB connection is established and pinged at startup, closed on shutdown, and checked by `/api/v1/health/ready`. Swagger lives at `/docs`; all API error responses are sanitized. `MONGODB_DATABASE` must equal `chargeguard`, and the ingestion API requires `INGEST_API_KEY` outside test environments.
+Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js driver) and `apps/web` (Next.js App Router). The backend includes charger and station reads, incident lifecycle actions, and synthetic demo controls. The frontend provides overview, charger detail, incident management, and demo-control screens; it polls the API through a same-origin BFF. A singleton MongoDB connection is established and pinged at startup, closed on shutdown, and checked by `/api/v1/health/ready`. Swagger lives at `/docs`; all API error responses are sanitized. `MONGODB_DATABASE` must equal `chargeguard`, and the ingestion API requires `INGEST_API_KEY` outside test environments.
 
 `db:init` is repeatable and initializes `stations`, `chargers`, `incidents`, `incident_actions`, `ingestion_receipts`, and time-series `telemetry` (time field `ts`, meta field `meta`, granularity `seconds`, TTL 604800s). Regular collections provide unique `_id` receipt enforcement and operational indexes; telemetry uses non-unique compound indexes on `meta.chargerId`/`ts` and `meta.stationId`/`ts`. The five virtual charger records are seeded via upsert, retaining existing data. The dedicated `chargeguard_dev` database account has the scoped `chargeguard_rw` role.
 
@@ -23,14 +25,15 @@ Code lives under `apps/api` (NestJS 11 / TypeScript / official MongoDB Node.js d
 
 **Data integrity:** `sourceEventAt` retains historical timestamps while replay `ts` reflects demonstration time; `provenance.fields` explicitly separates MEASURED, SOURCE_REPORTED, DERIVED and SYNTHETIC. Missing sensor channels stay missing. The current threshold used to derive app charging state is a demonstration assumption. Detected energy counter decreases are flagged. Session IDs are pseudonymous; the raw file path and source identifiers are never sent to Atlas by the adapter.
 
-**Verified:** 9 unit tests, 8 integration tests; MongoDB Atlas creation, initialization, virtual seeding and authenticated synthetic HTTP smoke checks passed on 18 October 2026. See [preparation report](PREPARATION_REPORT.md) for exact evidence and remaining rights/Datadog limitations. The five static source files were used only for a local dry-run.
+**Data and access boundaries:** the five static source files were used only for local inspection/dry-run and remain ignored. The current local API readiness endpoint returned `ready` with `database: connected`; earlier independent TLS failures remain documented in [the preparation report](PREPARATION_REPORT.md), and this runtime result is not a new permission audit. The API and web development servers bind to loopback. The BFF restricts mutations to an allowlist, same-origin loopback development requests, and bounded validated JSON; production mutations are rejected. This boundary is not operator authentication, so remote deployment remains blocked.
 
-## Planned Phase B/C services
-- **Telemetry Replay / Fault Simulator:** replays historical charger readings with explicit event-time versus ingestion-time; injects labeled synthetic sensor/fault events.
-- **NestJS API:** Phase A handles telemetry and queries; later work adds incident actions and Datadog logs/metrics.
-- **MongoDB Atlas:** time-series telemetry plus ordinary collections for stations, chargers, incidents, incident_actions. Use Aggregation Pipeline for rolling power and station summaries.
-- **Next.js UI:** station overview, connector detail, incident timeline; refresh via WebSocket or SSE if practical.
-- **Datadog:** application metrics/JSON logs implemented; final monitoring dashboard and metric/log monitor remain planned; APM is a future stretch.
+## Implemented Phase B/C components
+- **Replay and synthetic scenarios:** bounded ACN replay remains dry-run by default. Demo controls generate labeled synthetic fault/recovery telemetry and incident actions; they do not actuate physical chargers.
+- **NestJS API:** telemetry ingestion and bounded aggregation, charger/station reads, incident listing/detail/acknowledgement/resolution, and demo trigger/recover/reset routes.
+- **MongoDB Atlas:** time-series telemetry and regular collections for stations, chargers, incidents, incident actions, and ingestion receipts.
+- **Next.js UI:** operations overview, charger detail with measurement provenance and stale-data indication, incident queue/timeline, and demo control center.
+- **BFF:** explicit path/method allowlist, same-origin loopback policy for development mutations, body/schema limits, server-side API key, sanitized proxy errors, and production mutation denial. It does not authenticate human operators.
+- **Datadog:** bounded DogStatsD metrics and sanitized JSON logs are implemented. Prior US1 observations are recorded in [Datadog preparation](DATADOG_PREPARATION.md), but live account, monitor, and notification state were not rechecked during the current validation. APM remains out of scope.
 
 ## Initial conceptual domain model
 ```text
@@ -61,4 +64,4 @@ The global ObservabilityModule provides a single best-effort UDP DogStatsD socke
 
 Datagrams go only to the existing Agent on 127.0.0.1:8125; the app never handles Datadog credentials. The Agent forwards the standard-host JSON log file `/usr/local/var/log/chargeguard/api.jsonl` to US1 as service chargeguard-api/source nodejs. Field allowlisting omits raw payloads, headers, URLs, errors and arbitrary IDs. Static demo assets alone receive ID tags; other assets collapse into a bounded aggregate category. This is demonstration instrumentation, with UDP loss and stale/out-of-order gauge limitations.
 
-14 unit and 9 integration tests pass. Actual application metrics and logs were independently observed in US1 using NestJS HTTP requests and a disposable MongoDB fixture. Atlas DNS/TCP passed on 19 Oct but remote TLS alerts blocked the new Atlas smoke before authentication; do not conflate this local-database verification with a currently successful Atlas path. See [Datadog evidence](DATADOG_PREPARATION.md). Final dashboards/monitors and frontend remain unimplemented.
+Current validation: **21 API unit tests and 10 API integration tests pass**; API typecheck/build and web lint/typecheck/two BFF policy tests/production build pass. The four web routes returned HTTP 200 at 1440, 1024, 768, and 390 px with no horizontal document overflow. API readiness returned `ready`; earlier Atlas TLS failures are historical and preserved in [the preparation report](PREPARATION_REPORT.md). Production-build mutation probes returned 403, and development BFF probes returned 403 for missing Origin, 400 for invalid input, and 404 for unsupported routes. The web and API runbooks are in [the local demo runbook](DEMO_RUNBOOK.md). The current host uses Node 25.2.1, outside the API's declared `>=22.12 <25` engine range; repeat runtime validation with Node 24 before release.

@@ -3,7 +3,7 @@
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> **Status (19 October 2026): Phase A (NestJS + MongoDB time-series) & Phase B (Datadog metrics, JSON logs, operations dashboard, and monitors) are IMPLEMENTED and VERIFIED.** Atlas TLS connectivity is verified (`PASS_CERT_VERIFIED` on all 3 nodes). End-to-end incident lifecycle (DETECT → INVESTIGATE → RESOLVE) verified in Atlas and Datadog US1. Phase C (Next.js Operations Dashboard) in progress. Judged development runs **17–31 October 2026**.
+> **Status (19 October 2026):** Phase A API, Phase B metrics/logging, and the Phase C Next.js operations dashboard are implemented. The local API readiness endpoint currently reports its MongoDB connection as ready; this is an application-level check, not a fresh independent Atlas audit. Datadog account and monitor state were not re-verified in this run. The web BFF allows mutations only from its loopback development UI and rejects them in production; it does not provide operator authentication. Do not publicly deploy. Dataset redistribution rights remain unresolved.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.
@@ -27,13 +27,13 @@ ChargeGuard is a monitoring and incident-response prototype for EV charging stat
 **Non-goals for MVP:** real charger control, production integrations, a trained failure-prediction model, deployment to safety-critical equipment.
 
 ## Architecture
-`Local ACN CSV.gz → bounded replay adapter → authenticated NestJS API → MongoDB Atlas time-series + ingestion receipts → aggregation endpoints → future Next.js dashboard`
+`Local ACN CSV.gz → bounded replay adapter → NestJS API → MongoDB Atlas time-series + incidents → loopback Next.js dashboard/BFF`
 
-Phase B now includes local DogStatsD metrics and structured JSON logs forwarded by the macOS Agent; final dashboards and monitors remain planned. Only five virtual connectors have been seeded; no physical charger data stream is connected.
+The API includes charger views, incident lifecycle actions, and synthetic demo controls. Phase B instrumentation sends bounded DogStatsD metrics and sanitized JSON logs to the local Agent; prior US1 evidence is documented, but current Datadog monitor state is not claimed here. Only five virtual connectors are modeled; no physical charger data stream is connected.
 
-See [Architecture](docs/ARCHITECTURE.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
+See [Architecture](docs/ARCHITECTURE.md), [Project Status](docs/PROJECT_STATUS.md), [Local Demo Runbook](docs/DEMO_RUNBOOK.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
 
-**Project evidence:** [Preparation and verified Atlas report](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). Five static sessions (20,228 source rows) were inspected locally; those raw files remain Git-ignored. Authenticated Atlas checks passed on 18 October; on 19 October DNS/TCP still pass but TLS fails before authentication. Historical connectivity failures are retained in the preparation report with timestamps, not current blockers.
+**Project evidence:** [Preparation and Atlas history](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). Five static sessions (20,228 source rows) were inspected locally; those raw files remain Git-ignored. The preparation report preserves earlier TLS failures; the current local API readiness result supersedes them only for the running application's connection check.
 
 ## Phase A local setup
 
@@ -55,7 +55,7 @@ npm --prefix apps/api run verify:atlas  # read-only checks of ping, role, schema
 npm --prefix apps/api run dev
 ```
 
-API base: `http://127.0.0.1:3001/api/v1`. Swagger: `http://127.0.0.1:3001/docs` (OpenAPI JSON: `/docs-json`). The ingestion key is sent as the `x-api-key` request header; do not put it in query strings or documentation. Read endpoints currently have no authentication: keep the development server on its default loopback binding and add access controls before deployment.
+API base: `http://127.0.0.1:3001/api/v1`. Swagger: `http://127.0.0.1:3001/docs` (OpenAPI JSON: `/docs-json`). The ingestion key is sent as the `x-api-key` request header; do not put it in query strings or documentation. Read endpoints currently have no authentication: the API binds to loopback for local development. The browser BFF is also loopback-only for mutations and blocks all production mutations; this is not operator authentication. Add real authentication and authorization before any remote deployment.
 
 ### Implemented endpoints
 
@@ -70,6 +70,11 @@ API base: `http://127.0.0.1:3001/api/v1`. Swagger: `http://127.0.0.1:3001/docs` 
 | GET | `/analytics/states` | Event-count distribution of derived charging states |
 | GET | `/analytics/activity?windowMinutes=15` | Recent telemetry presence, not physical device health |
 | GET | `/analytics/stations/:stationId/summary` | Virtual station/connector operational summary |
+| GET | `/chargers`, `/chargers/:id` | Virtual charger list and detail |
+| GET | `/stations` | Virtual station metadata |
+| GET | `/incidents`, `/incidents/:id` | Incident queue and investigation evidence |
+| POST | `/incidents/:id/acknowledge`, `/incidents/:id/resolve` | Append lifecycle actions and update incident state |
+| POST | `/demo/trigger-fault`, `/demo/recover`, `/demo/reset` | Synthetic demo controls; these write telemetry and incident data |
 
 Timestamp queries accept timezone-qualified ISO 8601 strings, with a maximum 31-day query span. Default lookback is 24 hours. Query limits and index-backed time ranges help protect the Atlas Free tier. API responses label source fields through `provenance` and use sanitized error messages.
 
@@ -93,9 +98,9 @@ Application instrumentation sends `chargeguard.*` metrics to the existing local 
 
 Enable `DD_METRICS_ENABLED=true` in private `.env`; set `DD_ENV=dev` and `CHARGEGUARD_LOG_FILE=/usr/local/var/log/chargeguard/api.jsonl`. The application needs no Datadog API key. Install the narrow macOS Agent log configuration with `sudo /bin/sh scripts/observability/install-macos-agent-logs.sh`, then start the API normally. Sanitized JSON records go to stdout and the host log file; logs on the removable `/Volumes/Thang` checkout were blocked by macOS privacy controls.
 
-**Verified on 19 October:** all metric families (including Agent-generated latency histogram names) and 23 application JSON logs appeared in US1. The HTTP smoke used a disposable local MongoDB database with explicitly synthetic readings because the current Atlas path fails verified TLS on all three nodes before authentication. Repeat independently with `npm --prefix apps/api run smoke:observability -- --execute --local-db`; once Atlas TLS works, omit `--local-db` to retain three synthetic test readings in Atlas. No raw ACN source data is sent by these tests.
+**Historical verification on 19 October:** all metric families (including Agent-generated latency histogram names) and 23 application JSON logs appeared in US1. That HTTP smoke used a disposable local MongoDB database with explicitly synthetic readings after the Atlas TLS attempt in that run failed before authentication. A later local API readiness check returned `ready`; see [current project status](docs/PROJECT_STATUS.md) and the timestamped [preparation report](docs/PREPARATION_REPORT.md). To repeat the isolated smoke, use `npm --prefix apps/api run smoke:observability -- --execute --local-db`; omit `--local-db` only when intentionally retaining three synthetic test readings in Atlas. No raw ACN source data is sent by these tests.
 
-See [Datadog configuration, metric meanings, evidence and limitations](docs/DATADOG_PREPARATION.md). Metrics/status are observations from accepted telemetry, not physical availability or guaranteed event accounting. Dashboards, monitors and paid-service activation are outside this implementation.
+See [Datadog configuration, metric meanings, evidence and limitations](docs/DATADOG_PREPARATION.md). Metrics/status are observations from accepted telemetry, not physical availability or guaranteed event accounting. Dashboard configuration, monitor definitions, and historical US1 evidence are documented; recheck live monitor/account status before claiming a current alert. No paid-service activation was made.
 
 ## Dataset sources (raw sessions held locally, not uploaded)
 - [ACN-Data (Caltech)](https://ev.caltech.edu/dataset)

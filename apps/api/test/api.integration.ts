@@ -27,9 +27,13 @@ before(async()=>{
   client=new MongoClient(mongod.getUri());await client.connect();db=client.db('chargeguard');
   await initializeCollections(db);
   await db.collection<{_id:string;name:string}>('stations').insertOne({_id:stationId,name:'Unit test station'});
+  await db.collection<{_id:string;name:string}>('stations').insertOne({_id:'demo-station-01',name:'Demo Station 01'});
   await db.collection<{_id:string;stationId:string;connectorId:string;status:string}>('chargers').insertOne({_id:chargerId,stationId,connectorId:'1',status:'AVAILABLE'});
+  for(let i=1;i<=5;i++) {
+    await db.collection<{_id:string;stationId:string;connectorId:string;status:string}>('chargers').insertOne({_id:`demo-charger-${String(i).padStart(2,'0')}`,stationId:'demo-station-01',connectorId:String(i),status:'AVAILABLE'});
+  }
   const fakeDb={db:()=>db,collection:(name:string)=>{if(failAssetLookup && name==='stations') throw new Error('Sensitive database implementation details');return db.collection(name);},ping:async()=>ready};
-  const module=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(ObservabilityService).useValue({record:()=>{},ingestionRequest:(status:number,duration:number,batch:boolean)=>observedRequests.push({status,duration,batch}),accepted:(_input:unknown,duplicate:boolean)=>observedEvents.push({duplicate})}).overrideProvider(DatabaseService).useValue(fakeDb).overrideProvider(APP_CONFIG).useValue({mongoUri:'ignored',mongoDatabase:'chargeguard',nodeEnv:'test',port:3001,ingestApiKey:'local-test-ingest-key-abcdefghijkl'}).compile();
+  const module=await Test.createTestingModule({imports:[AppModule]}).overrideProvider(ObservabilityService).useValue({record:()=>{},flush:async()=>{},ingestionRequest:(status:number,duration:number,batch:boolean)=>observedRequests.push({status,duration,batch}),accepted:(_input:unknown,duplicate:boolean)=>observedEvents.push({duplicate})}).overrideProvider(DatabaseService).useValue(fakeDb).overrideProvider(APP_CONFIG).useValue({mongoUri:'ignored',mongoDatabase:'chargeguard',nodeEnv:'test',port:3001,ingestApiKey:'local-test-ingest-key-abcdefghijkl'}).compile();
   app=configureApplication(module.createNestApplication());await app.init();
 });
 after(async()=>{if(app)await app.close();if(client)await client.close();if(mongod)await mongod.stop();});
@@ -108,6 +112,63 @@ test('history, latest, averages, state distribution and station summary return c
   await request(s).get(`/api/v1/telemetry/history?chargerId=${chargerId}`).expect(400);
   await request(s).get(`/api/v1/analytics/latest?from=2025-01-01T00:00:00Z&to=2026-01-01T00:00:00Z`).expect(400);
 });
+
+test('Phase C endpoints: chargers, stations, incidents, and demo controls over HTTP', async () => {
+  const s = app.getHttpServer();
+  const key = 'local-test-ingest-key-abcdefghijkl';
+  // Stations & Chargers (reads are public)
+  const stations = await request(s).get('/api/v1/stations').expect(200);
+  assert.ok(Array.isArray(stations.body));
+  assert.equal(stations.body[0]._id, stationId);
+
+  const chargers = await request(s).get('/api/v1/chargers').expect(200);
+  assert.ok(Array.isArray(chargers.body));
+  assert.ok(chargers.body.some((c: { _id: string }) => c._id === chargerId));
+
+  const oneCharger = await request(s).get(`/api/v1/chargers/${chargerId}`).expect(200);
+  assert.equal(oneCharger.body._id, chargerId);
+
+  // Demo/incident writes require the ingest API key
+  await request(s).post('/api/v1/demo/trigger-fault').send({ chargerIndex: 1, scenario: 'SIM_OVERHEAT' }).expect(401);
+  await request(s).post('/api/v1/incidents/nonexistent/acknowledge').set('x-api-key', key).send({ actor: 'x' }).expect(404);
+
+  const fault = await request(s).post('/api/v1/demo/trigger-fault').set('x-api-key', key).send({ chargerIndex: 1, scenario: 'SIM_OVERHEAT' }).expect(201);
+  assert.equal(fault.body.status, 'OPEN');
+  assert.equal(fault.body.synthetic, true);
+  const incId = fault.body.incidentId;
+
+  // Idempotency: a second trigger while one is active returns the same incident
+  const dup = await request(s).post('/api/v1/demo/trigger-fault').set('x-api-key', key).send({ chargerIndex: 2, scenario: 'SIM_OVERHEAT' }).expect(201);
+  assert.equal(dup.body.incidentId, incId);
+  assert.equal(dup.body.duplicate, true);
+
+  // List incidents
+  const incidents = await request(s).get('/api/v1/incidents').expect(200);
+  assert.ok(incidents.body.some((i: { _id: string }) => i._id === incId));
+
+  // Acknowledge incident
+  const ack = await request(s).post(`/api/v1/incidents/${incId}/acknowledge`).set('x-api-key', key).send({ actor: 'test-operator' }).expect(201);
+  assert.equal(ack.body.status, 'ACKNOWLEDGED');
+
+  // Recover demo
+  const rec = await request(s).post('/api/v1/demo/recover').set('x-api-key', key).send({ incidentId: incId }).expect(201);
+  assert.equal(rec.body.status, 'RESOLVING');
+
+  // Resolve incident
+  const res = await request(s).post(`/api/v1/incidents/${incId}/resolve`).set('x-api-key', key).send({ actor: 'test-operator' }).expect(201);
+  assert.equal(res.body.status, 'RESOLVED');
+
+  // Get incident detail with actions
+  const detail = await request(s).get(`/api/v1/incidents/${incId}`).expect(200);
+  assert.equal(detail.body._id, incId);
+  assert.ok(detail.body.actions.length >= 3);
+
+  // Reset baseline requires the key too
+  await request(s).post('/api/v1/demo/reset').expect(401);
+  const reset = await request(s).post('/api/v1/demo/reset').set('x-api-key', key).expect(201);
+  assert.equal(reset.body.success, true);
+});
+
 test('database failures return sanitized service errors',async()=>{
   failAssetLookup=true;
   try {

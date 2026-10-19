@@ -3,7 +3,7 @@
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> **Status (19 October 2026): Phase A backend implemented; DogStatsD metrics and JSON log forwarding verified in Datadog US1 using synthetic HTTP tests with local MongoDB.** Atlas TLS connectivity currently needs rechecking; the successful Atlas tests on 18 October are historical. Final Datadog dashboards/monitors, Next.js and the complete incident demonstration remain future work. Judged development runs **17–31 October 2026**.
+> **Status (19 October 2026): Phase A (NestJS + MongoDB time-series) & Phase B (Datadog metrics, JSON logs, operations dashboard, and monitors) are IMPLEMENTED and VERIFIED.** Atlas TLS connectivity is verified (`PASS_CERT_VERIFIED` on all 3 nodes). End-to-end incident lifecycle (DETECT → INVESTIGATE → RESOLVE) verified in Atlas and Datadog US1. Phase C (Next.js Operations Dashboard) in progress. Judged development runs **17–31 October 2026**.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.

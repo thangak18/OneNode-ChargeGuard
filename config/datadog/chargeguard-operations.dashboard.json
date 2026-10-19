@@ -1,0 +1,221 @@
+{
+  "title": "ChargeGuard Operations Dashboard",
+  "description": "OneNode MUGVN Hackathon 2026 \u2014 synthetic/replay demonstration, not physical charger monitoring. Queries match the implemented DogStatsD metrics. No external recipients.",
+  "layout_type": "ordered",
+  "widgets": [
+    {
+      "definition": {
+        "type": "note",
+        "content": "# ChargeGuard Operations Dashboard\nVirtual chargers; synthetic faults and historical replay are demonstration inputs. No physical safety thresholds. Source tags distinguish synthetic / acn_replay / derived. Blank state means no observed telemetry, never assume all five chargers are online. Status is last processed observation; heartbeat monitoring is not implemented.",
+        "background_color": "white",
+        "font_size": "14",
+        "text_align": "left",
+        "show_tick": false
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Ingestion requests: success / failure (counts)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "success",
+                "query": "sum:chargeguard.ingestion.success{service:chargeguard-api,env:dev}.as_count()"
+              },
+              {
+                "data_source": "metrics",
+                "name": "failure",
+                "query": "sum:chargeguard.ingestion.failure{service:chargeguard-api,env:dev}.as_count()"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Ingestion failure rate (%) \u2014 undefined without traffic",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "success",
+                "query": "sum:chargeguard.ingestion.success{service:chargeguard-api,env:dev}.as_count()"
+              },
+              {
+                "data_source": "metrics",
+                "name": "failure",
+                "query": "sum:chargeguard.ingestion.failure{service:chargeguard-api,env:dev}.as_count()"
+              }
+            ],
+            "formulas": [
+              {
+                "formula": "100 * failure / (success + failure)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Ingestion processing latency (ms, Agent summaries)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "average",
+                "query": "avg:chargeguard.ingestion.processing_ms.avg{service:chargeguard-api,env:dev}"
+              },
+              {
+                "data_source": "metrics",
+                "name": "p95",
+                "query": "max:chargeguard.ingestion.processing_ms.95percentile{service:chargeguard-api,env:dev}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Charging current (A) by virtual charger / provenance",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "current",
+                "query": "avg:chargeguard.charger.current_a{service:chargeguard-api,env:dev} by {charger_id,source,origin}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Virtual charger 01: observed operational state (one-hot)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "status",
+                "query": "max:chargeguard.charger.operational_status{service:chargeguard-api,env:dev,charger_id:demo-charger-01} by {status,source}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Virtual charger 02: observed operational state (one-hot)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "status",
+                "query": "max:chargeguard.charger.operational_status{service:chargeguard-api,env:dev,charger_id:demo-charger-02} by {status,source}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Virtual charger 03: observed operational state (one-hot)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "status",
+                "query": "max:chargeguard.charger.operational_status{service:chargeguard-api,env:dev,charger_id:demo-charger-03} by {status,source}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Virtual charger 04: observed operational state (one-hot)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "status",
+                "query": "max:chargeguard.charger.operational_status{service:chargeguard-api,env:dev,charger_id:demo-charger-04} by {status,source}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Virtual charger 05: observed operational state (one-hot)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "status",
+                "query": "max:chargeguard.charger.operational_status{service:chargeguard-api,env:dev,charger_id:demo-charger-05} by {status,source}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "definition": {
+        "type": "timeseries",
+        "title": "Explicit synthetic fault events (counts)",
+        "requests": [
+          {
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "data_source": "metrics",
+                "name": "faults",
+                "query": "sum:chargeguard.fault.simulated{service:chargeguard-api,env:dev} by {charger_id}.as_count()"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "notify_list": [],
+  "tags": [
+    "team:onenode"
+  ]
+}

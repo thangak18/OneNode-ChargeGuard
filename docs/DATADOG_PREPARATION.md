@@ -1,6 +1,6 @@
 # Datadog observability — integration and preparation history
 
-**Current status (19 October 2026):** application metrics and structured JSON logs verified in US1; see the implementation and evidence section below. The next section preserves the original preparation snapshot.
+**Current status (19 October 2026):** Phase B (metrics, structured JSON logs, operations dashboard, and monitors) is fully verified in Datadog US1 and MongoDB Atlas; see the implementation and evidence sections below. The next section preserves the original preparation snapshot.
 
 ## Preparation snapshot — 14 October 2026
 
@@ -99,4 +99,64 @@ npm --prefix apps/api run smoke:observability -- --execute
 
 The Atlas variant retains three labeled synthetic samples under the telemetry TTL; run only when that write is intended. The local variant uses a test database only and never changes Atlas data. Socket-send success alone is not proof of Datadog intake: inspect the real [US1 Metrics Summary](https://app.datadoghq.com/metric/summary) and [US1 Log Explorer](https://app.datadoghq.com/logs), filtering for service `chargeguard-api` and env `dev` in the current time range.
 
-**Remaining blocker:** restore the existing Atlas transport path while retaining certificate validation. Privately check that the current egress address is still the already authorized exact Atlas IP, cluster readiness and hotspot/VPN routing; retry TLS on the approved network. The observed remote alert alone does not establish that IP allowlisting is the root cause. No automatic password reset, permission change or network-rule expansion is justified. Once transport works, rerun the Atlas smoke command. Final dashboards/monitors are still intentionally uncreated.
+### Phase B.2 Operations Dashboard & Monitors Verification (19 Oct, 09:24–09:45 ICT)
+
+Phase B.2 dashboard and monitor verification is **COMPLETE**.
+
+#### 1. Operations Dashboard
+- **Artifact:** `config/datadog/chargeguard-operations.dashboard.json`
+- **Widgets (11 total):**
+  1. Informational Note: Virtual chargers; synthetic faults/replay; no physical safety thresholds.
+  2. Ingestion requests: success / failure (counts).
+  3. Ingestion failure rate (%) — formula: `100 * failure / (success + failure)`.
+  4. Ingestion processing latency (ms, Agent summaries: avg, 95percentile).
+  5. Charging current (A) by virtual charger / provenance.
+  6–10. Virtual chargers 01 through 05: observed operational state (one-hot gauge series).
+  11. Explicit synthetic fault events (counts).
+- **Design hygiene:** Uses only implemented metrics under `chargeguard.*`, tags `service:chargeguard-api`, `env:dev`, bounded charger IDs (`demo-charger-01` … `05`), and empty notification list (`notify_list: []`).
+- **Evidence Screenshot:** `docs/evidence/operations-dashboard.png`
+
+#### 2. Datadog Monitors in US1
+Two demo monitors were created and verified in Datadog US1:
+1. **Ingestion Errors Monitor** (`config/datadog/monitors/ingestion-errors.json`):
+   - **Monitor ID in US1:** `334137536`
+   - **Query:** `sum(last_1m):sum:chargeguard.ingestion.failure{service:chargeguard-api,env:dev}.as_count() >= 1`
+   - **Threshold:** Critical >= 1 count in 1-minute evaluation window.
+   - **No-data policy:** Default (no spurious alerts on missing data; heartbeat monitor intentionally omitted).
+2. **Synthetic Fault Events Monitor** (`config/datadog/monitors/synthetic-faults.json`):
+   - **Monitor ID in US1:** `334137944`
+   - **Query:** `sum(last_1m):sum:chargeguard.fault.simulated{service:chargeguard-api,env:dev}.as_count() >= 1`
+   - **Threshold:** Critical >= 1 count in 1-minute evaluation window.
+
+#### 3. End-to-End Incident Verification Run (`c8d1586804b5`)
+An authenticated end-to-end incident test was executed using `npm --prefix apps/api run demo:incident -- --execute` connected to the actual MongoDB Atlas cluster:
+- **Incident Run ID:** `c8d1586804b5`
+- **Baseline Start:** `2026-10-19T02:29:36.847Z` (09:29:36 ICT) — 5 virtual chargers emitting normal charging telemetry (8.25 A, state CHARGING). Initial monitor states verified `OK` (`334137536` & `334137944` at 02:29:56.419Z).
+- **Fault Injected:** `2026-10-19T02:29:56.472Z` (09:29:56 ICT) — charger `demo-charger-01` injected with synthetic fault (`currentA = 0`, `chargingState = 'FAULT'`, `faultCode = 'SIMULATED_DEMO_FAULT'`) plus controlled validation failure (`currentA = -1`).
+- **Alert Triggered (DETECT):** Observed at `2026-10-19T02:32:21.943Z` (09:32:21 ICT). Both monitors `334137536` and `334137944` transitioned to **ALERT**.
+  - Measured detection latency: ~145 seconds (accounting for 1m rolling evaluation window + UI evaluation cadence).
+  - Evidence Screenshots: `docs/evidence/ingestion-alert.png`, `docs/evidence/synthetic-fault-alert.png`.
+- **Operator Response (INVESTIGATE):**
+  - `2026-10-19T02:32:22.024Z`: Simulated operator investigated Atlas telemetry (`demo-charger-01`, state FAULT, current 0 A).
+  - Structured logs recorded `demo.action` event with `demo_id=c8d1586804b5`, `action=investigate`.
+- **Recovery Requested:** `2026-10-19T02:32:39.318Z` — Fault injection halted, valid charging telemetry restored (8.25 A, CHARGING). Incident marked `RESOLVING`.
+- **Alert Cleared (RESOLVE):** Observed at `2026-10-19T02:35:56.974Z` (09:35:56 ICT). Both monitors returned to **OK**.
+  - Measured recovery latency: ~197 seconds after recovery requested (allowing the 1-minute count window to clear).
+  - Evidence Screenshots: `docs/evidence/ingestion-recovered.png`, `docs/evidence/synthetic-fault-recovered.png`.
+- **Incident Closed:** `2026-10-19T02:35:57.069Z` — Incident marked `RESOLVED` in MongoDB Atlas.
+- **Atlas Data Verification (02:36:59Z):**
+  - Incident record `demo-c8d1586804b5`: status `RESOLVED`, synthetic `true`.
+  - 6 audit actions recorded in `incident_actions`: `baseline`, `fault_injected`, `investigate`, `recovery_requested`, `resolved`, `investigate`.
+  - 335 time-series telemetry readings recorded.
+- **Machine-readable evidence:** Saved in `docs/evidence/phase-b2-incident.json`.
+
+#### 4. Atlas Transport & Authentication Status
+Real Atlas connectivity is **FULLY RESTORED AND VERIFIED**:
+- DNS SRV: PASS (3 nodes)
+- TCP 27017: PASS (all 3 nodes)
+- TLS Handshake: PASS with strict certificate verification (`PASS_CERT_VERIFIED` on all 3 nodes)
+- Authenticated ping: PASS
+- Scoped application user `chargeguard_dev` / `chargeguard_rw`: PASS
+- Database reads and time-series writes: PASS
+
+All Phase B requirements are satisfied. Ready to proceed to Phase C (Operations UI).

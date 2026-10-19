@@ -1,0 +1,23 @@
+{
+  "name": "ChargeGuard \u2014 Explicit synthetic fault events",
+  "type": "query alert",
+  "query": "sum(last_1m):sum:chargeguard.fault.simulated{service:chargeguard-api,env:dev}.as_count() >= 1",
+  "message": "SYNTHETIC / DEMONSTRATION ONLY. One or more events in the last minute triggers this demo monitor. Investigate service:chargeguard-api env:dev logs and labeled telemetry. Stop injections, submit valid recovery telemetry, then allow the 1-minute counter window to expire. Recovery indicates absence of new events, not physical safety or guaranteed service availability. No notification recipients configured.",
+  "tags": [
+    "service:chargeguard-api",
+    "env:dev",
+    "team:onenode",
+    "scenario:synthetic-demo"
+  ],
+  "options": {
+    "thresholds": {
+      "critical": 1
+    },
+    "require_full_window": false,
+    "include_tags": true,
+    "on_missing_data": "default",
+    "evaluation_delay": 0,
+    "renotify_interval": 0,
+    "notify_audit": false
+  }
+}

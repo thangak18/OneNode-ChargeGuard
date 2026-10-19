@@ -18,10 +18,11 @@
 
 ## Phase B — Observability (21–24 Oct)
 - [x] Emit structured application JSON logs and DogStatsD metrics; verify actual US1 receipt using synthetic HTTP tests (19 Oct)
-- [ ] Configure one functioning Datadog dashboard + monitor
-- [ ] Record alert delay, false alarms and detection conditions
+- [x] Configure one functioning Datadog dashboard + monitor (Operations Dashboard with 11 widgets + 2 monitors verified in US1)
+- [x] Record alert delay, false alarms and detection conditions (Run c8d1586804b5: Alert in 145s, Recovery in 197s, verified in Atlas + Datadog)
 
-**Current integration caveat:** 19 Oct Atlas DNS/TCP pass, but TLS returns a remote internal-error alert on all three nodes before authentication. US1 metrics/log verification used a disposable local MongoDB fixture. Restore the approved Atlas transport and rerun the Atlas observability smoke before claiming current Atlas-to-Datadog end-to-end readiness.
+**Phase B verification status (19 Oct):** Operations Dashboard JSON artifact (`config/datadog/chargeguard-operations.dashboard.json`) and 2 monitor configs (`config/datadog/monitors/`) verified. Authenticated Atlas TLS is fully operational (`PASS_CERT_VERIFIED` on all 3 nodes). End-to-end incident run `c8d1586804b5` verified in Atlas (`incidents`, `incident_actions`, `telemetry`) and Datadog US1 (monitors 334137536 and 334137944 transitioned OK -> ALERT -> OK). 17 unit tests and 9 integration tests PASS. Ready for Phase C.
+
 
 ## Phase C — Product & response (25–28 Oct)
 - [ ] Build Next.js operations dashboard + incident view

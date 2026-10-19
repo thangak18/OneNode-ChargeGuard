@@ -1,0 +1,92 @@
+{
+  "run": "c8d1586804b5",
+  "database": "atlas",
+  "synthetic": true,
+  "startedAt": "2026-10-19T02:29:36.842Z",
+  "monitorObservations": [
+    {
+      "monitorId": "334137536",
+      "state": "ok",
+      "observedAt": "2026-10-19T02:29:56.419Z",
+      "method": "authenticated-Datadog-UI"
+    },
+    {
+      "monitorId": "334137944",
+      "state": "ok",
+      "observedAt": "2026-10-19T02:29:56.420Z",
+      "method": "authenticated-Datadog-UI"
+    },
+    {
+      "monitorId": "334137536",
+      "state": "alert",
+      "observedAt": "2026-10-19T02:32:21.943Z",
+      "method": "authenticated-Datadog-UI"
+    },
+    {
+      "monitorId": "334137944",
+      "state": "alert",
+      "observedAt": "2026-10-19T02:32:21.947Z",
+      "method": "authenticated-Datadog-UI"
+    },
+    {
+      "monitorId": "334137536",
+      "state": "ok",
+      "observedAt": "2026-10-19T02:35:56.974Z",
+      "method": "authenticated-Datadog-UI"
+    },
+    {
+      "monitorId": "334137944",
+      "state": "ok",
+      "observedAt": "2026-10-19T02:35:56.975Z",
+      "method": "authenticated-Datadog-UI"
+    }
+  ],
+  "actions": [
+    {
+      "action": "baseline",
+      "at": "2026-10-19T02:29:36.847Z"
+    },
+    {
+      "action": "fault_injected",
+      "at": "2026-10-19T02:29:56.472Z"
+    },
+    {
+      "action": "investigate",
+      "at": "2026-10-19T02:32:22.024Z"
+    },
+    {
+      "action": "recovery_requested",
+      "at": "2026-10-19T02:32:39.318Z"
+    },
+    {
+      "action": "resolved",
+      "at": "2026-10-19T02:35:56.977Z"
+    },
+    {
+      "action": "investigate",
+      "at": "2026-10-19T02:35:57.144Z"
+    }
+  ],
+  "faultStartedAt": "2026-10-19T02:29:56.422Z",
+  "telemetryEvidence": {
+    "count": 63,
+    "latest": {
+      "ts": "2026-10-19T02:35:52.809Z",
+      "currentA": 8.25,
+      "chargingState": "CHARGING"
+    }
+  },
+  "recoveryRequestedAt": "2026-10-19T02:32:39.318Z",
+  "resolvedAt": "2026-10-19T02:35:57.069Z",
+  "stoppedAt": "2026-10-19T02:35:58.703Z",
+  "atlasVerification": {
+    "incident": {
+      "status": "RESOLVED",
+      "synthetic": true,
+      "resolvedAt": "2026-10-19T02:35:57.022Z"
+    },
+    "actions": 6,
+    "telemetryReadings": 335,
+    "verifiedAt": "2026-10-19T02:36:59.690Z"
+  }
+}

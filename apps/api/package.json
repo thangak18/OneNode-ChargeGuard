@@ -18,7 +18,9 @@
     "replay:acn": "tsx scripts/replay-acn.ts",
     "smoke:atlas": "tsx scripts/smoke-atlas.ts",
     "verify:atlas": "tsx scripts/verify-atlas.ts",
-    "smoke:observability": "tsx scripts/smoke-observability.ts"
+    "smoke:observability": "tsx scripts/smoke-observability.ts",
+    "demo:incident": "tsx scripts/incident-demo.ts",
+    "diagnose:atlas": "tsx scripts/diagnose-atlas.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

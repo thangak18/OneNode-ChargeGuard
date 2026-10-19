@@ -76,11 +76,12 @@ export class ObservabilityService implements OnModuleDestroy {
   }
   /** Only explicitly allowed operational fields reach disk/stdout; never raw errors, payloads or headers. */
   record(level:'info'|'warning'|'error',event:string,fields:Record<string,unknown>={}):void {
-    const allowedEvents=['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable'];
+    const allowedEvents=['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action'];
     const safe:Record<string,unknown>={};
     for(const key of ['status_code','duration_ms']) if(typeof fields[key]==='number' && Number.isFinite(fields[key])) safe[key]=fields[key];
-    const values:Record<string,string[]>={mode:['single','batch'],outcome:['success','failure'],source:['synthetic','derived','acn_replay'],asset_scope:['demo','other']};
+    const values:Record<string,string[]>={mode:['single','batch'],outcome:['success','failure'],source:['synthetic','derived','acn_replay'],asset_scope:['demo','other'],action:['baseline','fault_injected','investigate','recovery_requested','resolved']};
     for(const [key,options] of Object.entries(values)) if(typeof fields[key]==='string' && options.includes(fields[key] as string)) safe[key]=fields[key];
+    if(typeof fields.demo_id==='string' && /^[a-f0-9]{12}$/.test(fields.demo_id)) safe.demo_id=fields.demo_id;
     const line=JSON.stringify({timestamp:new Date().toISOString(),status:level,service:'chargeguard-api',env:this.config.env,message:allowedEvents.includes(event)?event:'framework.log',...safe})+'\n';
     if(this.config.stdout) process.stdout.write(line);
     if(this.config.logFile) {

@@ -11,6 +11,8 @@ test('incident fixture produces five valid virtual readings and explicit synthet
     assert.ok(telemetrySchema.safeParse(normal).success);assert.equal(normal.currentA,8.25);
     const fault=demoReading('123456abcdef',1,charger,true);
     assert.ok(telemetrySchema.safeParse(fault).success);assert.equal(fault.currentA,0);assert.equal(fault.provenance.fields.faultCode,'SYNTHETIC');
+    const overheat=demoReading('123456abcdef',2,charger,true,new Date(),'SIM_OVERHEAT');
+    assert.ok(telemetrySchema.safeParse(overheat).success);assert.equal(overheat.temperatureC,72);assert.equal(overheat.provenance.fields.temperatureC,'SYNTHETIC');
     assert.notEqual(normal.eventId,fault.eventId);assert.equal(normal.faultCode,undefined);
   }
   assert.throws(()=>demoReading('private',1,1,false));assert.throws(()=>demoReading('123456abcdef',1,6,false));

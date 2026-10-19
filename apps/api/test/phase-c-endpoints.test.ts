@@ -79,6 +79,8 @@ test('IncidentsService handles lifecycle: findAll, findOne, acknowledge, resolve
   assert.equal(actions.length, 1);
   assert.equal(actions[0].action, 'acknowledged');
 
+  await assert.rejects(() => service.resolve('inc-1', 'operator-test'), /recovery telemetry/);
+  Object.assign(incidents.get('inc-1'), { status: 'RESOLVING', recoveryTelemetryAt: new Date() });
   const res = await service.resolve('inc-1', 'operator-test');
   assert.equal(res.status, 'RESOLVED');
   assert.equal(actions.length, 2);
@@ -95,9 +97,11 @@ test('DemoService triggers fault and recovery telemetry batches', async () => {
       insertOne: async (doc: any) => {
         if (name === 'incidents') insertedIncident = doc;
       },
-      findOne: async (_q: any) => null,
-      findOneAndUpdate: async () => ({ _id: 'demo-test', status: 'RESOLVING' }),
+      findOne: async (_q: any) => name === 'incidents' ? insertedIncident : null,
+      find: () => ({ toArray: async () => [] }),
+      findOneAndUpdate: async (_q: any, update: any) => { Object.assign(insertedIncident, update.$set); return insertedIncident; },
       updateMany: async () => ({ modifiedCount: 1 }),
+      insertMany: async () => ({ insertedCount: 0 }),
     }),
   };
 
@@ -129,10 +133,11 @@ test('DemoService triggers fault and recovery telemetry batches', async () => {
   assert.equal(ingestedEvents[1].chargingState, 'CHARGING');
   assert.ok(loggedActions.includes('fault_injected'));
 
+  insertedIncident.status = 'ACKNOWLEDGED';
   const recoverRes = await service.recover(faultRes.incidentId);
   assert.equal(recoverRes.status, 'RESOLVING');
   assert.match(recoverRes.message, /Verify the Datadog monitor state directly/);
-  assert.equal(ingestedEvents.length, 5);
+  assert.equal(ingestedEvents.length, 1);
   assert.equal(ingestedEvents[0].currentA, 8.25);
   assert.equal(ingestedEvents[0].chargingState, 'CHARGING');
   assert.ok(loggedActions.includes('recovery_requested'));
@@ -141,6 +146,73 @@ test('DemoService triggers fault and recovery telemetry batches', async () => {
   assert.equal(resetRes.success, true);
   assert.match(resetRes.message, /Verify the Datadog monitor state directly/);
   assert.ok(loggedActions.includes('baseline'));
+});
+
+test('DemoService rejects invalid trigger input before writing', async () => {
+  let writes = 0;
+  const fakeDb: any = {
+    collection: () => ({
+      findOne: async () => null,
+      insertOne: async () => { writes += 1; },
+    }),
+  };
+  const fakeTelemetry: any = {};
+  const fakeObs: any = {};
+  const service = new DemoService(fakeDb, fakeTelemetry, fakeObs);
+
+  await assert.rejects(() => service.triggerFault(6, 'SIM_OVERHEAT'));
+  await assert.rejects(() => service.triggerFault(1, 'UNSUPPORTED'));
+  assert.equal(writes, 0);
+});
+
+test('DemoService reset is scoped to the five synthetic demo chargers and preserves audit history', async () => {
+  const active = [{ _id: 'demo-active' }];
+  let readFilter: any;
+  let updateFilter: any;
+  let auditActions: any[] = [];
+  let events: any[] = [];
+  const fakeDb: any = {
+    collection: (name: string) => ({
+      find: (filter: any) => {
+        if (name === 'incidents') readFilter = filter;
+        return { toArray: async () => active };
+      },
+      updateMany: async (filter: any) => {
+        updateFilter = filter;
+        return { modifiedCount: 1 };
+      },
+      insertMany: async (docs: any[]) => {
+        auditActions = docs;
+        return { insertedCount: docs.length };
+      },
+    }),
+  };
+  const fakeTelemetry: any = {
+    ingestBatch: async ({ events: inserted }: { events: any[] }) => {
+      events = inserted;
+      return { accepted: inserted.length, failed: 0 };
+    },
+  };
+  const fakeObs: any = { record: () => {}, flush: async () => {} };
+  const service = new DemoService(fakeDb, fakeTelemetry, fakeObs);
+
+  const result = await service.reset();
+
+  assert.equal(result.success, true);
+  assert.deepEqual(readFilter, updateFilter);
+  assert.deepEqual(readFilter, {
+    stationId: 'demo-station-01',
+    chargerId: { $in: ['demo-charger-01', 'demo-charger-02', 'demo-charger-03', 'demo-charger-04', 'demo-charger-05'] },
+    status: { $in: ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'] },
+    synthetic: true,
+  });
+  assert.deepEqual(auditActions.map(({ incidentId, actor, action }) => ({ incidentId, actor, action })), [{
+    incidentId: 'demo-active',
+    actor: 'demo-operator-ui',
+    action: 'baseline_reset',
+  }]);
+  assert.equal(events.length, 5);
+  assert.ok(events.every((event) => event.currentA === 8.25 && event.chargingState === 'CHARGING'));
 });
 
 test('DemoService.triggerFault is idempotent while a synthetic incident is active', async () => {

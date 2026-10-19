@@ -131,6 +131,8 @@ test('Phase C endpoints: chargers, stations, incidents, and demo controls over H
   // Demo/incident writes require the ingest API key
   await request(s).post('/api/v1/demo/trigger-fault').send({ chargerIndex: 1, scenario: 'SIM_OVERHEAT' }).expect(401);
   await request(s).post('/api/v1/incidents/nonexistent/acknowledge').set('x-api-key', key).send({ actor: 'x' }).expect(404);
+  await request(s).post('/api/v1/demo/trigger-fault').set('x-api-key', key)
+    .send({ chargerIndex: 6, scenario: 'SIM_OVERHEAT' }).expect(400);
 
   const fault = await request(s).post('/api/v1/demo/trigger-fault').set('x-api-key', key).send({ chargerIndex: 1, scenario: 'SIM_OVERHEAT' }).expect(201);
   assert.equal(fault.body.status, 'OPEN');
@@ -146,22 +148,42 @@ test('Phase C endpoints: chargers, stations, incidents, and demo controls over H
   const incidents = await request(s).get('/api/v1/incidents').expect(200);
   assert.ok(incidents.body.some((i: { _id: string }) => i._id === incId));
 
+  await request(s).post(`/api/v1/incidents/${incId}/resolve`).set('x-api-key', key).send({actor:'test-operator'}).expect(409);
+  await request(s).post('/api/v1/demo/recover').set('x-api-key',key).send({incidentId:incId}).expect(409);
+  await request(s).post('/api/v1/demo/recover').set('x-api-key',key).send({}).expect(400);
+  await request(s).post('/api/v1/demo/recover').set('x-api-key',key).expect(400);
   // Acknowledge incident
   const ack = await request(s).post(`/api/v1/incidents/${incId}/acknowledge`).set('x-api-key', key).send({ actor: 'test-operator' }).expect(201);
   assert.equal(ack.body.status, 'ACKNOWLEDGED');
 
+  await request(s).post(`/api/v1/incidents/${incId}/acknowledge`).set('x-api-key',key).send({actor:'test-operator'}).expect(201);
+  assert.equal(await db.collection('incident_actions').countDocuments({incidentId:incId,action:'acknowledged'}),1);
+  const otherBefore=await db.collection('telemetry').countDocuments({'meta.chargerId':{$in:['demo-charger-02','demo-charger-03','demo-charger-04','demo-charger-05']}});
   // Recover demo
   const rec = await request(s).post('/api/v1/demo/recover').set('x-api-key', key).send({ incidentId: incId }).expect(201);
   assert.equal(rec.body.status, 'RESOLVING');
 
+  const recoveryTime=rec.body.recoveredAt;
+  const retry=await request(s).post('/api/v1/demo/recover').set('x-api-key',key).send({incidentId:incId}).expect(201);
+  assert.equal(retry.body.recoveredAt,recoveryTime);
+  assert.equal(await db.collection('telemetry').countDocuments({'meta.chargerId':{$in:['demo-charger-02','demo-charger-03','demo-charger-04','demo-charger-05']}}),otherBefore);
+  const recovery=await db.collection('telemetry').find({eventId:`b2-${incId.slice(5)}-2-1`}).toArray();
+  assert.equal(recovery.length,1);assert.equal(recovery[0].provenance.fields.currentA,'SYNTHETIC');
+  assert.equal(recovery[0].chargingState,'CHARGING');assert.equal(recovery[0].temperatureC,undefined);
   // Resolve incident
   const res = await request(s).post(`/api/v1/incidents/${incId}/resolve`).set('x-api-key', key).send({ actor: 'test-operator' }).expect(201);
   assert.equal(res.body.status, 'RESOLVED');
 
+  await request(s).post(`/api/v1/incidents/${incId}/resolve`).set('x-api-key',key).send({actor:'test-operator'}).expect(201);
+  assert.equal(await db.collection('incident_actions').countDocuments({incidentId:incId,action:'resolved'}),1);
+  await request(s).post(`/api/v1/incidents/${incId}/acknowledge`).set('x-api-key',key).send({actor:'test-operator'}).expect(409);
+  await request(s).post('/api/v1/demo/recover').set('x-api-key',key).send({incidentId:incId}).expect(409);
   // Get incident detail with actions
   const detail = await request(s).get(`/api/v1/incidents/${incId}`).expect(200);
   assert.equal(detail.body._id, incId);
   assert.ok(detail.body.actions.length >= 3);
+  await request(s).post('/api/v1/demo/recover').set('x-api-key', key)
+    .send({ incidentId: 'demo-ffffffffffff' }).expect(404);
 
   // Reset baseline requires the key too
   await request(s).post('/api/v1/demo/reset').expect(401);
@@ -187,4 +209,17 @@ test('observability covers authentication/validation/database failures and dedup
   assert.ok(observedRequests.every(r=>r.duration>=0));
   assert.ok(observedEvents.some(r=>r.duplicate));
   assert.ok(observedEvents.some(r=>!r.duplicate));
+});
+
+test('failed recovery cannot resolve, then the exact reserved recovery can be retried safely',async()=>{
+  const id='demo-aaaaaaaaaaaa';const key='local-test-ingest-key-abcdefghijkl';
+  await db.collection<{_id:string;[key:string]:unknown}>('incidents').insertOne({_id:id,stationId:'demo-station-01',chargerId:'demo-charger-01',status:'ACKNOWLEDGED',synthetic:true});
+  failAssetLookup=true;
+  try {await request(app.getHttpServer()).post('/api/v1/demo/recover').set('x-api-key',key).send({incidentId:id}).expect(503);} finally {failAssetLookup=false;}
+  const pending=await db.collection<{_id:string;[key:string]:any}>('incidents').findOne({_id:id});
+  assert.equal(pending?.status,'RESOLVING');assert.equal(pending?.recoveryTelemetryAt,undefined);
+  await request(app.getHttpServer()).post(`/api/v1/incidents/${id}/resolve`).set('x-api-key',key).send({actor:'test-operator'}).expect(409);
+  const retried=await request(app.getHttpServer()).post('/api/v1/demo/recover').set('x-api-key',key).send({incidentId:id}).expect(201);
+  assert.equal(retried.body.recoveredAt,new Date(pending!.recoveryEventAt).toISOString());
+  await request(app.getHttpServer()).post(`/api/v1/incidents/${id}/resolve`).set('x-api-key',key).send({actor:'test-operator'}).expect(201);
 });

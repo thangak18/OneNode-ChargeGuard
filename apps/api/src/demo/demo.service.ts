@@ -1,9 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { recordIncidentAction } from '../incidents/incident-audit';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
 import { ObservabilityService } from '../observability/observability.service';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { demoReading } from '../observability/demo-scenario';
+
+const DEMO_CHARGER_IDS = Array.from({ length: 5 }, (_, index) => `demo-charger-${String(index + 1).padStart(2, '0')}`);
+const DEMO_SCENARIOS = new Set(['SIM_OVERHEAT', 'SIM_POWER_LOSS', 'SIM_HARDWARE_FAULT']);
+const ACTIVE_STATUSES = ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'];
 
 @Injectable()
 export class DemoService {
@@ -14,6 +19,12 @@ export class DemoService {
   ) {}
 
   async triggerFault(chargerIndex = 1, scenario = 'SIM_OVERHEAT') {
+    if (!Number.isInteger(chargerIndex) || chargerIndex < 1 || chargerIndex > DEMO_CHARGER_IDS.length) {
+      throw new BadRequestException('chargerIndex must be an integer from 1 through 5.');
+    }
+    if (!DEMO_SCENARIOS.has(scenario)) {
+      throw new BadRequestException('Unsupported synthetic fault scenario.');
+    }
     const chargerId = `demo-charger-${String(chargerIndex).padStart(2, '0')}`;
 
     // Idempotency safeguard: if an active synthetic incident already exists,
@@ -21,7 +32,12 @@ export class DemoService {
     // repeated triggering (e.g. double-clicks) from cluttering Atlas and
     // keeps the demo's DETECT -> INVESTIGATE -> RESOLVE lifecycle clean.
     const existing = await this.database.collection('incidents').findOne(
-      { status: { $in: ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'] }, synthetic: true },
+      {
+        stationId: 'demo-station-01',
+        chargerId: { $in: DEMO_CHARGER_IDS },
+        status: { $in: ACTIVE_STATUSES },
+        synthetic: true,
+      },
       { sort: { detectedAt: -1 } },
     );
     if (existing) {
@@ -54,7 +70,9 @@ export class DemoService {
       evidence: [
         {
           type: 'TELEMETRY_ANOMALY',
-          detail: 'Synthetic current dropped to 0 A with FAULT state',
+          detail: scenario === 'SIM_OVERHEAT'
+            ? 'Synthetic current dropped to 0 A with FAULT state; illustrative synthetic temperature stimulus is 72 °C, not a measured value or hardware threshold.'
+            : 'Synthetic current dropped to 0 A with FAULT state.',
           faultCode: 'SIMULATED_DEMO_FAULT',
         },
       ],
@@ -77,7 +95,7 @@ export class DemoService {
     // 4. Ingest 5 telemetry events (chargerIndex has fault)
     const now = new Date();
     const events = Array.from({ length: 5 }, (_, i) =>
-      demoReading(run, 1, i + 1, i + 1 === chargerIndex, now),
+      demoReading(run, 1, i + 1, i + 1 === chargerIndex, now, scenario),
     );
 
     await this.telemetry.ingestBatch({ events });
@@ -94,57 +112,75 @@ export class DemoService {
     };
   }
 
-  async recover(incidentId: string) {
+  async recover(incidentId: unknown) {
+    if (typeof incidentId !== 'string' || !/^demo-[a-f0-9]{12}$/.test(incidentId)) {
+      throw new BadRequestException('A valid synthetic demo incidentId is required.');
+    }
+    const scope = { _id: incidentId, stationId: 'demo-station-01', chargerId: { $in: DEMO_CHARGER_IDS }, synthetic: true };
+    let incident = await this.database.collection('incidents').findOne(scope);
+    if (!incident) throw new NotFoundException('Synthetic demo incident not found');
+    if (!['ACKNOWLEDGED', 'RESOLVING'].includes(incident.status)) {
+      throw new ConflictException('Acknowledge the active incident before sending recovery telemetry.');
+    }
+    if (incident.status === 'ACKNOWLEDGED') {
+      // Reserve one immutable event timestamp so retries reuse the exact payload fingerprint.
+      const reserved = await this.database.collection('incidents').findOneAndUpdate(
+        { ...scope, status: 'ACKNOWLEDGED' },
+        { $set: { status: 'RESOLVING', recoveryEventAt: new Date(), updatedAt: new Date() } },
+        { returnDocument: 'after' },
+      );
+      incident = reserved ?? await this.database.collection('incidents').findOne(scope);
+    }
+    if (!incident || incident.status !== 'RESOLVING' || !incident.recoveryEventAt) {
+      throw new ConflictException('Recovery is unavailable; inspect the incident timeline.');
+    }
+    const run = incidentId.slice(5);
+    const eventTime = new Date(incident.recoveryEventAt);
+    const chargerIndex = DEMO_CHARGER_IDS.indexOf(incident.chargerId) + 1;
+    // Recover only this incident's charger; preserve the other four chargers' observations.
+    const event = demoReading(run, 2, chargerIndex, false, eventTime);
+    await this.telemetry.ingestBatch({ events: [event] });
     const at = new Date();
-    const run = incidentId.startsWith('demo-') ? incidentId.slice(5) : randomBytes(6).toString('hex');
-
-    // 1. Update incident status
     const updated = await this.database.collection('incidents').findOneAndUpdate(
-      { _id: incidentId },
-      { $set: { status: 'RESOLVING', recoveryRequestedAt: at } },
+      { ...scope, status: 'RESOLVING' },
+      { $set: { recoveryTelemetryAt: eventTime, recoveryRequestedAt: eventTime, updatedAt: at } },
       { returnDocument: 'after' },
     );
-
-    // 2. Insert incident action
-    await this.database.collection('incident_actions').insertOne({
-      incidentId,
-      actor: 'demo-operator-ui',
-      action: 'recovery_requested',
-      at,
-      synthetic: true,
-    });
-
-    // 3. Record log
-    if (/^[a-f0-9]{12}$/.test(run)) {
-      this.obs.record('info', 'demo.action', { demo_id: run, action: 'recovery_requested' });
-    }
-
-    // 4. Ingest recovery readings (all 5 chargers healthy at 8.25 A)
-    const now = new Date();
-    const safeRun = /^[a-f0-9]{12}$/.test(run) ? run : randomBytes(6).toString('hex');
-    const events = Array.from({ length: 5 }, (_, i) => demoReading(safeRun, 2, i + 1, false, now));
-
-    await this.telemetry.ingestBatch({ events });
+    if (!updated) throw new ConflictException('Incident state changed during recovery.');
+    await recordIncidentAction(this.database, incidentId, 'demo-operator-ui', 'recovery_requested', eventTime);
+    this.obs.record('info', 'demo.action', { demo_id: run, incident_id: incidentId, charger_id: incident.chargerId, station_id: incident.stationId, action: 'recovery_requested' });
     await this.obs.flush();
-
-    return {
-      incidentId,
-      status: 'RESOLVING',
-      recoveredAt: at.toISOString(),
-      message: 'Recovery telemetry submitted. Verify the Datadog monitor state directly.',
-      incident: updated,
-    };
+    return { incidentId, status: 'RESOLVING', recoveredAt: eventTime.toISOString(), message: 'Recovery telemetry submitted for the affected charger. Verify the Datadog monitor state directly.', incident: updated };
   }
 
   async reset() {
     const run = randomBytes(6).toString('hex');
     const now = new Date();
+    const resetScope = {
+      stationId: 'demo-station-01',
+      chargerId: { $in: DEMO_CHARGER_IDS },
+      status: { $in: ACTIVE_STATUSES },
+      synthetic: true,
+    };
+    const activeIncidents = await this.database
+      .collection('incidents')
+      .find(resetScope, { projection: { _id: 1 } })
+      .toArray();
 
-    // 1. Close any open demo incidents
-    await this.database.collection('incidents').updateMany(
-      { status: { $in: ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'] }, synthetic: true },
-      { $set: { status: 'RESOLVED', resolvedAt: now } },
-    );
+    if (activeIncidents.length > 0) {
+      await this.database.collection('incidents').updateMany(resetScope, {
+        $set: { status: 'RESOLVED', resolvedAt: now },
+      });
+      await this.database.collection('incident_actions').insertMany(
+        activeIncidents.map((incident) => ({
+          incidentId: incident._id,
+          actor: 'demo-operator-ui',
+          action: 'baseline_reset',
+          at: now,
+          synthetic: true,
+        })),
+      );
+    }
 
     // 2. Emit clean baseline telemetry for all 5 chargers
     const events = Array.from({ length: 5 }, (_, i) => demoReading(run, 0, i + 1, false, now));

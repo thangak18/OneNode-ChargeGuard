@@ -57,6 +57,8 @@ export class ObservabilityService implements OnModuleDestroy {
   accepted(input:TelemetryInput,duplicate:boolean):void {
     const source=input.provenance.sourceType.toLowerCase();
     const tags=[`source:${source}`];
+    const match=/^b2-([a-f0-9]{12})-/.exec(input.eventId);
+    const context=match?{demo_id:match[1],incident_id:`demo-${match[1]}`,station_id:input.meta.stationId,charger_id:input.meta.chargerId}:{};
     this.metric(`telemetry.${duplicate?'duplicate':'accepted'}`,1,'c',tags);
     if(duplicate) return; // A retry must not create a second fault/current observation.
     const assetTags=input.meta.stationId===station && chargers.has(input.meta.chargerId)
@@ -70,9 +72,9 @@ export class ObservabilityService implements OnModuleDestroy {
       (input.faultCode!==undefined && input.provenance.fields.faultCode==='SYNTHETIC');
     if(syntheticFault) {
       this.metric('fault.simulated',1,'c',assetTags);
-      this.record('warning','fault.simulated',{source:'synthetic',asset_scope:assetTags[0]==='asset_scope:other'?'other':'demo'});
+      this.record('warning','fault.simulated',{...context,source:'synthetic',asset_scope:assetTags[0]==='asset_scope:other'?'other':'demo'});
     }
-    this.record('info','telemetry.accepted',{source,asset_scope:assetTags[0]==='asset_scope:other'?'other':'demo'});
+    this.record('info','telemetry.accepted',{...context,source,asset_scope:assetTags[0]==='asset_scope:other'?'other':'demo'});
   }
   /** Only explicitly allowed operational fields reach disk/stdout; never raw errors, payloads or headers. */
   record(level:'info'|'warning'|'error',event:string,fields:Record<string,unknown>={}):void {
@@ -82,6 +84,9 @@ export class ObservabilityService implements OnModuleDestroy {
     const values:Record<string,string[]>={mode:['single','batch'],outcome:['success','failure'],source:['synthetic','derived','acn_replay'],asset_scope:['demo','other'],action:['baseline','fault_injected','investigate','recovery_requested','resolved']};
     for(const [key,options] of Object.entries(values)) if(typeof fields[key]==='string' && options.includes(fields[key] as string)) safe[key]=fields[key];
     if(typeof fields.demo_id==='string' && /^[a-f0-9]{12}$/.test(fields.demo_id)) safe.demo_id=fields.demo_id;
+    if(typeof fields.incident_id==='string' && /^demo-[a-f0-9]{12}$/.test(fields.incident_id)) safe.incident_id=fields.incident_id;
+    if(fields.station_id===station) safe.station_id=station;
+    if(typeof fields.charger_id==='string' && chargers.has(fields.charger_id)) safe.charger_id=fields.charger_id;
     const line=JSON.stringify({timestamp:new Date().toISOString(),status:level,service:'chargeguard-api',env:this.config.env,message:allowedEvents.includes(event)?event:'framework.log',...safe})+'\n';
     if(this.config.stdout) process.stdout.write(line);
     if(this.config.logFile) {

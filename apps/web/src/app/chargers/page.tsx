@@ -46,7 +46,7 @@ function ChargerDetailContent() {
       const targetId = selectedId || (allChargers[0]?._id ?? 'demo-charger-01');
       const [chargerDetail, incs] = await Promise.all([
         api.getCharger(targetId),
-        api.getIncidents(undefined, targetId).catch(() => []),
+        api.getIncidents(undefined, targetId),
       ]);
       setCharger(chargerDetail);
       setChargerIncidents(incs);
@@ -54,7 +54,7 @@ function ChargerDetailContent() {
       // Fetch 24-hour history for time-series chart
       const to = new Date().toISOString();
       const from = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-      const hist = await api.getTelemetryHistory(targetId, from, to, 100).catch(() => []);
+      const hist = await api.getTelemetryHistory(targetId, from, to, 100);
       setHistory(hist);
 
       setError(null);
@@ -73,6 +73,12 @@ function ChargerDetailContent() {
   const latestReading = history.length > 0 ? history[history.length - 1] : null;
   const currentA = latestReading?.currentA;
   const derivedPowerKW = currentA === undefined ? null : ((240 * currentA) / 1000).toFixed(2);
+  const stateSourceType =
+    latestReading?.provenance.fields.chargingState === 'SYNTHETIC'
+      ? 'SYNTHETIC'
+      : latestReading?.provenance.fields.chargingState === 'DERIVED'
+        ? 'DERIVED'
+        : latestReading?.provenance.sourceType;
   const latestSeenAt = latestReading ? new Date(latestReading.ts) : null;
   const isStale =
     clock !== null &&
@@ -101,7 +107,16 @@ function ChargerDetailContent() {
             return (
               <button
                 key={c._id}
-                onClick={() => setSelectedId(c._id)}
+                onClick={() => {
+                  if (c._id === selectedId) return;
+                  setError(null);
+                  setLoading(true);
+                  setCharger(null);
+                  setHistory([]);
+                  setChargerIncidents([]);
+                  setSelectedId(c._id);
+                }}
+                aria-pressed={active}
                 className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 shrink-0 ${
                   active
                     ? 'bg-cyan-950 text-cyan-300 border border-cyan-800 shadow-sm'
@@ -152,9 +167,9 @@ function ChargerDetailContent() {
               </p>
             </div>
 
-            {/* Live Current Reading */}
+            {/* Latest Current Reading */}
             <div className="flex items-baseline gap-3 bg-slate-950/80 border border-slate-800 px-4 py-2.5 rounded-md self-start md:self-auto">
-              <span className="text-xs font-mono text-slate-400 uppercase">Live Output</span>
+              <span className="text-xs font-mono text-slate-400 uppercase">Latest reading</span>
               <span className="text-2xl font-bold font-mono text-cyan-400 tabular-nums">
                 {currentA === undefined ? (
                   'N/A'
@@ -258,7 +273,26 @@ function ChargerDetailContent() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          <p id="sensor-provenance-scroll-hint" className="text-[11px] text-slate-500">
+            Swipe or focus this table and use the Left/Right Arrow keys to view all columns.
+          </p>
+          <div
+            className="overflow-x-auto focus-visible:ring-2 focus-visible:ring-cyan-500 outline-none"
+            role="region"
+            aria-label="Sensor channels and data provenance"
+            aria-describedby="sensor-provenance-scroll-hint"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+              const container = event.currentTarget;
+              const step = event.key === 'ArrowRight' ? 120 : -120;
+              const next = Math.max(0, Math.min(container.scrollWidth - container.clientWidth, container.scrollLeft + step));
+              if (next !== container.scrollLeft) {
+                event.preventDefault();
+                container.scrollLeft = next;
+              }
+            }}
+          >
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
                 <tr>
@@ -276,13 +310,17 @@ function ChargerDetailContent() {
                     {latestReading?.currentA === undefined ? 'UNAVAILABLE' : <ProvenanceBadge sourceType={latestReading.provenance.sourceType} />}
                   </td>
                   <td className="px-4 py-3 text-[11px] text-slate-400 font-sans">
-                    Measured current from Caltech ACN-Data sample or synthetic stimulus.
+                    Historical ACN current, when replayed, or synthetic current; see the provenance label.
                   </td>
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-semibold text-slate-200">Charging State</td>
                   <td className="px-4 py-3">{latestReading?.chargingState ? <StatusBadge status={latestReading.chargingState} size="sm" /> : 'N/A'}</td>
-                  <td className="px-4 py-3"><ProvenanceBadge sourceType="DERIVED" /></td>
+                  <td className="px-4 py-3">
+                    {latestReading?.chargingState && stateSourceType
+                      ? <ProvenanceBadge sourceType={stateSourceType} />
+                      : 'UNAVAILABLE'}
+                  </td>
                   <td className="px-4 py-3 text-[11px] text-slate-400 font-sans">
                     Derived by application logic: Current &gt; 0.5 A indicates CHARGING.
                   </td>
@@ -296,7 +334,7 @@ function ChargerDetailContent() {
                     {latestReading?.sourceEnergyKWh !== undefined ? <ProvenanceBadge sourceType={latestReading.provenance.sourceType} /> : 'UNAVAILABLE'}
                   </td>
                   <td className="px-4 py-3 text-[11px] text-slate-400 font-sans">
-                    Reported counter from source. Resets/decreases flagged automatically.
+                    Source-reported counter where present; decreases are flagged automatically.
                   </td>
                 </tr>
                 <tr>
@@ -306,7 +344,7 @@ function ChargerDetailContent() {
                     <span className="text-[11px] text-slate-400">UNMEASURED</span>
                   </td>
                   <td className="px-4 py-3 text-[11px] text-slate-400 font-sans">
-                    Not measured by ACN-Data source. Omitted rather than fabricated.
+                    Unavailable in this telemetry record; never inferred from another field.
                   </td>
                 </tr>
                 <tr>
@@ -319,12 +357,16 @@ function ChargerDetailContent() {
                 </tr>
                 <tr>
                   <td className="px-4 py-3 font-semibold text-slate-200">Temperature (°C)</td>
-                  <td className="px-4 py-3 text-slate-400 italic">
-                    {latestReading?.faultCode ? 'SIMULATED FAULT' : 'N/A (Unmeasured)'}
+                  <td className="px-4 py-3 text-slate-400 italic tabular-nums">
+                    {latestReading?.temperatureC === undefined ? 'N/A (Unmeasured)' : `${latestReading.temperatureC.toFixed(1)} °C`}
                   </td>
-                  <td className="px-4 py-3">{latestReading?.faultCode ? <ProvenanceBadge sourceType="SYNTHETIC" /> : 'UNMEASURED'}</td>
+                  <td className="px-4 py-3">
+                    {latestReading?.temperatureC === undefined
+                      ? 'UNMEASURED'
+                      : <ProvenanceBadge sourceType={latestReading.provenance.fields.temperatureC === 'SYNTHETIC' ? 'SYNTHETIC' : latestReading.provenance.sourceType} />}
+                  </td>
                   <td className="px-4 py-3 text-[11px] text-slate-400 font-sans">
-                    Synthetic fault signal only; EV hardware temperature sensors not connected.
+                    Synthetic values are demonstrations only; EV hardware temperature sensors are not connected.
                   </td>
                 </tr>
               </tbody>

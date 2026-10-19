@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   Server,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   Clock,
   Radio,
@@ -45,7 +44,7 @@ export default function OverviewPage() {
     try {
       const [sum, incs] = await Promise.all([
         api.getStationSummary('demo-station-01'),
-        api.getIncidents().catch(() => []),
+        api.getIncidents(),
       ]);
       setSummary(sum);
       setIncidents(incs);
@@ -63,18 +62,31 @@ export default function OverviewPage() {
 
   // Derived metrics
   const chargers = summary?.chargers || [];
-  const activeCount = chargers.filter(
-    (c) => c.configuredStatus === 'CHARGING' || (c.telemetry && c.telemetry.averageCurrentA > 0.5),
-  ).length;
-  const faultedCount = chargers.filter(
-    (c) => c.configuredStatus === 'FAULT' || (c.telemetry && c.telemetry.averageCurrentA === 0),
-  ).length;
-  const idleCount = Math.max(0, chargers.length - activeCount - faultedCount);
-
-  const totalCurrentA = chargers.reduce(
-    (acc, c) => acc + (c.telemetry?.averageCurrentA || 0),
-    0,
+  const now = lastUpdated?.getTime() ?? 0;
+  const hasFreshTelemetry = (
+    charger: StationSummary['chargers'][number],
+  ): charger is StationSummary['chargers'][number] & {
+    telemetry: NonNullable<StationSummary['chargers'][number]['telemetry']>;
+  } => {
+    if (!charger.telemetry) return false;
+    const age = now - new Date(charger.telemetry.lastSeenAt).getTime();
+    return Number.isFinite(age) && age >= 0 && age <= 60_000;
+  };
+  const freshChargers = chargers.filter(hasFreshTelemetry);
+  const staleCount = chargers.filter((charger) => charger.telemetry && !hasFreshTelemetry(charger)).length;
+  const noSignalCount = chargers.filter((charger) => !charger.telemetry).length;
+  const activeCount = freshChargers.filter((charger) => charger.telemetry.averageCurrentA > 0.5).length;
+  const idleCount = Math.max(0, freshChargers.length - activeCount);
+  const activeIncidents = incidents.filter((incident) =>
+    ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'].includes(incident.status),
   );
+  const freshnessStatus =
+    freshChargers.length === 0
+      ? staleCount > 0 ? 'STALE' : 'NO DATA'
+      : staleCount > 0 || noSignalCount > 0 ? 'PARTIAL' : 'FRESH';
+  const freshnessVariant = freshnessStatus === 'FRESH' ? 'cyan' : 'amber';
+  const freshnessSubtitle = `${freshChargers.length} fresh · ${staleCount} stale · ${noSignalCount} no signal`;
+  const totalCurrentA = freshChargers.reduce((acc, charger) => acc + charger.telemetry.averageCurrentA, 0);
   // Derived power assuming 240V split-phase standard: P = (V * I) / 1000 kW (disclosed assumption)
   const derivedPowerKW = ((240 * totalCurrentA) / 1000).toFixed(2);
 
@@ -82,18 +94,25 @@ export default function OverviewPage() {
   const chartData = chargers.map((c) => ({
     name: `#${c.connectorId.replace('virtual-', '')}`,
     fullName: c.chargerId,
-    currentA: Number((c.telemetry?.averageCurrentA || 0).toFixed(2)),
+    currentA: hasFreshTelemetry(c) ? Number(c.telemetry.averageCurrentA.toFixed(2)) : null,
     status: c.configuredStatus,
-    isFault: c.configuredStatus === 'FAULT' || (c.telemetry?.averageCurrentA ?? 0) === 0,
+    isFault: c.configuredStatus === 'FAULT',
   }));
+  const hasChartTelemetry = chartData.some((charger) => charger.currentA !== null);
 
-  const openIncidents = incidents.filter((i) => i.status === 'OPEN' || i.status === 'RESOLVING');
+  const openIncidents = activeIncidents;
+  const activeIncidentChargers = new Set(activeIncidents.map((incident) => incident.chargerId));
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Navbar onRefresh={() => loadData(true)} isRefreshing={isRefreshing} lastUpdated={lastUpdated} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 grid-bg">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-100">Operations Overview</h1>
+          <p className="text-xs text-slate-400 mt-1">Five virtual connectors · API data refreshes every 6 seconds</p>
+        </div>
+
         {/* Banner: Simulation & Provenance Disclosure */}
         <div className="glass-panel rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-300 animate-in">
           <div className="flex items-center gap-2.5">
@@ -102,11 +121,12 @@ export default function OverviewPage() {
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 animate-ping opacity-60" />
             </div>
             <span>
-              <strong className="text-slate-100">Telemetry Stream:</strong>{' '}
-              Caltech ACN-Data Historical Replay with Controlled Synthetic Fault Injection.
+              <strong className="text-slate-100">Current data:</strong>{' '}
+              Synthetic virtual-charger telemetry. Historical ACN replay is separate and not active in this snapshot.
             </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0" aria-label="Supported provenance labels">
+            <span className="sr-only">Supported provenance labels</span>
             <ProvenanceBadge sourceType="ACN_REPLAY" />
             <ProvenanceBadge sourceType="DERIVED" />
             <ProvenanceBadge sourceType="SYNTHETIC" />
@@ -145,19 +165,19 @@ export default function OverviewPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <MetricCard
-              title="Station Health"
-              value={faultedCount > 0 ? 'ALERT' : 'OPTIMAL'}
-              variant={faultedCount > 0 ? 'rose' : 'emerald'}
-              subtitle={faultedCount > 0 ? `${faultedCount} connector in fault state` : 'All 5 connectors nominal'}
-              icon={<ShieldCheck size={16} />}
+              title="Telemetry Freshness"
+              value={freshnessStatus}
+              variant={freshnessVariant}
+              subtitle={freshnessSubtitle}
+              icon={<Radio size={16} />}
               animationDelay={50}
             />
             <MetricCard
               title="Active Current"
-              value={totalCurrentA.toFixed(1)}
-              unit="A"
+              value={freshChargers.length > 0 ? totalCurrentA.toFixed(1) : 'N/A'}
+              unit={freshChargers.length > 0 ? 'A' : undefined}
               variant="cyan"
-              subtitle={`Derived power ~${derivedPowerKW} kW (240V)`}
+              subtitle={freshChargers.length > 0 ? `Derived power ~${derivedPowerKW} kW (240V)` : 'No fresh telemetry to aggregate'}
               icon={<Zap size={16} />}
               animationDelay={100}
             />
@@ -166,7 +186,7 @@ export default function OverviewPage() {
               value={`${activeCount} / ${chargers.length || 5}`}
               unit="ACTIVE"
               variant="default"
-              subtitle={`${idleCount} idle · ${faultedCount} faulted`}
+              subtitle={`${idleCount} below threshold · ${staleCount + noSignalCount} stale/unobserved`}
               icon={<Activity size={16} />}
               animationDelay={150}
             />
@@ -197,10 +217,7 @@ export default function OverviewPage() {
                 </p>
               </div>
               <span className="text-[10px] font-mono text-cyan-400/90 bg-cyan-950/60 border border-cyan-800/30 px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-                <span className="relative w-1.5 h-1.5 rounded-full bg-cyan-400">
-                  <span className="absolute inset-0 rounded-full bg-cyan-400 animate-ping opacity-40" />
-                </span>
-                Live
+                API refresh · 6s
               </span>
             </div>
 
@@ -209,7 +226,7 @@ export default function OverviewPage() {
                 <div className="h-full flex items-center justify-center">
                   <div className="skeleton h-48 w-full rounded-lg" />
                 </div>
-              ) : chartData.length > 0 ? (
+              ) : hasChartTelemetry ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
@@ -292,7 +309,7 @@ export default function OverviewPage() {
                   </div>
                   <p className="text-xs font-medium text-slate-200">No Active Incidents</p>
                   <p className="text-[11px] text-slate-400/80 mt-1.5 max-w-[200px] leading-relaxed">
-                    All charging connectors operational. Trigger a synthetic fault from Demo Controls.
+                    This does not confirm physical charger health. Check telemetry freshness below.
                   </p>
                 </div>
               ) : (
@@ -349,10 +366,21 @@ export default function OverviewPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {chargers.map((charger, idx) => {
-              const currentA = charger.telemetry?.averageCurrentA ?? 0;
-              const isFault = charger.configuredStatus === 'FAULT' || currentA === 0;
-              const isCharging = currentA > 0.5;
-              const barWidth = Math.min(100, (currentA / 12) * 100); // 12A as reference max
+              const fresh = hasFreshTelemetry(charger);
+              const currentA = fresh ? charger.telemetry?.averageCurrentA ?? null : null;
+              const isFault = charger.configuredStatus === 'FAULT' || activeIncidentChargers.has(charger.chargerId);
+              const isCharging = currentA !== null && currentA > 0.5;
+              const isStale = Boolean(charger.telemetry && !fresh);
+              const displayStatus = isFault
+                ? 'FAULT'
+                : isStale
+                  ? 'WARNING'
+                  : currentA === null
+                    ? 'NO DATA'
+                    : isCharging
+                      ? 'CHARGING'
+                      : 'IDLE';
+              const barWidth = Math.min(100, ((currentA ?? 0) / 12) * 100); // 12A as reference max
 
               return (
                 <Link
@@ -378,13 +406,13 @@ export default function OverviewPage() {
                       <span className="text-xs font-mono font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">
                         {charger.chargerId}
                       </span>
-                      <StatusBadge status={charger.configuredStatus} size="sm" />
+                      <StatusBadge status={displayStatus} size="sm" />
                     </div>
 
                     <div className="flex items-baseline justify-between pt-1">
-                      <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Current</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Mean current</span>
                       <span className={`text-lg font-bold font-mono tabular-nums ${isFault ? 'text-rose-400' : 'text-slate-100'}`}>
-                        {currentA.toFixed(1)} <span className="text-xs text-slate-400 font-normal">A</span>
+                        {currentA === null ? 'N/A' : <>{currentA.toFixed(1)} <span className="text-xs text-slate-400 font-normal">A</span></>}
                       </span>
                     </div>
 
@@ -396,10 +424,10 @@ export default function OverviewPage() {
                         }`}
                         style={{ width: `${barWidth}%` }}
                         role="meter"
-                        aria-valuenow={currentA}
+                        aria-valuenow={currentA ?? 0}
                         aria-valuemin={0}
                         aria-valuemax={12}
-                        aria-label={`Current: ${currentA.toFixed(1)} A`}
+                        aria-label={currentA === null ? `${charger.chargerId} current unavailable` : `${charger.chargerId} current: ${currentA.toFixed(1)} A`}
                       />
                     </div>
                   </div>
@@ -407,7 +435,7 @@ export default function OverviewPage() {
                   <div className="pt-3 mt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500 font-mono">
                     <span className="flex items-center gap-1">
                       <Clock size={11} />
-                      {charger.telemetry?.lastSeenAt
+                      {isStale ? 'Stale >60s' : charger.telemetry?.lastSeenAt
                         ? new Date(charger.telemetry.lastSeenAt).toLocaleTimeString()
                         : 'No signal'}
                     </span>

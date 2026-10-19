@@ -20,6 +20,7 @@ export interface TelemetryReading {
     chargerId: string;
   };
   currentA?: number;
+  temperatureC?: number;
   chargingState?: 'CHARGING' | 'IDLE' | 'FAULT' | 'AVAILABLE' | 'UNPLUGGED' | string;
   faultCode?: string;
   sourceEnergyKWh?: number;
@@ -48,6 +49,7 @@ export interface Incident {
   status: 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVING' | 'RESOLVED';
   detectedAt: string;
   acknowledgedAt?: string;
+  recoveryTelemetryAt?: string;
   resolvedAt?: string;
   synthetic?: boolean;
   evidence?: Array<{ type: string; detail: string; faultCode?: string }>;

@@ -75,3 +75,16 @@ test('shutdown is safe when enabled without any datagrams and when called again'
   await obs.onModuleDestroy();
   await obs.onModuleDestroy();
 });
+
+test('incident correlation accepts generated demo context but rejects arbitrary identifiers',async()=>{
+  const folder=await mkdtemp(join(tmpdir(),'chargeguard-correlation-'));const path=join(folder,'api.jsonl');
+  const obs=new ObservabilityService({enabled:false,port:8125,env:'test',stdout:false,logFile:path});
+  try {
+    obs.accepted({...event,eventId:'b2-58a1983cae09-100-1'},false);
+    obs.record('info','demo.action',{incident_id:'private-secret',demo_id:'private-secret',charger_id:'private-secret',station_id:'private-secret'});
+    const raw=await readFile(path,'utf8');assert.equal(raw.includes('private-secret'),false);
+    const records=raw.trim().split('\n').map(line=>JSON.parse(line));
+    const fault=records.find(record=>record.message==='fault.simulated');
+    assert.equal(fault.incident_id,'demo-58a1983cae09');assert.equal(fault.demo_id,'58a1983cae09');assert.equal(fault.charger_id,'demo-charger-01');
+  } finally {await obs.onModuleDestroy();await rm(folder,{recursive:true,force:true});}
+});

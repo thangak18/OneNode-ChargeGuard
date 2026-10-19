@@ -58,6 +58,7 @@ export function Navbar({ onRefresh, isRefreshing, lastUpdated }: NavbarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
+                  aria-current={active ? 'page' : undefined}
                   className={`relative inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-cyan-500 outline-none ${
                     active
                       ? 'bg-slate-800/90 text-cyan-400 border border-slate-700/80 shadow-sm shadow-cyan-950/20'
@@ -109,7 +110,9 @@ export function Navbar({ onRefresh, isRefreshing, lastUpdated }: NavbarProps) {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-slate-200 transition-colors"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
+              className="lg:hidden inline-flex items-center justify-center p-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 outline-none"
               aria-label="Toggle navigation"
             >
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
@@ -118,29 +121,33 @@ export function Navbar({ onRefresh, isRefreshing, lastUpdated }: NavbarProps) {
         </div>
 
         {/* Mobile Nav Drawer */}
-        {mobileOpen && (
-          <nav className="lg:hidden py-3 border-t border-slate-800/80 space-y-1 animate-in" aria-label="Mobile Navigation">
-            {navLinks.map((link) => {
-              const active = pathname === link.href;
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    active
-                      ? 'text-cyan-400 bg-slate-800/60 border border-slate-700/50'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
-                  }`}
-                >
-                  <Icon size={16} />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+        <nav
+          id="mobile-navigation"
+          hidden={!mobileOpen}
+          className="lg:hidden py-3 border-t border-slate-800/80 space-y-1 animate-in"
+          aria-label="Mobile Navigation"
+        >
+          {navLinks.map((link) => {
+            const active = pathname === link.href;
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 outline-none ${
+                  active
+                    ? 'text-cyan-400 bg-slate-800/60 border border-slate-700/50'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                }`}
+              >
+                <Icon size={16} />
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );

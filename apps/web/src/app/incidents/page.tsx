@@ -50,12 +50,8 @@ function IncidentsContent() {
         // live across polls, without overriding a manual selection.
         const currentId = selectedRef.current?._id ?? selectedParam;
         if (currentId && incs.some((i) => i._id === currentId)) {
-          try {
-            const detail = await api.getIncident(currentId);
-            setSelectedIncident(detail);
-          } catch {
-            // best-effort refresh; the queue still updates
-          }
+          const detail = await api.getIncident(currentId);
+          setSelectedIncident(detail);
         } else if (!autoSelectedRef.current && incs.length > 0) {
           // First load only: auto-select the most recent incident.
           autoSelectedRef.current = true;
@@ -138,7 +134,7 @@ function IncidentsContent() {
               Incident Management & Response Queue
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Full lifecycle tracking: DETECT → INVESTIGATE → RESOLVE with immutable audit actions in MongoDB
+              Full lifecycle tracking: DETECT → INVESTIGATE → RESOLVE with append-only API audit actions in MongoDB
             </p>
           </div>
 
@@ -153,7 +149,7 @@ function IncidentsContent() {
 
         {/* Feedback alerts */}
         {actionSuccess && (
-          <div className="p-3 rounded-lg bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between">
+          <div role="status" className="p-3 rounded-lg bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between">
             <span className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
               {actionSuccess}
@@ -165,7 +161,7 @@ function IncidentsContent() {
         )}
 
         {error && (
-          <div className="p-3 rounded-lg bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
+          <div role="alert" className="p-3 rounded-lg bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
             <span className="flex items-center gap-2">
               <AlertTriangle size={16} className="text-rose-400 shrink-0" />
               {error}
@@ -188,6 +184,7 @@ function IncidentsContent() {
               <button
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
+                aria-pressed={active}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 shrink-0 flex items-center gap-1.5 ${
                   active
                     ? 'bg-slate-800 text-cyan-400 border border-slate-700 shadow-sm'
@@ -219,10 +216,12 @@ function IncidentsContent() {
               filteredIncidents.map((inc) => {
                 const active = selectedIncident?._id === inc._id;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={inc._id}
                     onClick={() => selectIncident(inc._id)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                    aria-pressed={active}
+                    className={`w-full text-left p-4 rounded-lg border transition-all focus-visible:ring-2 focus-visible:ring-cyan-500 outline-none ${
                       active
                         ? 'bg-slate-900 border-cyan-500 shadow-sm shadow-cyan-950/40'
                         : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
@@ -242,7 +241,7 @@ function IncidentsContent() {
                         {new Date(inc.detectedAt).toLocaleTimeString()}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
@@ -277,9 +276,7 @@ function IncidentsContent() {
                       </button>
                     )}
 
-                    {(selectedIncident.status === 'OPEN' ||
-                      selectedIncident.status === 'ACKNOWLEDGED' ||
-                      selectedIncident.status === 'RESOLVING') && (
+                    {selectedIncident.status === 'RESOLVING' && selectedIncident.recoveryTelemetryAt && (
                       <button
                         onClick={handleResolve}
                         disabled={actionLoading}
@@ -307,7 +304,7 @@ function IncidentsContent() {
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
                     <ShieldCheck size={14} className="text-cyan-400" />
-                    Immutable Investigation Action Timeline
+                    Incident Audit Action Timeline
                   </h3>
 
                   <div className="space-y-3 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-800">
@@ -353,8 +350,9 @@ function IncidentsContent() {
                     {selectedIncident.resolvedAt && (
                       <div>Resolved At: <span className="text-emerald-400">{new Date(selectedIncident.resolvedAt).toISOString()}</span></div>
                     )}
-                    <div>Telemetry State: <span className="text-rose-400">FAULT (Current = 0 A)</span></div>
-                    <div>Fault Code: <span className="text-rose-400">SIMULATED_DEMO_FAULT</span></div>
+                    <div>Telemetry State: <span className="text-rose-400">Synthetic FAULT (Current = 0 A)</span></div>
+                    <div>Fault Code: <span className="text-rose-400">{selectedIncident.evidence?.[0]?.faultCode ?? 'Unavailable'}</span></div>
+                    <div className="font-sans text-slate-400">{selectedIncident.evidence?.[0]?.detail ?? 'No diagnostic evidence recorded.'}</div>
                   </div>
                 </div>
               </div>

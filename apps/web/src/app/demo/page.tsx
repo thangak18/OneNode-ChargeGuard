@@ -34,6 +34,7 @@ export default function DemoPage() {
       try {
         const inc = await api.getIncident(activeIncidentId);
         setActiveIncident(inc);
+        setError(null);
         if (inc.status === 'RESOLVED') {
           setStep(4);
         } else if (inc.status === 'RESOLVING') {
@@ -42,7 +43,7 @@ export default function DemoPage() {
           setStep(2);
         }
       } catch {
-        // ignore polling errors
+        setError('Unable to refresh the active incident. Check the API connection and retry.');
       }
     }, 4000);
     return () => clearInterval(interval);
@@ -67,11 +68,17 @@ export default function DemoPage() {
   const handleAcknowledge = async () => {
     if (!activeIncidentId) return;
     setLoading(true);
+    setError(null);
+    setStatusMessage(null);
     try {
       await api.acknowledgeIncident(activeIncidentId, 'hackathon-judge');
       setStatusMessage(`Incident ${activeIncidentId} acknowledged by operator.`);
-      const inc = await api.getIncident(activeIncidentId);
-      setActiveIncident(inc);
+      try {
+        const inc = await api.getIncident(activeIncidentId);
+        setActiveIncident(inc);
+      } catch (err: unknown) {
+        setError(`Acknowledgement was recorded, but incident details could not be refreshed: ${errorMessage(err, 'refresh failed')}`);
+      }
     } catch (err: unknown) {
       setError(errorMessage(err, 'Failed to acknowledge incident'));
     } finally {
@@ -82,12 +89,18 @@ export default function DemoPage() {
   const handleRecover = async () => {
     if (!activeIncidentId) return;
     setLoading(true);
+    setError(null);
+    setStatusMessage(null);
     try {
       const res = await api.recoverFault(activeIncidentId);
       setStep(3);
       setStatusMessage(res.message);
-      const inc = await api.getIncident(activeIncidentId);
-      setActiveIncident(inc);
+      try {
+        const inc = await api.getIncident(activeIncidentId);
+        setActiveIncident(inc);
+      } catch (err: unknown) {
+        setError(`Recovery telemetry was submitted, but incident details could not be refreshed: ${errorMessage(err, 'refresh failed')}`);
+      }
     } catch (err: unknown) {
       setError(errorMessage(err, 'Failed to send recovery telemetry'));
     } finally {
@@ -98,12 +111,18 @@ export default function DemoPage() {
   const handleResolve = async () => {
     if (!activeIncidentId) return;
     setLoading(true);
+    setError(null);
+    setStatusMessage(null);
     try {
       await api.resolveIncident(activeIncidentId, 'hackathon-judge');
       setStep(4);
       setStatusMessage(`Incident ${activeIncidentId} resolved and lifecycle closed with audit evidence.`);
-      const inc = await api.getIncident(activeIncidentId);
-      setActiveIncident(inc);
+      try {
+        const inc = await api.getIncident(activeIncidentId);
+        setActiveIncident(inc);
+      } catch (err: unknown) {
+        setError(`Incident resolution was recorded, but incident details could not be refreshed: ${errorMessage(err, 'refresh failed')}`);
+      }
     } catch (err: unknown) {
       setError(errorMessage(err, 'Failed to resolve incident'));
     } finally {
@@ -113,6 +132,8 @@ export default function DemoPage() {
 
   const handleReset = async () => {
     setLoading(true);
+    setError(null);
+    setStatusMessage(null);
     try {
       const res = await api.resetBaseline();
       if (!res.success) throw new Error(res.message || 'The API did not confirm the baseline reset.');
@@ -171,7 +192,7 @@ export default function DemoPage() {
 
         {/* Status Alerts */}
         {statusMessage && (
-          <div className="p-3.5 rounded-lg bg-cyan-950/70 border border-cyan-800 text-cyan-200 text-xs flex items-center justify-between">
+          <div role="status" className="p-3.5 rounded-lg bg-cyan-950/70 border border-cyan-800 text-cyan-200 text-xs flex items-center justify-between">
             <span className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-cyan-400 shrink-0" />
               {statusMessage}
@@ -183,7 +204,7 @@ export default function DemoPage() {
         )}
 
         {error && (
-          <div className="p-3.5 rounded-lg bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
+          <div role="alert" className="p-3.5 rounded-lg bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
             <span className="flex items-center gap-2">
               <AlertOctagon size={16} className="text-rose-400 shrink-0" />
               {error}
@@ -305,12 +326,16 @@ export default function DemoPage() {
                 onChange={(e) => setScenario(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
-                <option value="SIM_OVERHEAT">SIM_OVERHEAT (Synthetic Temperature Over-Threshold)</option>
-                <option value="SIM_POWER_LOSS">SIM_POWER_LOSS (Unexpected Current Loss / Zero A)</option>
-                <option value="SIM_HARDWARE_FAULT">SIM_HARDWARE_FAULT (EVSE Internal Circuit Fault)</option>
+                <option value="SIM_OVERHEAT">SIM_OVERHEAT (Synthetic 72 °C stimulus; illustrative only)</option>
+                <option value="SIM_POWER_LOSS">SIM_POWER_LOSS (Synthetic zero-current signal)</option>
+                <option value="SIM_HARDWARE_FAULT">SIM_HARDWARE_FAULT (Synthetic generic fault signal)</option>
               </select>
             </div>
           </div>
+          <p className="text-[11px] text-slate-400">
+            Every scenario emits a synthetic zero-current fault event. Only SIM_OVERHEAT adds a 72 °C synthetic
+            stimulus; the Datadog monitor counts simulated fault events, not a temperature safety threshold.
+          </p>
 
           {/* Action Trigger Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -333,7 +358,7 @@ export default function DemoPage() {
               </button>
             )}
 
-            {activeIncident && (activeIncident.status === 'OPEN' || activeIncident.status === 'ACKNOWLEDGED') && (
+            {activeIncident && (activeIncident.status === 'ACKNOWLEDGED' || (activeIncident.status === 'RESOLVING' && !activeIncident.recoveryTelemetryAt)) && (
               <button
                 onClick={handleRecover}
                 disabled={loading}
@@ -344,7 +369,7 @@ export default function DemoPage() {
               </button>
             )}
 
-            {activeIncident && activeIncident.status === 'RESOLVING' && (
+            {activeIncident && activeIncident.status === 'RESOLVING' && activeIncident.recoveryTelemetryAt && (
               <button
                 onClick={handleResolve}
                 disabled={loading}

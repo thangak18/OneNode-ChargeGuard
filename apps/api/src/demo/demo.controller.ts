@@ -18,8 +18,8 @@ export class DemoController {
 
   @Post('recover')
   @ApiOperation({ summary: 'Send recovery telemetry for active synthetic incident' })
-  recover(@Body() body: { incidentId: string }) {
-    return this.demo.recover(body.incidentId);
+  recover(@Body() body?: { incidentId?: unknown }) {
+    return this.demo.recover(body?.incidentId);
   }
 
   @Post('reset')

@@ -66,6 +66,39 @@ An application-scoped HTTPS transport is an alternative for ChargeGuard-only san
 
 Preparation checks: 42 API unit, 13 integration and 5 web policy tests; API typecheck/build, web lint/typecheck/build passed with Node 24. Focused tests cover hosted binding, deferred database startup, Render public liveness without private data, private API service authentication, unconditional write denial, and rejection of local observability sinks on Render. Blueprint validation returned valid=true for one Free web service.
 
-Pending live verification: actual Render service/URL, CIDRs, Atlas TLS/auth/ping/readiness, BFF switch, UI data, OAuth regression after the switch, real cold-start measurements and production Datadog intake. A Render Live label or /healthz=200 does not complete these checks.
+The actual service/URL, Free Singapore plan, Live deployment and shared CIDRs are recorded below. Atlas TLS/auth/ping/readiness, BFF switch, UI data, OAuth regression after the switch, real cold-start measurements and production Datadog intake remain pending. A Render Live label or /healthz=200 does not complete these checks.
 
 Stop at the Atlas approval gate. Do not add, remove or replace any network entry without the owner's explicit approval of the displayed actual ranges and risk.
+
+
+## Actual service and explicit Atlas decision — 2026-10-21
+
+- Service: [chargeguard-api-m9ji.onrender.com](https://chargeguard-api-m9ji.onrender.com).
+- [Render Dashboard](https://dashboard.render.com/web/srv-dbcc2rd9fdbs73chm9e0), service `srv-dbcc2rd9fdbs73chm9e0`.
+- Actual plan/region: **Free / Singapore**. Initial deployment is **Live**, source `693de56854da84ec96259b56ebaaceabdaf1ad48`, auto-deploy **off**. The first deploy took 56.2 seconds in the UI; that is deployment time, not an idle cold-start measurement.
+- Workspace Hobby, no payment method and $0 service charges were observed before creation. Two other existing Free services were left untouched. No card, paid instance, disk, dedicated IP or other paid feature was added.
+- `/healthz` GET: 200 with only the status field. POST: 403.
+- Private `/api/v1/health/live`: 401 without service key, 200 with it.
+- Unauthenticated charger read: 401. Telemetry POST: 403. Fault POST even with read key: 403. Swagger: 404.
+- No authorized database-dependent request was made: Atlas TLS/auth/ping/readiness/data reads wait for approval. The BFF origin remains the previous Vercel backend. The online application is **not declared functional through Render**.
+
+Actual assigned shared outbound ranges, read from the authenticated Render API and cross-checked in Connect:
+
+| Proposed addition | Full IPv4 addresses |
+| --- | ---: |
+| 74.220.52.0/24 | 256 |
+| 74.220.60.0/24 | 256 |
+| **Distinct total** | **512** |
+
+Counts include every address in each CIDR, not just conventional usable host counts, and do not count machines or customers. The ranges do not overlap.
+
+Proposed action for approval: **add only these two entries to the existing Atlas project's IP Access List, retain every existing entry, and use the comment `ChargeGuard Render Free SG (shared)`. No automatic expiry is proposed; later removal remains an owner decision. Do not remove/replace entries, use an all-address range, change TLS, credentials or privileges.** No Atlas entry has been changed.
+
+These ranges are shared with other Render services in the region and are not exclusive to this service or workspace. Any workload using an address in the approved ranges passes the IP-filter layer; valid MongoDB authentication and TLS are still required. Free does not guarantee an exclusive narrower egress address. Using one currently reflected /32 instead of the assigned ranges is not a reliable replacement. Dedicated IPs require a paid workspace/add-on and were not enabled.
+
+512 shared addresses materially expand the network trust boundary relative to exact private-application /32 rules. If the owner requires exclusive /32 egress, this Free option does not meet that requirement; stop the Atlas change and prefer an already-approved fixed-egress private VM or separately reviewed hosting alternative. No paid migration is authorized automatically.
+
+**Owner approval is pending. Work stops at this gate.** [Sanitized machine-readable evidence](evidence/render-atlas-approval-gate.json) contains the service, assigned CIDRs, test results and unperformed checks. The pinned Phase D JSON remains byte-identical to the starting commit. OAuth source/configuration is unchanged, but a new full live OAuth regression after the future BFF switch has not been claimed.
+
+
+Pre-gate Vercel preservation checks: `/history` 404, `/api/historical` 403, GitHub provider endpoint 200 and fresh anonymous session endpoint 200. These establish production route protection/provider availability, not a new authenticated login/logout regression. The full OAuth lifecycle will be retested after the future BFF switch if approved.

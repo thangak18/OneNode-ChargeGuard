@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-21",
+  "gate": "ATLAS_NETWORK_APPROVAL_REQUIRED",
+  "approvalStatus": "PENDING",
+  "startingCommit": "12f2e84f1c0807f4c06486446154b2e0086f2dac",
+  "service": {
+    "id": "srv-dbcc2rd9fdbs73chm9e0",
+    "name": "chargeguard-api",
+    "url": "https://chargeguard-api-m9ji.onrender.com",
+    "plan": "free",
+    "region": "singapore",
+    "rootDir": "apps/api",
+    "repo": "https://github.com/thangak18/OneNode-ChargeGuard",
+    "branch": "main",
+    "autoDeployTrigger": "off",
+    "initialDeployId": "dep-dbcc2rt9fdbs73chmagg"
+  },
+  "deployment": {
+    "status": "live",
+    "id": "dep-dbcc2rt9fdbs73chmagg",
+    "commit": "693de56854da84ec96259b56ebaaceabdaf1ad48"
+  },
+  "networkSource": "Authenticated Render GET /v1/services/{serviceId}/outbound-ips, cross-checked in Connect UI",
+  "outboundType": "shared",
+  "proposedAdditions": [
+    {
+      "cidr": "74.220.52.0/24",
+      "addressCount": 256
+    },
+    {
+      "cidr": "74.220.60.0/24",
+      "addressCount": 256
+    }
+  ],
+  "distinctAddressCount": 512,
+  "proposal": {
+    "addOnlyListedRanges": true,
+    "retainAllExistingAtlasEntries": true,
+    "removeOrReplaceEntries": false,
+    "allowAllInternet": false,
+    "sharedWithOtherRenderServices": true,
+    "exclusiveEgressAvailableWithinZeroBudget": false,
+    "atlasChangesPerformed": false,
+    "comment": "ChargeGuard Render Free SG (shared)",
+    "automaticExpiryProposed": false
+  },
+  "budget": {
+    "servicePlan": "free",
+    "region": "singapore",
+    "workspaceHobbyObserved": true,
+    "noPaymentMethodObserved": true,
+    "otherExistingFreeServices": 2,
+    "paidFeaturesEnabled": false,
+    "newPaymentMethodAdded": false
+  },
+  "httpChecks": [
+    {
+      "path": "/healthz",
+      "method": "GET",
+      "readKeySupplied": false,
+      "status": 200,
+      "livenessBodyOnlyStatus": true
+    },
+    {
+      "path": "/healthz",
+      "method": "POST",
+      "readKeySupplied": false,
+      "status": 403
+    },
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "readKeySupplied": false,
+      "status": 401
+    },
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "readKeySupplied": true,
+      "status": 200
+    },
+    {
+      "path": "/api/v1/chargers",
+      "method": "GET",
+      "readKeySupplied": false,
+      "status": 401
+    },
+    {
+      "path": "/api/v1/telemetry",
+      "method": "POST",
+      "readKeySupplied": false,
+      "status": 403
+    },
+    {
+      "path": "/api/v1/demo/trigger-fault",
+      "method": "POST",
+      "readKeySupplied": true,
+      "status": 403
+    },
+    {
+      "path": "/docs",
+      "method": "GET",
+      "readKeySupplied": false,
+      "status": 404
+    }
+  ],
+  "notVerifiedBeforeApproval": [
+    "Atlas TLS",
+    "MongoDB authentication",
+    "MongoDB ping",
+    "authenticated database readiness",
+    "synthetic charger reads",
+    "Vercel BFF to Render switch",
+    "browser data rendering through Render",
+    "OAuth regression after origin switch",
+    "actual idle cold start",
+    "Datadog production intake"
+  ],
+  "tests": {
+    "nodeMajor": 24,
+    "apiUnit": 42,
+    "apiIntegration": 13,
+    "webPolicy": 5,
+    "apiTypecheckAndBuild": true,
+    "webLintTypecheckAndBuild": true,
+    "renderBlueprintValidation": true
+  },
+  "preservation": {
+    "phaseDEvidenceBytesUnchanged": true,
+    "oauthApplicationFilesUnchanged": true,
+    "vercelBffOriginChanged": false,
+    "rawAcnUploaded": false,
+    "localEnvCommitted": false,
+    "databasePrivilegesChanged": false,
+    "credentialsReset": false,
+    "tlsVerificationDisabled": false
+  },
+  "vercelPreservationChecks": [
+    {
+      "path": "/history",
+      "status": 404
+    },
+    {
+      "path": "/api/historical",
+      "status": 403
+    },
+    {
+      "path": "/api/auth/providers",
+      "status": 200,
+      "githubProviderAvailable": true
+    },
+    {
+      "path": "/api/auth/session",
+      "status": 200,
+      "anonymousSessionOnly": true,
+      "responseIsAnonymous": true
+    }
+  ]
+}

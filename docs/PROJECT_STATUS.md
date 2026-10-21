@@ -131,3 +131,8 @@ DNS SRV/TXT and TCP pass on all three Atlas nodes from Vercel, while default TLS
 ## Render Free migration preparation — 2026-10-21
 
 The owner selected a Singapore Render Free backend with the existing Vercel frontend/OAuth and Atlas Free cluster. Hosted runtime preparation preserves read-only security and adds only a non-sensitive Render platform liveness path. No Atlas entry or BFF origin is changed before the actual service CIDRs are explicitly approved. See [migration settings, budget, tests and approval gate](RENDER_MIGRATION.md).
+
+
+### Render service created — Atlas approval pending
+
+The Free Singapore service [chargeguard-api-m9ji.onrender.com](https://chargeguard-api-m9ji.onrender.com) is Live on source `693de56`; liveness and read-only access controls passed HTTP checks. Its assigned shared egress ranges are `74.220.52.0/24` and `74.220.60.0/24` (512 distinct addresses). No Atlas rule or Vercel BFF origin has changed. Database connectivity and end-to-end functionality are not verified; work stops for explicit owner approval. [Decision details and evidence](RENDER_MIGRATION.md).

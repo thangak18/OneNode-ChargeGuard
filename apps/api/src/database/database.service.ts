@@ -1,3 +1,4 @@
+import { isHostedRuntime } from '../config/runtime';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { Collection, Db, MongoClient } from 'mongodb';
 import { AppConfig } from '../config/config';
@@ -11,9 +12,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly settings: AppConfig) {}
 
   async onModuleInit(): Promise<void> {
-    // Vercel must bind its listener before slow network initialization.
+    // Hosted services bind before slow network initialization; readiness stays explicit.
     // Authorized requests retry through the readiness middleware.
-    if (process.env.VERCEL !== '1') await this.connect();
+    if (!isHostedRuntime(process.env)) await this.connect();
   }
 
   private async connect(): Promise<void> {

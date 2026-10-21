@@ -25,3 +25,15 @@ test('production denies mutations even with valid service key and hides Swagger'
   const res=await request(app).get('/api/v1/chargers').set('Origin','https://untrusted.example');
   assert.equal(res.headers['access-control-allow-origin'],undefined);
 });
+
+test('Render locks writes even without NODE_ENV and exposes only non-sensitive platform liveness',async()=>{
+  assert.throws(()=>deploymentPolicy({RENDER:'true'}),/BFF_READ_API_KEY/);
+  const app=express();app.use(deploymentPolicy({RENDER:'true',BFF_READ_API_KEY:key}));
+  app.all('/api/v1/chargers',(_req,res)=>res.json({ok:true}));
+  await request(app).get('/healthz').expect(200).expect({status:'ok'});
+  await request(app).head('/healthz').expect(200);
+  await request(app).post('/healthz').expect(403);
+  await request(app).get('/api/v1/chargers').expect(401);
+  await request(app).post('/api/v1/chargers').set('x-chargeguard-read-key',key).expect(403);
+  await request(app).get('/api/v1/chargers').set('x-chargeguard-read-key',key).expect(200);
+});

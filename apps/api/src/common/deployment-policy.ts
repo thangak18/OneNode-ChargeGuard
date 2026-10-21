@@ -1,9 +1,10 @@
+import { isHostedRuntime } from '../config/runtime';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 
 /** Production Stage A: service-authenticated reads only, independent of the UI. */
 export function deploymentPolicy(env: NodeJS.ProcessEnv) {
-  const restricted = env.NODE_ENV === 'production' || env.VERCEL === '1';
+  const restricted = env.NODE_ENV === 'production' || isHostedRuntime(env);
   const key = env.BFF_READ_API_KEY;
   if (restricted && (!key || key.length < 32)) throw new Error('BFF_READ_API_KEY is required (minimum 32 characters).');
   const digest = (value: string) => createHash('sha256').update(value).digest();
@@ -16,6 +17,11 @@ export function deploymentPolicy(env: NodeJS.ProcessEnv) {
     }
     if (!['GET', 'HEAD'].includes(req.method)) {
       res.status(403).json({message: 'This deployment is read-only.'}); return;
+    }
+    // Render's unauthenticated platform probe exposes no database or configuration data.
+    // Write denial above also applies to this path. API health/readiness remain private.
+    if (env.RENDER === 'true' && req.path === '/healthz') {
+      res.status(200).json({status:'ok'}); return;
     }
     const supplied = req.headers['x-chargeguard-read-key'];
     if (typeof supplied !== 'string' || !timingSafeEqual(digest(key!), digest(supplied))) {

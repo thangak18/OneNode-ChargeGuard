@@ -1,3 +1,4 @@
+import { isHostedRuntime } from '../config/runtime';
 import { Controller, Get, Inject, NotFoundException } from '@nestjs/common';
 import { APP_CONFIG } from '../config/tokens';
 import type { AppConfig } from '../config/config';
@@ -11,7 +12,7 @@ export class AtlasDiagnosticsController {
   @Get('atlas-diagnostics')
   async inspect() {
     const until=Date.parse(process.env.ATLAS_DIAGNOSTICS_UNTIL??'');
-    if(process.env.VERCEL!=='1' || process.env.ATLAS_DIAGNOSTICS_ENABLED!=='true' || !Number.isFinite(until) || until<=Date.now() || until-Date.now()>30*60*1000)throw new NotFoundException();
+    if(!isHostedRuntime(process.env) || process.env.ATLAS_DIAGNOSTICS_ENABLED!=='true' || !Number.isFinite(until) || until<=Date.now() || until-Date.now()>30*60*1000)throw new NotFoundException();
     if(this.cached && Date.now()-this.cached.at<60000)return this.cached.value;
     if(!this.pending)this.pending=diagnoseAtlas(this.config).then(value=>{this.cached={at:Date.now(),value};return value;}).finally(()=>{this.pending=undefined;});
     return this.pending;

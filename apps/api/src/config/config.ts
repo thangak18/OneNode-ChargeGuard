@@ -1,3 +1,4 @@
+import { isHostedRuntime } from './runtime';
 import { resolve } from 'node:path';
 import { config as readDotEnv } from 'dotenv';
 import { z } from 'zod';
@@ -14,7 +15,7 @@ export type AppConfig = {
 
 export function loadLocalEnv(): void {
   // Commands execute from apps/api; always use the repository root .env.
-  if (process.env.VERCEL !== '1') readDotEnv({ path: resolve(__dirname, '../../../../.env'), quiet: true });
+  if (!isHostedRuntime(process.env)) readDotEnv({ path: resolve(__dirname, '../../../../.env'), quiet: true });
   // Opt-in DNS override for SRV queries on mobile hotspots returning EBADRESP.
   // In-process only: never changes OS DNS or Atlas network-access rules.
   const override=process.env.MONGODB_DNS_SERVERS;
@@ -45,6 +46,7 @@ export function validateConfig(env: NodeJS.ProcessEnv): AppConfig {
       ['tlsInsecure', 'tlsAllowInvalidCertificates', 'tlsAllowInvalidHostnames'].some(key => url.searchParams.get(key)?.toLowerCase() === 'true')) {
     throw new Error('TLS validation cannot be disabled.');
   }
+  if (isHostedRuntime(env) && nodeEnv !== 'production') throw new Error('Hosted runtimes require NODE_ENV=production.');
   if (nodeEnv !== 'test' && !ingestApiKey) throw new Error('INGEST_API_KEY must be configured for the API.');
   return { mongoUri: uri, mongoDatabase: database, port, nodeEnv, ingestApiKey };
 }

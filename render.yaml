@@ -1,0 +1,33 @@
+# Explicit Free compute only. No datastore, disk, cron, paid networking or seed hook.
+services:
+  - type: web
+    name: chargeguard-api
+    runtime: node
+    plan: free
+    region: singapore
+    repo: https://github.com/thangak18/OneNode-ChargeGuard
+    branch: main
+    rootDir: apps/api
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --include=dev && npm run build && npm prune --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.22.0
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "true"
+      - key: MONGODB_DATABASE
+        value: chargeguard
+      - key: MONGODB_URI
+        sync: false
+      - key: INGEST_API_KEY
+        sync: false
+      - key: BFF_READ_API_KEY
+        sync: false
+      - key: DD_ENV
+        value: prod
+      - key: DD_METRICS_ENABLED
+        value: "false"

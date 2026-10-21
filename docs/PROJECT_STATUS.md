@@ -126,3 +126,8 @@ GitHub owner login completed and the browser's session endpoint contained user/e
 ## Atlas transport audit — 2026-10-21
 
 DNS SRV/TXT and TCP pass on all three Atlas nodes from Vercel, while default TLS and TLS 1.2 both fail with an internal TLS alert before authentication. Atlas has three exact IPv4 rules; observed function HTTPS egress matches none. This is a verified network-policy mismatch and a strong explanation, not a proven server-side cause for the TLS alert. Cloud readiness and charger reads remain 503. No TLS bypass, Atlas rule edit, privilege change, paid feature or provider migration was performed. Temporary diagnostics were disabled after collection; Phase D evidence is unchanged. See [full evidence, limits, free/low-cost options and owner decisions](ATLAS_CLOUD_CONNECTIVITY.md).
+
+
+## Render Free migration preparation — 2026-10-21
+
+The owner selected a Singapore Render Free backend with the existing Vercel frontend/OAuth and Atlas Free cluster. Hosted runtime preparation preserves read-only security and adds only a non-sensitive Render platform liveness path. No Atlas entry or BFF origin is changed before the actual service CIDRs are explicitly approved. See [migration settings, budget, tests and approval gate](RENDER_MIGRATION.md).

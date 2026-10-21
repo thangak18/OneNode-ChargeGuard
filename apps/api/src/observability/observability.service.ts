@@ -1,3 +1,4 @@
+import { isHostedRuntime } from '../config/runtime';
 import { LoggerService, OnModuleDestroy } from '@nestjs/common';
 import { createSocket, Socket } from 'node:dgram';
 import { appendFileSync, existsSync, mkdirSync, renameSync, statSync } from 'node:fs';
@@ -10,7 +11,7 @@ const chargers = new Set(Array.from({length:5},(_,i)=>`demo-charger-${String(i+1
 export const states = ['AVAILABLE','CHARGING','NOT_CHARGING','IDLE','FAULT','OFFLINE'] as const;
 export type ObsConfig = {enabled:boolean; port:number; env:string; logFile?:string; stdout:boolean};
 export function observabilityConfig(env:NodeJS.ProcessEnv):ObsConfig {
-  if (env.VERCEL === '1' && (env.DD_METRICS_ENABLED === 'true' || env.CHARGEGUARD_LOG_FILE)) throw new Error('Local Agent and file logging are unavailable on Vercel; use stdout and an approved cloud integration.');
+  if (isHostedRuntime(env) && (env.DD_METRICS_ENABLED === 'true' || env.CHARGEGUARD_LOG_FILE)) throw new Error('Local Agent and file logging are unavailable on hosted runtimes; use stdout and an approved cloud integration.');
   const result=z.object({
     DD_METRICS_ENABLED:z.enum(['true','false']).default('false'),
     DD_DOGSTATSD_PORT:z.coerce.number().int().min(1).max(65535).default(8125),

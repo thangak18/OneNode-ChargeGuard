@@ -36,3 +36,27 @@ test('production Nest bootstrap enforces auth before DB and keeps liveness avail
     for(const [key,value] of Object.entries(previous)) if(value===undefined)delete process.env[key];else process.env[key]=value;
   }
 });
+
+test('Render bootstrap keeps private reads gated and platform liveness independent of Atlas',async()=>{
+  const keys=['NODE_ENV','VERCEL','RENDER','BFF_READ_API_KEY'];
+  const previous=Object.fromEntries(keys.map(key=>[key,process.env[key]]));
+  Object.assign(process.env,{NODE_ENV:'production',RENDER:'true',BFF_READ_API_KEY:'integration-render-read-key-0123456789'});delete process.env.VERCEL;
+  let calls=0;
+  const module=await Test.createTestingModule({controllers:[HealthController],providers:[
+    {provide:DatabaseService,useValue:{ping:async()=>{calls++;return false;}}},
+    {provide:ObservabilityService,useValue:{record:()=>{},ingestionRequest:()=>{}}},
+  ]}).compile();
+  const app=configureApplication(module.createNestApplication());
+  try {
+    await app.init();const server=app.getHttpServer();
+    await request(server).get('/healthz').expect(200).expect({status:'ok'});
+    await request(server).post('/healthz').expect(403);
+    await request(server).get('/api/v1/chargers').expect(401);
+    await request(server).post('/api/v1/demo/reset').expect(403);
+    assert.equal(calls,0);
+    await request(server).get('/api/v1/health/ready').set('x-chargeguard-read-key','integration-render-read-key-0123456789').expect(503);
+    assert.equal(calls,1);
+  } finally {
+    await app.close();for(const key of keys)if(previous[key]===undefined)delete process.env[key];else process.env[key]=previous[key];
+  }
+});

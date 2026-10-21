@@ -92,13 +92,18 @@ Actual assigned shared outbound ranges, read from the authenticated Render API a
 
 Counts include every address in each CIDR, not just conventional usable host counts, and do not count machines or customers. The ranges do not overlap.
 
-Proposed action for approval: **add only these two entries to the existing Atlas project's IP Access List, retain every existing entry, and use the comment `ChargeGuard Render Free SG (shared)`. No automatic expiry is proposed; later removal remains an owner decision. Do not remove/replace entries, use an all-address range, change TLS, credentials or privileges.** No Atlas entry has been changed.
+Rejected proposal (retained as historical context): **add only these two entries to the existing Atlas project's IP Access List, retain every existing entry, and use the comment `ChargeGuard Render Free SG (shared)`. No automatic expiry is proposed; later removal remains an owner decision. Do not remove/replace entries, use an all-address range, change TLS, credentials or privileges.** No Atlas entry has been changed.
 
 These ranges are shared with other Render services in the region and are not exclusive to this service or workspace. Any workload using an address in the approved ranges passes the IP-filter layer; valid MongoDB authentication and TLS are still required. Free does not guarantee an exclusive narrower egress address. Using one currently reflected /32 instead of the assigned ranges is not a reliable replacement. Dedicated IPs require a paid workspace/add-on and were not enabled.
 
 512 shared addresses materially expand the network trust boundary relative to exact private-application /32 rules. If the owner requires exclusive /32 egress, this Free option does not meet that requirement; stop the Atlas change and prefer an already-approved fixed-egress private VM or separately reviewed hosting alternative. No paid migration is authorized automatically.
 
-**Owner approval is pending. Work stops at this gate.** [Sanitized machine-readable evidence](evidence/render-atlas-approval-gate.json) contains the service, assigned CIDRs, test results and unperformed checks. The pinned Phase D JSON remains byte-identical to the starting commit. OAuth source/configuration is unchanged, but a new full live OAuth regression after the future BFF switch has not been claimed.
+**The owner explicitly rejected these shared CIDRs on 2026-10-21. Atlas remains unchanged and migration stops at this gate.** [Sanitized machine-readable evidence](evidence/render-atlas-approval-gate.json) contains the service, assigned CIDRs, test results and unperformed checks. The pinned Phase D JSON remains byte-identical to the starting commit. OAuth source/configuration is unchanged, but a new full live OAuth regression after the future BFF switch has not been claimed.
 
 
 Pre-gate Vercel preservation checks: `/history` 404, `/api/historical` 403, GitHub provider endpoint 200 and fresh anonymous session endpoint 200. These establish production route protection/provider availability, not a new authenticated login/logout regression. The full OAuth lifecycle will be retested after the future BFF switch if approved.
+
+
+## Owner decision — 2026-10-21
+
+The owner rejected both proposed shared CIDRs and instructed that Atlas remain unchanged. No access-list entry was added, replaced or removed. The Vercel BFF was not switched to Render, and no further Render-to-Atlas connection or end-to-end migration work is authorized under this proposal. No other provider, paid egress or broader range is substituted automatically. The already-created Free Render service was left unchanged; no suspension or deletion was requested. Cloud data functionality remains unverified and blocked. Any alternative network/hosting proposal requires a new explicit owner decision. Phase D evidence, database privileges, credentials, TLS verification and local historical-data isolation remain unchanged.

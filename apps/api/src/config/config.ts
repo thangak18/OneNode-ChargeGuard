@@ -14,7 +14,7 @@ export type AppConfig = {
 
 export function loadLocalEnv(): void {
   // Commands execute from apps/api; always use the repository root .env.
-  readDotEnv({ path: resolve(__dirname, '../../../../.env'), quiet: true });
+  if (process.env.VERCEL !== '1') readDotEnv({ path: resolve(__dirname, '../../../../.env'), quiet: true });
   // Opt-in DNS override for SRV queries on mobile hotspots returning EBADRESP.
   // In-process only: never changes OS DNS or Atlas network-access rules.
   const override=process.env.MONGODB_DNS_SERVERS;

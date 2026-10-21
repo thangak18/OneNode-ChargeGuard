@@ -20,7 +20,7 @@ export function Navbar({ onRefresh, isRefreshing, lastUpdated }: NavbarProps) {
     { href: '/chargers', label: 'Charger Detail', icon: Zap },
     { href: '/incidents', label: 'Incidents', icon: AlertOctagon },
     { href: '/demo', label: 'Demo Controls', icon: Sliders },
-    { href: '/history', label: 'Historical Local', icon: History },
+    ...(process.env.NODE_ENV === 'development' ? [{ href: '/history', label: 'Historical Local', icon: History }] : []),
   ];
 
   return (

@@ -135,3 +135,10 @@ The five sessions share one exported prefix, shown as one local EVSE alias; they
 For a private owner inspection, follow the eight-step [historical walkthrough](HISTORICAL_LOCAL_MODE.md#private-walkthrough-checklist), including the five-session dry-run and two-clock comparison. For submission/video, use the [Vietnamese two-track storyboard](DEMO_VIDEO_STORYBOARD.md) and [presentation outline](PRESENTATION_OUTLINE.md). While source display permissions are pending, show only aggregate historical findings and the isolated architecture; no ACN plots or original rows leave the machine. Synthetic operational footage must be dated and labeled, and the preserved RESOLVED incident must not be reset for recording. Datadog originals need account/host masking and renewed privacy review before external use.
 
 Recording, final slides, dataset permission, official judge accounts/access method, exact trial expiry and the final form remain owner actions. Review [judge access constraints](JUDGE_ACCESS_PLAN.md): the current private personal repository cannot offer read-only collaborator access. No judge invitation, public deployment or submission is part of this preparation.
+
+
+## Online restricted preview — 2026-10-21
+
+Open https://chargeguard-web.vercel.app. Explain the restricted-preview banner and synthetic operations scope. Overview, chargers, incidents, demo and login pages are HTTP-reachable. Data reads currently show database unavailability; do not narrate empty cards as successful live telemetry. Fault/acknowledge/recovery/resolve/reset controls are disabled in production. `/history` returns 404; the historical API returns 403. Use the existing local walkthrough for actual operations and preserve the pinned Phase D incident.
+
+Before an online interactive recording, complete the secure Atlas egress decision, configure GitHub OAuth, implement/verify backend operator authorization and durable rate limiting, then agree a new synthetic test scope. Sign-in alone does not unlock writes. Do not rerun/reset the preserved incident to make the public preview appear functional. See [deployment and owner instructions](VERCEL_DEPLOYMENT.md).

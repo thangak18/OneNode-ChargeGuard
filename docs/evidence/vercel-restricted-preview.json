@@ -1,0 +1,144 @@
+{
+  "verifiedAt": "2026-10-21",
+  "startingCommit": "334afdb56297d8d5d1492e636a37bf49dafd88e7",
+  "accountPlan": "Hobby",
+  "frontend": "https://chargeguard-web.vercel.app",
+  "backend": "https://chargeguard-api.vercel.app",
+  "backendChecks": [
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "authenticated": false,
+      "status": 401,
+      "json": true,
+      "bodyBytes": 46,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "authenticated": true,
+      "status": 200,
+      "json": true,
+      "bodyBytes": 15,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/health/ready",
+      "method": "GET",
+      "authenticated": true,
+      "status": 503,
+      "json": true,
+      "bodyBytes": 34,
+      "wildcardCors": false,
+      "databaseConnected": false
+    },
+    {
+      "path": "/api/v1/chargers",
+      "method": "GET",
+      "authenticated": true,
+      "status": 503,
+      "json": true,
+      "bodyBytes": 34,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/demo/trigger-fault",
+      "method": "POST",
+      "authenticated": false,
+      "status": 403,
+      "json": true,
+      "bodyBytes": 43,
+      "wildcardCors": false
+    },
+    {
+      "path": "/docs",
+      "method": "GET",
+      "authenticated": true,
+      "status": 404,
+      "json": true,
+      "bodyBytes": 23,
+      "wildcardCors": false
+    }
+  ],
+  "webChecks": [
+    {
+      "path": "/",
+      "method": "GET",
+      "status": 200,
+      "bytes": 29332
+    },
+    {
+      "path": "/chargers",
+      "method": "GET",
+      "status": 200,
+      "bytes": 9599
+    },
+    {
+      "path": "/incidents",
+      "method": "GET",
+      "status": 200,
+      "bytes": 8761
+    },
+    {
+      "path": "/demo",
+      "method": "GET",
+      "status": 200,
+      "bytes": 26156
+    },
+    {
+      "path": "/login",
+      "method": "GET",
+      "status": 200,
+      "bytes": 9066
+    },
+    {
+      "path": "/history",
+      "method": "GET",
+      "status": 404,
+      "bytes": 7564
+    },
+    {
+      "path": "/api/historical",
+      "method": "GET",
+      "status": 403,
+      "bytes": 80
+    },
+    {
+      "path": "/api/v1/demo/trigger-fault",
+      "method": "POST",
+      "status": 403,
+      "bytes": 89
+    },
+    {
+      "path": "/api/auth/session",
+      "method": "GET",
+      "status": 503,
+      "bytes": 74
+    },
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "status": 200,
+      "bytes": 15
+    },
+    {
+      "path": "/api/v1/chargers",
+      "method": "GET",
+      "status": 503,
+      "bytes": 34
+    }
+  ],
+  "databaseFailureCategory": "tls",
+  "atlasAllowlistRootCause": "not independently verified",
+  "rawAcnUploaded": false,
+  "cloudMutationsAccepted": 0,
+  "datadogProductionVerified": false,
+  "operatorLoginConfigured": false,
+  "tests": {
+    "apiUnit": 33,
+    "apiIntegration": 12,
+    "webPolicy": 5
+  },
+  "historicalTracingRawReferences": 0
+}

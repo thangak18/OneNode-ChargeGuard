@@ -146,3 +146,8 @@ Verified local result: 20,228 source rows, 1,246 selected readings at ≥60-seco
 ChargeGuard has two isolated paths: **observed historical ACN data for private local analysis**, and **synthetic operational events for Atlas, Datadog and incident response**. Five historical sessions do not establish five physical chargers. Public historical plots/cloud processing/redistribution remain permission-gated; no raw ACN data is included in the repository.
 
 Start with the [private historical walkthrough](docs/HISTORICAL_LOCAL_MODE.md#private-walkthrough-checklist), [Vietnamese video storyboard](docs/DEMO_VIDEO_STORYBOARD.md), [presentation outline](docs/PRESENTATION_OUTLINE.md), [unsent dataset permission inquiry](docs/DATASET_PERMISSION_INQUIRY.md) and [submission checklist](docs/SUBMISSION_CHECKLIST.md). These prepare the package; the video, final deck and official form are not completed by these documents. The [judge access plan](docs/JUDGE_ACCESS_PLAN.md) explains the personal-repository permission limitation. Keep the repo private; do not expose the current loopback application publicly.
+
+
+## Vercel restricted preview (2026-10-21)
+
+[Web preview](https://chargeguard-web.vercel.app) and [restricted NestJS API](https://chargeguard-api.vercel.app) are deployed as separate Node 24 projects. HTTP reachability is verified; Atlas readiness and operational reads currently fail with 503. This is a read-only UI preview, not a verified cloud incident demo. Production mutations are blocked; local ACN history is unavailable in production. GitHub operator login is prepared and requires owner OAuth configuration. Datadog remains locally verified only. See [deployment results, environment matrix and owner steps](docs/VERCEL_DEPLOYMENT.md).

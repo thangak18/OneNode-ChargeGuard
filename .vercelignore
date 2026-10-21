@@ -1,0 +1,12 @@
+.env
+.env.*
+**/.env
+**/.env.*
+data/raw/**
+.agents/**
+docs/learning/**
+docs/evidence/**
+node_modules/**
+**/node_modules/**
+**/.next/**
+**/dist/**

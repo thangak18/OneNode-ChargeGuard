@@ -135,3 +135,18 @@ The [detailed storyboard](DEMO_VIDEO_STORYBOARD.md) and [presentation outline](P
 | Official submission | README/runbook/architecture/evidence/checklist | Owner completes contact fields/form, checks links/access and submits by 31 October 23:59 ICT; freeze final SHA afterwards. |
 
 Private status is verified, not a license to redistribute restricted data. Original Datadog images are private evidence until sanitization; no historical trace screenshot is approved. No permission inquiry, judge invitation, recording upload, public deployment or competition submission has been performed here.
+
+
+## Online delivery gates — 2026-10-21
+
+- [x] Two Vercel Hobby projects, correct private monorepo roots and Node 24.
+- [x] Restricted production builds and HTTP routes verified; backend service-key enforcement and mutation denial checked.
+- [x] Historical page/API blocked; no raw ACN records or local secrets staged for deployment.
+- [ ] Approve a secure backend egress/hosting approach; Atlas cloud readiness is currently 503.
+- [ ] Owner creates GitHub OAuth App and configures Vercel variables; verify login/logout and unapproved-account denial.
+- [ ] Complete independent backend operator authorization and distributed rate limits before enabling any cloud mutation.
+- [ ] Verify a new, scoped cloud synthetic lifecycle; existing local Phase D evidence is preserved.
+- [ ] Approve/verify a free-compatible Datadog cloud transport or retain a clearly documented local-only monitoring demo.
+- [ ] Complete judge-access plan, private-source permissions, video, slides, trial expiry review and official submission.
+
+Online URLs and exact limitations: [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md). A Ready deployment is not a working Atlas-connected or interactive demo.

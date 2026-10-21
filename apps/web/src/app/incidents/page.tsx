@@ -269,7 +269,7 @@ function IncidentsContent() {
                     {selectedIncident.status === 'OPEN' && (
                       <button
                         onClick={handleAcknowledge}
-                        disabled={actionLoading}
+                        disabled={process.env.NODE_ENV === 'production' || actionLoading}
                         className="px-3 py-1.5 rounded-md bg-amber-950 hover:bg-amber-900 text-amber-200 border border-amber-800 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50"
                       >
                         {actionLoading ? 'Saving…' : 'Acknowledge'}
@@ -279,7 +279,7 @@ function IncidentsContent() {
                     {selectedIncident.status === 'RESOLVING' && selectedIncident.recoveryTelemetryAt && (
                       <button
                         onClick={handleResolve}
-                        disabled={actionLoading}
+                        disabled={process.env.NODE_ENV === 'production' || actionLoading}
                         className="px-3 py-1.5 rounded-md bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-800 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50"
                       >
                         {actionLoading ? 'Saving…' : 'Resolve Incident'}

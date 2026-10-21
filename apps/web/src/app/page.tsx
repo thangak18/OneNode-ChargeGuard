@@ -142,7 +142,7 @@ export default function OverviewPage() {
             <div className="flex items-center gap-2">
               <AlertTriangle size={16} className="text-rose-400" />
               <span>
-                <strong>Backend Communication Alert:</strong> {error}. Ensure NestJS API is running on port 3001.
+                <strong>Backend Communication Alert:</strong> {error}. {process.env.NODE_ENV === 'production' ? 'Cloud data connection is unavailable; this preview cannot display operational records yet.' : 'Ensure NestJS API is running on port 3001.'}
               </span>
             </div>
             <button

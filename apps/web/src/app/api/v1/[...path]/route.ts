@@ -149,7 +149,7 @@ function getNestBase(): URL {
   if (
     !['http:', 'https:'].includes(base.protocol) ||
     base.username ||
-    base.password ||
+    base.password || base.pathname !== '/' || !!base.search || !!base.hash ||
     (process.env.NODE_ENV === 'production' && base.protocol !== 'https:')
   ) {
     throw new Error('NEST_API_BASE_URL must be an HTTP(S) origin without credentials; production requires HTTPS.');
@@ -180,6 +180,11 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
   }
 
   const headers = new Headers();
+  if (process.env.NODE_ENV === 'production') {
+    const readKey = process.env.NEST_READ_API_KEY;
+    if (!readKey || readKey.length < 32) return badRequest('Read service is not configured.', 503);
+    headers.set('x-chargeguard-read-key', readKey);
+  }
   const accept = request.headers.get('accept');
   if (accept) headers.set('accept', accept);
   if (mutationBody !== undefined) headers.set('content-type', 'application/json');
@@ -195,7 +200,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
       body: mutationBody,
       cache: 'no-store',
       redirect: 'manual',
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(20_000),
     });
     if (upstream.status >= 300 && upstream.status < 400) {
       return badRequest('ChargeGuard API returned an unexpected redirect.', 502);

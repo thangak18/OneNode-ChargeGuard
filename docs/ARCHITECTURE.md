@@ -111,3 +111,8 @@ Fault and accepted-reading logs carry validated demo/incident IDs plus bounded v
 ## Isolated local historical path
 
 The optional `/history` client calls only the dedicated development-only `GET /api/historical` route. Its server-only bridge imports the existing pure ACN adapter and checksum-verified local reader, with no NestJS bootstrap, MongoDB client, API key or DogStatsD/logger dependency. Original `sourceEventAt` and mapped `replayAt` remain separate; a browser-only cursor animates the demonstration clock. Unknown routes, methods, aliases, remote origins and production reads are denied. Next traces exclude raw source files. The synthetic operational pages and Phase D evidence remain unchanged. See [permission and quality boundaries](HISTORICAL_LOCAL_MODE.md).
+
+
+## Restricted Vercel topology (2026-10-21)
+
+Two projects share the private monorepo: Next.js `apps/web` → HTTPS/service-authenticated NestJS `apps/api` → existing Atlas. Both use Node 24 and select Singapore. Production independently rejects backend writes and browser mutations, disables CORS, hides Swagger and blocks historical mode. Request-time database initialization avoids blocking the Vercel listener; pooling/reconnects are bounded/coalesced. Atlas reads currently return 503; this topology has not passed database readiness. GitHub login scaffolding does not grant write authorization. Local Agent support and Phase D evidence remain intact. See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for exact verified boundaries and remaining Stage B work.

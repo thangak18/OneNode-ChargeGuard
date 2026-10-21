@@ -19,6 +19,7 @@ venv/
 
 # Node tooling once build period begins
 node_modules/
+.vercel/
 .next/
 dist/
 

@@ -100,3 +100,14 @@ Current implementation is unchanged from the verified local historical mode: fiv
 The package now has a reproducible private walkthrough, an unsent dataset-owner permission inquiry, Vietnamese hybrid video storyboard and presentation outline, and a concrete judge-access plan. Actual video recording, final slide export, dataset permission, organizer-provided judge accounts, accessible-demo approval, exact Datadog trial expiry and official form remain owner tasks. The repository is private and personal; GitHub offers no read-only collaborator role in this ownership model. No invitations, visibility changes, public deployment or submission were made.
 
 See [submission checklist](SUBMISSION_CHECKLIST.md) for the final gates. Node 24 regression and release verification results are recorded in the finalization section of [Historical Local Mode](HISTORICAL_LOCAL_MODE.md).
+
+
+## Vercel deployment update — 2026-10-21
+
+- DEPLOYED / HTTP REACHABLE: separate `chargeguard-web` and `chargeguard-api`, confirmed Hobby account and Node 24.
+- DATABASE CONNECTED / READ-ONLY FUNCTIONAL: blocked; Atlas readiness and charger reads return 503.
+- INTERACTIVE DEMO VERIFIED: no; all production mutations remain denied. GitHub login is prepared but OAuth owner configuration and complete backend operator authorization/rate limits remain outstanding.
+- DATADOG VERIFIED in production: no; JSON stdout observed, Agent stays local and paid drains are not enabled.
+- Local regression: 33 unit API, 12 integration, 5 web policy tests, typechecks, lint and builds pass. Historical and existing Phase D records were not uploaded/reset.
+
+See [deployment report](VERCEL_DEPLOYMENT.md). Earlier local Phase D verification remains historical evidence and must not be represented as a newly verified cloud lifecycle.

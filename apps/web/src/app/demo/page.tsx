@@ -167,7 +167,7 @@ export default function DemoPage() {
 
           <button
             onClick={handleReset}
-            disabled={loading}
+            disabled={process.env.NODE_ENV === 'production' || loading}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-medium self-start sm:self-auto transition-colors disabled:opacity-50"
           >
             <RotateCcw size={13} />
@@ -341,7 +341,7 @@ export default function DemoPage() {
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={handleTriggerFault}
-              disabled={Boolean(loading || (activeIncident && activeIncident.status !== 'RESOLVED'))}
+              disabled={Boolean(process.env.NODE_ENV === 'production' || loading || (activeIncident && activeIncident.status !== 'RESOLVED'))}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
             >
               <AlertOctagon size={14} />
@@ -351,7 +351,7 @@ export default function DemoPage() {
             {activeIncident && activeIncident.status === 'OPEN' && (
               <button
                 onClick={handleAcknowledge}
-                disabled={loading}
+                disabled={process.env.NODE_ENV === 'production' || loading}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-amber-950 hover:bg-amber-900 text-amber-200 border border-amber-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50"
               >
                 Acknowledge Alert
@@ -361,7 +361,7 @@ export default function DemoPage() {
             {activeIncident && (activeIncident.status === 'ACKNOWLEDGED' || (activeIncident.status === 'RESOLVING' && !activeIncident.recoveryTelemetryAt)) && (
               <button
                 onClick={handleRecover}
-                disabled={loading}
+                disabled={process.env.NODE_ENV === 'production' || loading}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:opacity-50"
               >
                 <Zap size={14} />
@@ -372,7 +372,7 @@ export default function DemoPage() {
             {activeIncident && activeIncident.status === 'RESOLVING' && activeIncident.recoveryTelemetryAt && (
               <button
                 onClick={handleResolve}
-                disabled={loading}
+                disabled={process.env.NODE_ENV === 'production' || loading}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />

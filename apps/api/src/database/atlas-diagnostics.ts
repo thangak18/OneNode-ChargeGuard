@@ -94,11 +94,11 @@ export async function diagnoseAtlas(settings:AppConfig,env:NodeJS.ProcessEnv=pro
   try {
     await client.connect();
     const db=client.db(settings.mongoDatabase);
-    const status=await db.admin().command({connectionStatus:1},{maxTimeMS:3000});
+    const status=await db.admin().command({connectionStatus:1},{timeoutMS:3000});
     const expected=status.authInfo?.authenticatedUsers?.length===1 && status.authInfo.authenticatedUsers[0].user==='chargeguard_dev';
     result.authentication=expected?'PASS_EXPECTED_APPLICATION_USER':'FAIL_UNEXPECTED_IDENTITY';
     if(!expected)return result;
-    result.ping=(await db.admin().command({ping:1},{maxTimeMS:3000})).ok===1?'PASS':'FAIL';
+    result.ping=(await db.admin().command({ping:1},{timeoutMS:3000})).ok===1?'PASS':'FAIL';
     const charger=await db.collection('chargers').findOne({}, {projection:{_id:1},maxTimeMS:3000});
     result.databaseRead={status:'PASS',chargerPresent:!!charger};
   } catch(error){result.driverFailure=safeDiagnosticError(error);}

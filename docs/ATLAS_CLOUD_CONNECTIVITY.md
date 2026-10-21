@@ -95,3 +95,7 @@ Node 24 regression checks: 38 API unit tests, 12 integration tests, 5 web policy
 [Sanitized machine-readable evidence](evidence/atlas-cloud-connectivity-diagnosis.json) records both local resolver runs, the function transport results, private configuration-equality booleans, Atlas UI rule counts, endpoint results and safety boundaries. Phase D evidence bytes match commit `354a942`; no ACN source records or credentials were uploaded/committed.
 
 Owner action: choose whether to retain the restricted Hobby preview or explicitly approve a specific alternative with its budget and network policy. If restoring the local demo is also desired, Atlas currently reports the Mac's IP absent; adding only its current `/32` would require a separate, explicit approval and would not solve Vercel's dynamic egress. No such entry was added here. Do not paste passwords, Atlas URIs, API keys or certificate material into chat.
+
+## Validation correction
+
+An additional command-timeout bound was initially pushed in `fd2e038` before its new typecheck had completed. MongoDB driver 7 rejects `maxTimeMS` in `RunCommandOptions`. The follow-up uses the driver's supported `timeoutMS` option for admin commands, retains the socket timeout, and reruns the full listed checks before pushing the correction. No Git history was rewritten. The diagnostic-disabled deployment remained the canonical backend while the failed build was corrected.

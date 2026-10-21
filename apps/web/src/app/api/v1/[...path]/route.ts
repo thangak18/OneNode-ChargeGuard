@@ -1,3 +1,4 @@
+import { isRenderOrigin, upstreamTimeoutMs, isJsonResponse, fetchWithDeadline } from '@/lib/upstream-policy.mts';
 import { type NextRequest, NextResponse } from 'next/server';
 import { isAllowedApiRoute, isLocalOperatorRequest } from '@/lib/bff-policy.mts';
 
@@ -5,6 +6,8 @@ import { isAllowedApiRoute, isLocalOperatorRequest } from '@/lib/bff-policy.mts'
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const runtime = 'nodejs';
+// Verified against this project's enabled Fluid Compute and Hobby 300-second ceiling.
+export const maxDuration = 120;
 
 const NEST_KEY = process.env.NEST_API_KEY;
 const MAX_BODY_BYTES = 8 * 1024;
@@ -185,27 +188,28 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
     if (!readKey || readKey.length < 32) return badRequest('Read service is not configured.', 503);
     headers.set('x-chargeguard-read-key', readKey);
   }
-  const accept = request.headers.get('accept');
-  if (accept) headers.set('accept', accept);
+  headers.set('accept', 'application/json');
   if (mutationBody !== undefined) headers.set('content-type', 'application/json');
   if (mutationKey) headers.set('x-api-key', mutationKey);
 
   try {
     const safePath = path.map((segment) => encodeURIComponent(segment)).join('/');
-    const target = new URL(`/api/v1/${safePath}`, getNestBase());
+    const origin = getNestBase();
+    const target = new URL(`/api/v1/${safePath}`, origin);
     target.search = request.nextUrl.search;
-    const upstream = await fetch(target, {
+    const upstream = await fetchWithDeadline(target, {
       method: request.method,
       headers,
       body: mutationBody,
-      cache: 'no-store',
-      redirect: 'manual',
-      signal: AbortSignal.timeout(20_000),
-    });
+    },request.signal,upstreamTimeoutMs(origin,request.method));
     if (upstream.status >= 300 && upstream.status < 400) {
       return badRequest('ChargeGuard API returned an unexpected redirect.', 502);
     }
 
+    if (!isMutation && isRenderOrigin(origin) && !isJsonResponse(upstream.headers.get('content-type'))) {
+      await upstream.body?.cancel();
+      return NextResponse.json({message:'The backend is starting or temporarily unavailable. Please retry shortly.',code:'BACKEND_NOT_READY'}, {status:503,headers:{'Retry-After':'15','Cache-Control':'no-store'}});
+    }
     const responseHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
       if (!STRIP_HEADERS.has(key.toLowerCase())) responseHeaders.set(key, value);
@@ -215,6 +219,10 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
       headers: responseHeaders,
     });
   } catch {
+    if (request.signal.aborted) return new Response(null,{status:499});
+    if (!isMutation) {
+      return NextResponse.json({message:'The backend is starting or temporarily unavailable. Please retry shortly.',code:'BACKEND_NOT_READY'}, {status:503,headers:{'Retry-After':'15','Cache-Control':'no-store'}});
+    }
     return badRequest('ChargeGuard API proxy could not reach the NestJS backend.', 502);
   }
 }

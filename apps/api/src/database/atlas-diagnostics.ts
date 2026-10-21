@@ -94,10 +94,13 @@ export async function diagnoseAtlas(settings:AppConfig,env:NodeJS.ProcessEnv=pro
   try {
     await client.connect();
     const db=client.db(settings.mongoDatabase);
-    const status=await db.admin().command({connectionStatus:1},{timeoutMS:3000});
+    const status=await db.admin().command({connectionStatus:1,showPrivileges:true},{timeoutMS:3000});
     const expected=status.authInfo?.authenticatedUsers?.length===1 && status.authInfo.authenticatedUsers[0].user==='chargeguard_dev';
     result.authentication=expected?'PASS_EXPECTED_APPLICATION_USER':'FAIL_UNEXPECTED_IDENTITY';
     if(!expected)return result;
+    const roles=status.authInfo.authenticatedUserRoles ?? [];
+    const privileges=status.authInfo.authenticatedUserPrivileges ?? [];
+    result.authorization={expectedCustomRoleOnly:roles.length===1 && roles[0].role==='chargeguard_rw',broadRolesAbsent:roles.every((r:{role:string})=>!['atlasAdmin','root','readWriteAnyDatabase','dbAdminAnyDatabase','userAdminAnyDatabase','clusterAdmin'].includes(r.role)),privilegesScopedToChargeguard:privileges.length>0 && privileges.every((p:{resource:{db?:string;cluster?:boolean}})=>p.resource.db==='chargeguard' && !p.resource.cluster)};
     result.ping=(await db.admin().command({ping:1},{timeoutMS:3000})).ok===1?'PASS':'FAIL';
     const charger=await db.collection('chargers').findOne({}, {projection:{_id:1},maxTimeMS:3000});
     result.databaseRead={status:'PASS',chargerPresent:!!charger};

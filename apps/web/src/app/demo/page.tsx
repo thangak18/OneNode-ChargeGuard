@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { startPolling } from '@/lib/utils';
 import { Navbar } from '@/components/Navbar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { api, Incident } from '@/lib/api';
@@ -30,7 +31,7 @@ export default function DemoPage() {
   // Poll active incident if present
   useEffect(() => {
     if (!activeIncidentId) return;
-    const interval = setInterval(async () => {
+    return startPolling(async () => {
       try {
         const inc = await api.getIncident(activeIncidentId);
         setActiveIncident(inc);
@@ -46,7 +47,6 @@ export default function DemoPage() {
         setError('Unable to refresh the active incident. Check the API connection and retry.');
       }
     }, 4000);
-    return () => clearInterval(interval);
   }, [activeIncidentId]);
 
   const handleTriggerFault = async () => {

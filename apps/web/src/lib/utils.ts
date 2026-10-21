@@ -1,3 +1,5 @@
+import { startSerialPolling } from './polling.mts';
+import { cancelPendingReads, readRetryAt } from './api';
 /**
  * Shared helpers for the ChargeGuard web app.
  */
@@ -9,19 +11,9 @@ export function errorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/**
- * Run a polling-style data loader on a fixed interval without triggering the
- * `react-hooks/set-state-in-effect` lint rule (which flags setState called
- * synchronously inside an effect body). The first load is deferred to a
- * macrotask so the effect body itself never calls setState synchronously.
- *
- * Returns a cleanup function for use in the effect.
- */
-export function startPolling(load: () => void, intervalMs: number): () => void {
-  const timer = setTimeout(() => load(), 0);
-  const interval = setInterval(() => load(), intervalMs);
-  return () => {
-    clearTimeout(timer);
-    clearInterval(interval);
-  };
+/** No hidden-tab traffic, overlap or requests retained after page cleanup. */
+export function startPolling(load: () => void | Promise<unknown>, intervalMs: number): () => void {
+  return startSerialPolling(load, intervalMs,
+    () => (typeof document === 'undefined' || document.visibilityState !== 'hidden') && Date.now() >= readRetryAt(),
+    cancelPendingReads);
 }

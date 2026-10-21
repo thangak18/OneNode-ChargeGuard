@@ -74,22 +74,50 @@ export interface StationSummary {
 
 const API_BASE = '/api/v1';
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+type PendingRead = {promise: Promise<unknown>; controller: AbortController};
+const pendingReads = new Map<string, PendingRead>();
+let retryAt = 0;
+export const READ_ACTIVITY_EVENT = 'chargeguard-read-activity';
+export function pendingReadCount(): number { return pendingReads.size; }
+export function readRetryAt(): number { return retryAt; }
+function notifyReads(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(READ_ACTIVITY_EVENT));
+}
+export function cancelPendingReads(): void {
+  for (const item of pendingReads.values()) item.controller.abort();
+  pendingReads.clear(); notifyReads();
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') cancelPendingReads();
   });
-
+}
+async function performRequest<T>(url: string, options: RequestInit, signal: AbortSignal): Promise<T> {
+  const res = await fetch(url, {
+    ...options, signal, cache:'no-store',
+    headers: {'Accept':'application/json','Content-Type':'application/json',...options.headers},
+  });
   if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.message || `API request failed with status ${res.status}`);
+    const body = await res.json().catch(() => ({}));
+    const delay = Number(res.headers.get('retry-after'));
+    if (['GET','HEAD'].includes(options.method ?? 'GET') && [429,503].includes(res.status) && Number.isFinite(delay) && delay > 0) {
+      retryAt = Math.max(retryAt, Date.now() + Math.min(delay,60)*1000);
+    }
+    throw new Error(typeof body.message === 'string' ? body.message : `API request failed with status ${res.status}`);
   }
-
   return res.json() as Promise<T>;
+}
+function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE}${path}`;
+  const isRead = ['GET','HEAD'].includes(options.method ?? 'GET');
+  if (!isRead) return performRequest<T>(url,options,AbortSignal.any([...(options.signal?[options.signal]:[]),AbortSignal.timeout(25_000)]));
+  const existing = pendingReads.get(url);
+  if (existing) return existing.promise as Promise<T>;
+  const controller = new AbortController();
+  const promise = performRequest<T>(url,options,AbortSignal.any([controller.signal,...(options.signal?[options.signal]:[]),AbortSignal.timeout(95_000)]))
+    .finally(() => {if(pendingReads.get(url)?.promise === promise)pendingReads.delete(url);notifyReads();});
+  pendingReads.set(url,{promise,controller}); notifyReads();
+  return promise;
 }
 
 export const api = {

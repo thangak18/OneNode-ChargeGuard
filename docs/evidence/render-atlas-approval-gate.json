@@ -1,7 +1,7 @@
 {
   "date": "2026-10-21",
   "gate": "ATLAS_NETWORK_CHANGE_REJECTED",
-  "approvalStatus": "REJECTED",
+  "approvalStatus": "APPROVED_SUPERSEDES_REJECTION",
   "startingCommit": "12f2e84f1c0807f4c06486446154b2e0086f2dac",
   "service": {
     "id": "srv-dbcc2rd9fdbs73chm9e0",
@@ -40,7 +40,7 @@
     "allowAllInternet": false,
     "sharedWithOtherRenderServices": true,
     "exclusiveEgressAvailableWithinZeroBudget": false,
-    "atlasChangesPerformed": false,
+    "atlasChangesPerformed": true,
     "comment": "ChargeGuard Render Free SG (shared)",
     "automaticExpiryProposed": false
   },
@@ -158,8 +158,25 @@
   ],
   "ownerDecision": {
     "date": "2026-10-21",
-    "instruction": "Do not approve; keep Atlas unchanged.",
-    "networkChangeAuthorized": false,
-    "renderToAtlasMigrationMayProceed": false
+    "instruction": "Owner approved Option A and only the two reverified Render shared CIDRs, superseding earlier rejection.",
+    "networkChangeAuthorized": true,
+    "renderToAtlasMigrationMayProceed": true
+  },
+  "atlasChangeVerification": {
+    "date": "2026-10-21",
+    "originalCount": 3,
+    "finalCount": 5,
+    "originalsPreserved": true,
+    "approvedStatuses": [
+      {
+        "cidr": "74.220.52.0/24",
+        "active": true
+      },
+      {
+        "cidr": "74.220.60.0/24",
+        "active": true
+      }
+    ],
+    "automaticExpiry": false
   }
 }

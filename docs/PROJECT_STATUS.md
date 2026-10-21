@@ -121,3 +121,8 @@ Owner configuration was confirmed through Production environment metadata (five 
 ### Approved operator session verified — 2026-10-21
 
 GitHub owner login completed and the browser's session endpoint contained user/expiry. Logout removed both; re-login restored both, and the browser was left authenticated. Observed lifetime was approximately one hour. Read-only banner and disabled fault/reset controls were verified while authenticated; separate unauthenticated fault/recovery/reset POST checks returned 403. No authenticated mutation was submitted. Unapproved-account provider-flow rejection, actual expired-session enforcement and independent backend operator authorization/rate limits remain unverified/incomplete. Existing Atlas TLS and cloud Datadog limitations remain separate blockers. No code, Atlas rules, raw ACN data or Phase D records changed.
+
+
+## Atlas transport audit — 2026-10-21
+
+DNS SRV/TXT and TCP pass on all three Atlas nodes from Vercel, while default TLS and TLS 1.2 both fail with an internal TLS alert before authentication. Atlas has three exact IPv4 rules; observed function HTTPS egress matches none. This is a verified network-policy mismatch and a strong explanation, not a proven server-side cause for the TLS alert. Cloud readiness and charger reads remain 503. No TLS bypass, Atlas rule edit, privilege change, paid feature or provider migration was performed. Temporary diagnostics were disabled after collection; Phase D evidence is unchanged. See [full evidence, limits, free/low-cost options and owner decisions](ATLAS_CLOUD_CONNECTIVITY.md).

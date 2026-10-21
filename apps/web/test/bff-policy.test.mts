@@ -12,6 +12,7 @@ test('BFF permits only supported read and mutation routes', () => {
   assert.equal(isAllowedApiRoute('DELETE', ['incidents', 'demo-123']), false);
   assert.equal(isAllowedApiRoute('POST', ['demo', 'unknown']), false);
   assert.equal(isAllowedApiRoute('GET', ['admin', 'secrets']), false);
+  assert.equal(isAllowedApiRoute('GET', ['health', 'atlas-diagnostics']), false);
 });
 
 test('BFF permits mutations only from a same-origin loopback development page', () => {

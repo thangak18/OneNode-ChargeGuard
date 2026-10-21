@@ -151,3 +151,8 @@ Start with the [private historical walkthrough](docs/HISTORICAL_LOCAL_MODE.md#pr
 ## Vercel restricted preview (2026-10-21)
 
 [Web preview](https://chargeguard-web.vercel.app) and [restricted NestJS API](https://chargeguard-api.vercel.app) are deployed as separate Node 24 projects. HTTP reachability is verified; Atlas readiness and operational reads currently fail with 503. This is a read-only UI preview, not a verified cloud incident demo. Production mutations are blocked; local ACN history is unavailable in production. GitHub OAuth login, authenticated browser session, logout and re-login are verified for the approved owner account. Production operations remain read-only. Datadog remains locally verified only. See [deployment results, environment matrix and owner steps](docs/VERCEL_DEPLOYMENT.md).
+
+
+## Atlas transport audit — 2026-10-21
+
+DNS SRV/TXT and TCP pass on all three Atlas nodes from Vercel, while default TLS and TLS 1.2 both fail with an internal TLS alert before authentication. Atlas has three exact IPv4 rules; observed function HTTPS egress matches none. This is a verified network-policy mismatch and a strong explanation, not a proven server-side cause for the TLS alert. Cloud readiness and charger reads remain 503. No TLS bypass, Atlas rule edit, privilege change, paid feature or provider migration was performed. Temporary diagnostics were disabled after collection; Phase D evidence is unchanged. See [full evidence, limits, free/low-cost options and owner decisions](docs/ATLAS_CLOUD_CONNECTIVITY.md).

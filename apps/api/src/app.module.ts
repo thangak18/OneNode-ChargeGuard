@@ -2,6 +2,7 @@ import { ObservabilityModule } from './observability/observability.module';
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
+import { AtlasDiagnosticsController } from './health/atlas-diagnostics.controller';
 import { HealthController } from './health/health.controller';
 import { TelemetryController } from './telemetry/telemetry.controller';
 import { TelemetryService } from './telemetry/telemetry.service';
@@ -22,7 +23,7 @@ import { DemoController } from './demo/demo.controller';
     ChargersService,IncidentsService,DemoService
   ],
   controllers:[
-    HealthController,TelemetryController,AnalyticsController,
+    HealthController,AtlasDiagnosticsController,TelemetryController,AnalyticsController,
     ChargersController,StationsController,IncidentsController,DemoController
   ]
 })

@@ -1,0 +1,403 @@
+{
+  "auditDate": "2026-10-21",
+  "startingCommit": "354a942166c197e6f711794ad3a41de5b9833008",
+  "cloudDiagnostic": {
+    "status": 200,
+    "result": {
+      "configuration": {
+        "canonicalDatabase": true,
+        "expectedApplicationUser": true
+      },
+      "timestamp": "2026-10-21T10:36:57.747Z",
+      "runtime": "v24.21.0",
+      "dnsSrv": {
+        "status": "PASS",
+        "nodeCount": 3
+      },
+      "dnsTxt": {
+        "status": "PASS",
+        "recordCount": 1
+      },
+      "transport": [
+        {
+          "node": 1,
+          "ipv4": {
+            "status": "PASS",
+            "addressCount": 1
+          },
+          "ipv6": {
+            "status": "PASS",
+            "addressCount": 0
+          },
+          "tcp": {
+            "status": "PASS"
+          },
+          "tls": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          },
+          "tls12": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          }
+        },
+        {
+          "node": 2,
+          "ipv4": {
+            "status": "PASS",
+            "addressCount": 1
+          },
+          "ipv6": {
+            "status": "PASS",
+            "addressCount": 0
+          },
+          "tcp": {
+            "status": "PASS"
+          },
+          "tls": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          },
+          "tls12": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          }
+        },
+        {
+          "node": 3,
+          "ipv4": {
+            "status": "PASS",
+            "addressCount": 1
+          },
+          "ipv6": {
+            "status": "PASS",
+            "addressCount": 0
+          },
+          "tcp": {
+            "status": "PASS"
+          },
+          "tls": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          },
+          "tls12": {
+            "status": "FAIL",
+            "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+            "certificateReceived": false,
+            "certificateVerified": false
+          }
+        }
+      ],
+      "authentication": "NOT_TESTED",
+      "ping": "NOT_TESTED",
+      "databaseRead": "NOT_TESTED",
+      "networkAccess": {
+        "status": "ASSESSED",
+        "egressMatchesObservedRules": false,
+        "ruleCount": 3,
+        "note": "External HTTPS egress observation; MongoDB socket NAT identity is not independently proven."
+      },
+      "writesPerformed": false
+    }
+  },
+  "privateConfigurationComparison": {
+    "decryptedValueAvailable": true,
+    "clusterHostMatchesLocal": true,
+    "applicationUserMatchesLocal": true,
+    "passwordMatchesLocal": true,
+    "completeUriMatchesLocal": true,
+    "cloudTlsBypassAbsent": true
+  },
+  "atlasUiReadOnlyInspection": {
+    "projectAccessRulesActive": 3,
+    "allRulesIpv4Slash32": true,
+    "allowAllRulePresent": false,
+    "browserCurrentIpAllowed": false,
+    "expectedClusterVisible": true,
+    "regionSingapore": true,
+    "nodeCount": 3,
+    "serverVersion": "8.0.34",
+    "monitoringPausedBannerSeen": true,
+    "monitoringBannerIsNotEvidenceClusterPaused": true,
+    "rulesChanged": false,
+    "privateAddressesOmitted": true
+  },
+  "localDiagnosticDefaultResolver": {
+    "configuration": {
+      "canonicalDatabase": true,
+      "expectedApplicationUser": true
+    },
+    "timestamp": "2026-10-21T10:29:14.852Z",
+    "runtime": "v24.22.0",
+    "dnsSrv": {
+      "status": "FAIL",
+      "code": "EBADRESP"
+    },
+    "dnsTxt": {
+      "status": "NOT_TESTED"
+    },
+    "transport": [],
+    "authentication": "NOT_TESTED",
+    "ping": "NOT_TESTED",
+    "databaseRead": "NOT_TESTED",
+    "networkAccess": {
+      "status": "NOT_ASSESSED"
+    },
+    "writesPerformed": false
+  },
+  "localDiagnosticProcessOnlyAlternateResolver": {
+    "configuration": {
+      "canonicalDatabase": true,
+      "expectedApplicationUser": true
+    },
+    "timestamp": "2026-10-21T10:29:56.401Z",
+    "runtime": "v24.22.0",
+    "dnsSrv": {
+      "status": "PASS",
+      "nodeCount": 3
+    },
+    "dnsTxt": {
+      "status": "PASS",
+      "recordCount": 1
+    },
+    "transport": [
+      {
+        "node": 1,
+        "ipv4": {
+          "status": "PASS",
+          "addressCount": 1
+        },
+        "ipv6": {
+          "status": "PASS",
+          "addressCount": 0
+        },
+        "tcp": {
+          "status": "PASS"
+        },
+        "tls": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        },
+        "tls12": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        }
+      },
+      {
+        "node": 2,
+        "ipv4": {
+          "status": "PASS",
+          "addressCount": 1
+        },
+        "ipv6": {
+          "status": "PASS",
+          "addressCount": 0
+        },
+        "tcp": {
+          "status": "PASS"
+        },
+        "tls": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        },
+        "tls12": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        }
+      },
+      {
+        "node": 3,
+        "ipv4": {
+          "status": "PASS",
+          "addressCount": 1
+        },
+        "ipv6": {
+          "status": "PASS",
+          "addressCount": 0
+        },
+        "tcp": {
+          "status": "PASS"
+        },
+        "tls": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        },
+        "tls12": {
+          "status": "FAIL",
+          "code": "ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR",
+          "certificateReceived": false,
+          "certificateVerified": false
+        }
+      }
+    ],
+    "authentication": "NOT_TESTED",
+    "ping": "NOT_TESTED",
+    "databaseRead": "NOT_TESTED",
+    "networkAccess": {
+      "status": "NOT_ASSESSED"
+    },
+    "writesPerformed": false
+  },
+  "backendEndpointChecks": [
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "authenticated": false,
+      "status": 401,
+      "json": true,
+      "bodyBytes": 46,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/health/live",
+      "method": "GET",
+      "authenticated": true,
+      "status": 200,
+      "json": true,
+      "bodyBytes": 15,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/health/ready",
+      "method": "GET",
+      "authenticated": true,
+      "status": 503,
+      "json": true,
+      "bodyBytes": 34,
+      "wildcardCors": false,
+      "databaseConnected": false
+    },
+    {
+      "path": "/api/v1/chargers",
+      "method": "GET",
+      "authenticated": true,
+      "status": 503,
+      "json": true,
+      "bodyBytes": 34,
+      "wildcardCors": false
+    },
+    {
+      "path": "/api/v1/demo/trigger-fault",
+      "method": "POST",
+      "authenticated": false,
+      "status": 403,
+      "json": true,
+      "bodyBytes": 43,
+      "wildcardCors": false
+    },
+    {
+      "path": "/docs",
+      "method": "GET",
+      "authenticated": true,
+      "status": 404,
+      "json": true,
+      "bodyBytes": 23,
+      "wildcardCors": false
+    }
+  ],
+  "bffChecks": [
+    {
+      "path": "/api/v1/health/live",
+      "status": 200,
+      "returnedChargerArray": null
+    },
+    {
+      "path": "/api/v1/health/ready",
+      "status": 503,
+      "returnedChargerArray": null
+    },
+    {
+      "path": "/api/v1/chargers",
+      "status": 503,
+      "returnedChargerArray": false
+    }
+  ],
+  "conclusion": {
+    "verifiedFailureStage": "TLS handshake before secureConnect; no peer certificate available to inspect",
+    "exactAtlasRejectionReasonVerified": false,
+    "observedHttpsEgressMatchesAtlasAllowlist": false,
+    "mongodbSocketNatIdentityVerified": false,
+    "leadingExplanation": "Atlas network access excludes the observed Vercel egress; a controlled network-policy change or server-side rejection logs would be needed to prove causality.",
+    "cloudAuthenticationVerified": false,
+    "cloudMongoReadsWorking": false,
+    "hobbyStableEgressAvailable": false,
+    "secureConnectivityResolved": false
+  },
+  "safety": {
+    "tlsVerificationDisabled": false,
+    "atlasRulesChanged": false,
+    "databasePrivilegesChanged": false,
+    "paidFeaturesEnabled": false,
+    "providerMigrationPerformed": false,
+    "applicationCollectionsCreated": false,
+    "phaseDEvidenceBytesUnchanged": true,
+    "rawAcnUploaded": false
+  },
+  "tests": {
+    "nodeMajor": 24,
+    "apiUnit": 38,
+    "apiIntegration": 12,
+    "webPolicy": 5
+  },
+  "sanitizedRuntimeFailures": [
+    {
+      "timestamp": "2026-10-21T10:38:02.957Z",
+      "runtime": "nodejs24.x",
+      "region": "sin1",
+      "categories": [
+        "tls"
+      ]
+    },
+    {
+      "timestamp": "2026-10-21T10:37:52.422Z",
+      "runtime": "nodejs24.x",
+      "region": "sin1",
+      "categories": [
+        "tls"
+      ]
+    },
+    {
+      "timestamp": "2026-10-21T10:37:51.206Z",
+      "runtime": "nodejs24.x",
+      "region": "sin1",
+      "categories": [
+        "tls"
+      ]
+    }
+  ],
+  "diagnosticCleanup": {
+    "temporaryEnvironmentVariablesRemoved": true,
+    "canonicalProductionDiagnosticWithServiceKey": 404,
+    "canonicalProductionDiagnosticWithoutServiceKey": 401,
+    "publicBffDiagnostic": 404,
+    "readServiceKeyFaultPost": 403,
+    "disabledDeployment": "https://chargeguard-o3hj804an-thangak18-7126s-projects.vercel.app",
+    "priorImmutableDeploymentsAutoExpire": true
+  },
+  "browserObservation": {
+    "restrictedPreviewVisible": true,
+    "databaseUnavailableVisible": true,
+    "noFreshDataVisible": true,
+    "successfulOperationalRenderingVerified": false
+  }
+}

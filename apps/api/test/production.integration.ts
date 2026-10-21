@@ -24,6 +24,8 @@ test('production Nest bootstrap enforces auth before DB and keeps liveness avail
     await request(server).get('/api/v1/health/live').set('x-chargeguard-read-key',key).expect(200);
     await request(server).post('/api/v1/demo/trigger-fault').set('x-chargeguard-read-key',key).expect(403);
     await request(server).get('/docs-json').expect(404);
+    await request(server).get('/api/v1/health/atlas-diagnostics').expect(401);
+    await request(server).get('/api/v1/health/atlas-diagnostics').set('x-chargeguard-read-key',key).expect(404);
     assert.equal(calls,0);
     const response=await request(server).get('/api/v1/health/ready').set('x-chargeguard-read-key',key).set('Origin','https://untrusted.example').expect(503);
     assert.equal(response.body.message,'Database unavailable');

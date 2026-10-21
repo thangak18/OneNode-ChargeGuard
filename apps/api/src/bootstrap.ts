@@ -23,7 +23,7 @@ export function configureApplication(app:INestApplication):INestApplication {
   if (process.env.VERCEL === '1') {
     const database = app.get(DatabaseService);
     app.use(async (req: Request, res: Response, next: NextFunction) => {
-      if (req.path === '/api/v1/health/live') { next(); return; }
+      if (['/api/v1/health/live','/api/v1/health/atlas-diagnostics'].includes(req.path)) { next(); return; }
       if (!await database.ping()) { res.status(503).json({message: 'Database unavailable'}); return; }
       next();
     });

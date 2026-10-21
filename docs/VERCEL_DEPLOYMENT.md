@@ -146,3 +146,8 @@ The owner completed GitHub login/2FA and consent directly in the browser. The ca
 These observations prove the approved-account callback, persisted browser session, browser logout and re-login. They do not prove live rejection of an unapproved provider account, expired-session rejection, authenticated-session cookie attributes, or backend operator mutation authorization. The earlier cookie-attribute checks applied to the CSRF flow. Logout cleared this browser's session; stateless JWT server-side revocation was not implemented or claimed. Session expiry metadata was inspected without waiting one hour or changing clocks/tokens.
 
 No application code changed for this verification. Production mutation denial, Atlas network rules, local ACN isolation and preserved Phase D evidence remain unchanged. See [sanitized OAuth verification evidence](evidence/vercel-oauth-configuration.json).
+
+
+## Atlas transport audit — 2026-10-21
+
+DNS SRV/TXT and TCP pass on all three Atlas nodes from Vercel, while default TLS and TLS 1.2 both fail with an internal TLS alert before authentication. Atlas has three exact IPv4 rules; observed function HTTPS egress matches none. This is a verified network-policy mismatch and a strong explanation, not a proven server-side cause for the TLS alert. Cloud readiness and charger reads remain 503. No TLS bypass, Atlas rule edit, privilege change, paid feature or provider migration was performed. Temporary diagnostics were disabled after collection; Phase D evidence is unchanged. See [full evidence, limits, free/low-cost options and owner decisions](ATLAS_CLOUD_CONNECTIVITY.md).

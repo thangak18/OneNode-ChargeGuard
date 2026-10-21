@@ -76,7 +76,7 @@ Values belong in project Environment Variables for the intended Production/Previ
 
 Vercel provides `VERCEL`, `PORT` and production runtime environment. Node version is pinned in each package and confirmed project settings. Local `.env` is never read when running on Vercel. Do not copy the local file wholesale into cloud settings; it can contain unrelated local observability settings.
 
-## GitHub operator login — configured; interactive verification pending
+## GitHub operator login — approved-account session verified
 
 The owner selected GitHub OAuth. Stable NextAuth `4.24.15` supports the installed Next/React versions. `/api/auth/[...nextauth]` and `/login` are implemented, and return a clear unavailable response when configuration is incomplete. The owner has now added all five required OAuth variables to Production as Sensitive values; only metadata was inspected. Numeric provider-account IDs are explicitly allowlisted; empty or unknown identities are denied. JWT sessions expire after one hour. The library handles OAuth state/CSRF, HttpOnly cookies and SameSite defaults; production uses Secure cookies. Raw provider errors/tokens/profiles are not logged.
 
@@ -88,7 +88,7 @@ Owner steps:
 4. Generate/configure the session secret securely and set the canonical origin and approved numeric operator IDs. Do not allow every GitHub account.
 5. Redeploy and verify sign-in, rejected unapproved account, session expiry and sign-out.
 
-**Signing in does not enable mutations in this release.** Stage B still requires independent backend operator authorization, durable rate limits, CSRF/origin action tests, trusted actor propagation, connectivity, and an explicitly scoped new synthetic lifecycle test. There is no mutation-unlock environment switch. Existing Phase D evidence must not be reset for this test. No login/logout or authenticated action success is claimed without the owner configuration and live verification.
+**Signing in does not enable mutations in this release.** Stage B still requires independent backend operator authorization, durable rate limits, CSRF/origin action tests, trusted actor propagation, connectivity, and an explicitly scoped new synthetic lifecycle test. There is no mutation-unlock environment switch. Existing Phase D evidence must not be reset for this test. Approved-account login/logout/re-login have now been verified as recorded below; no authenticated operational action success is claimed.
 
 ## Datadog production decision
 
@@ -131,4 +131,18 @@ Actual live checks:
 - Browser reached the GitHub sign-in page naming ChargeGuard. The owner must complete login/2FA and any new-app consent directly on GitHub.
 - Fault injection, recovery and reset through the production BFF still returned 403 after OAuth configuration.
 
-Pending: real approved-account callback and session, unapproved-account rejection through the provider flow, authenticated-session expiry/logout verification, and independent backend action authorization/rate limits. OAuth configuration does not resolve the separately observed Atlas TLS blocker. No cloud incident was created, no Phase D record was reset, and no mutation protection was relaxed.
+The approved-account callback, session, logout and re-login were subsequently verified below. Remaining checks: unapproved-account rejection through the live provider flow, expired-session rejection, and independent backend action authorization/rate limits. OAuth configuration does not resolve the separately observed Atlas TLS blocker. No cloud incident was created, no Phase D record was reset, and no mutation protection was relaxed.
+
+
+## Approved-account login lifecycle verification — 2026-10-21
+
+The owner completed GitHub login/2FA and consent directly in the browser. The canonical web origin then returned a session containing a user and expiry, with no OAuth error. No user profile, email, token, cookie value, authorization code or OAuth query parameter was displayed or saved in evidence.
+
+1. Authenticated browser GET `/api/auth/session`: user object and expiry present. Observed remaining expiry was 3,581 seconds, consistent with the configured one-hour session lifetime.
+2. The application's Sign out control completed. A subsequent browser GET of the session endpoint contained neither user nor expiry.
+3. Sign in with GitHub completed again using the existing GitHub login and previously granted application consent. A subsequent session read again contained user and expiry. The browser was left authenticated.
+4. The authenticated `/demo` page retained its restricted read-only banner and disabled Reset Baseline / Inject Synthetic Fault controls. Separate unauthenticated HTTP checks of production fault injection, recovery and reset all returned 403. No authenticated POST was sent and no operational records were changed.
+
+These observations prove the approved-account callback, persisted browser session, browser logout and re-login. They do not prove live rejection of an unapproved provider account, expired-session rejection, authenticated-session cookie attributes, or backend operator mutation authorization. The earlier cookie-attribute checks applied to the CSRF flow. Logout cleared this browser's session; stateless JWT server-side revocation was not implemented or claimed. Session expiry metadata was inspected without waiting one hour or changing clocks/tokens.
+
+No application code changed for this verification. Production mutation denial, Atlas network rules, local ACN isolation and preserved Phase D evidence remain unchanged. See [sanitized OAuth verification evidence](evidence/vercel-oauth-configuration.json).

@@ -116,3 +116,8 @@ See [deployment report](VERCEL_DEPLOYMENT.md). Earlier local Phase D verificatio
 ### GitHub OAuth configuration follow-up — 2026-10-21
 
 Owner configuration was confirmed through Production environment metadata (five variables, all Sensitive). The web project was redeployed; provider/session/CSRF endpoints now return 200. Canonical GitHub redirect, `read:user` scope, state issuance and Secure/HttpOnly/SameSite=Lax CSRF-flow cookies were verified. Missing-CSRF sign-in requests challenge again. The browser reached GitHub's ChargeGuard login page; actual owner login/2FA/consent and session/logout checks remain pending. Production fault/recovery/reset requests still return 403. Atlas TLS and Stage B backend authorization/rate-limit blockers remain unchanged. See [OAuth verification evidence](evidence/vercel-oauth-configuration.json).
+
+
+### Approved operator session verified — 2026-10-21
+
+GitHub owner login completed and the browser's session endpoint contained user/expiry. Logout removed both; re-login restored both, and the browser was left authenticated. Observed lifetime was approximately one hour. Read-only banner and disabled fault/reset controls were verified while authenticated; separate unauthenticated fault/recovery/reset POST checks returned 403. No authenticated mutation was submitted. Unapproved-account provider-flow rejection, actual expired-session enforcement and independent backend operator authorization/rate limits remain unverified/incomplete. Existing Atlas TLS and cloud Datadog limitations remain separate blockers. No code, Atlas rules, raw ACN data or Phase D records changed.

@@ -26,7 +26,7 @@ Browser → Next.js BFF → HTTPS NestJS function → existing Atlas. This topol
 | INTERACTIVE DEMO VERIFIED | NO: all cloud mutations deliberately disabled |
 | DATADOG VERIFIED (production) | NO: stdout only; no production intake or alert lifecycle claimed |
 
-Deployed web `/`, `/chargers`, `/incidents`, `/demo`, `/login`: 200. `/history`: 404. `/api/historical`: 403. Fault POST through BFF: 403. `/api/auth/session`: 503 until OAuth configuration exists. BFF `/api/v1/health/live`: 200; `/api/v1/chargers`: 503.
+Deployed web `/`, `/chargers`, `/incidents`, `/demo`, `/login`: 200. `/history`: 404. `/api/historical`: 403. Fault POST through BFF: 403. `/api/auth/session` initially returned 503; after owner configuration and redeployment it returns 200 with no authenticated user in a fresh session. BFF `/api/v1/health/live`: 200; `/api/v1/chargers`: 503.
 
 Direct backend: no read key → 401; correct read key + liveness → 200; readiness and chargers → 503; fault POST → 403; `/docs` and OpenAPI JSON → 404. CORS wildcard/credentialed cross-origin access is not enabled in production. Tests sent no accepted mutation and did not create/reset demo records.
 
@@ -68,7 +68,7 @@ Values belong in project Environment Variables for the intended Production/Previ
 | Web | NEST_API_BASE_URL | Actual backend HTTPS origin |
 | Web | NEST_READ_API_KEY | Same private read credential as backend |
 | Web | NEST_API_KEY | Local development only; not needed to unlock cloud writes |
-| Web | GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET | Owner-created GitHub OAuth App credentials, pending |
+| Web | GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET | Owner-created GitHub OAuth App credentials; Production presence verified |
 | Web | NEXTAUTH_SECRET | Owner-configured random session secret, at least 32 characters |
 | Web | NEXTAUTH_URL | Canonical production web origin |
 | Web | OPERATOR_GITHUB_IDS | Explicit comma-separated numeric GitHub account IDs |
@@ -76,9 +76,9 @@ Values belong in project Environment Variables for the intended Production/Previ
 
 Vercel provides `VERCEL`, `PORT` and production runtime environment. Node version is pinned in each package and confirmed project settings. Local `.env` is never read when running on Vercel. Do not copy the local file wholesale into cloud settings; it can contain unrelated local observability settings.
 
-## GitHub operator login — prepared, not verified
+## GitHub operator login — configured; interactive verification pending
 
-The owner selected GitHub OAuth. Stable NextAuth `4.24.15` supports the installed Next/React versions. `/api/auth/[...nextauth]` and `/login` are implemented, but return a clear unavailable response when configuration is incomplete. Numeric provider-account IDs are explicitly allowlisted; empty or unknown identities are denied. JWT sessions expire after one hour. The library handles OAuth state/CSRF, HttpOnly cookies and SameSite defaults; production uses Secure cookies. Raw provider errors/tokens/profiles are not logged.
+The owner selected GitHub OAuth. Stable NextAuth `4.24.15` supports the installed Next/React versions. `/api/auth/[...nextauth]` and `/login` are implemented, and return a clear unavailable response when configuration is incomplete. The owner has now added all five required OAuth variables to Production as Sensitive values; only metadata was inspected. Numeric provider-account IDs are explicitly allowlisted; empty or unknown identities are denied. JWT sessions expire after one hour. The library handles OAuth state/CSRF, HttpOnly cookies and SameSite defaults; production uses Secure cookies. Raw provider errors/tokens/profiles are not logged.
 
 Owner steps:
 
@@ -115,3 +115,20 @@ Do not promote merely because build status is Ready. Require database readiness,
 Rollback: use the project's deployment history to promote the last verified restricted deployment, or `vercel rollback <verified-deployment-url>` within the correct project. A frontend/backend rollback does not roll back database records. If no functional Atlas-connected release exists, remain in restricted mode and use the existing local synthetic demo for judges. Do not downgrade to the original unrestricted backend configuration on a public runtime.
 
 Judges can inspect the online UI shell at the web URL, but cannot currently inspect cloud operational records or run incidents. Communicate the Atlas and OAuth blockers before judging. Use the existing local demo plus preserved Phase D evidence for the verified lifecycle. Do not expose ingest/read keys or invite judges as unrestricted repository collaborators without an access decision.
+
+
+## OAuth configuration follow-up — 2026-10-21
+
+The owner confirmed configuration. All five required variables exist in Production with Sensitive storage; no values were displayed or copied into the repository. The web project was redeployed from code commit `8e5dce55aae0bbae20e049697d6e88df1547655e` to apply them. Deployment: `https://chargeguard-fau3qv4sh-thangak18-7126s-projects.vercel.app`, aliased to the canonical web origin.
+
+Actual live checks:
+
+- `/api/auth/providers`: 200, GitHub available.
+- Fresh `/api/auth/session`: 200, no authenticated user. This is not a successful-login claim.
+- `/api/auth/csrf`: 200, token issued; both issued cookies were Secure, HttpOnly and SameSite=Lax. An authenticated session cookie has not yet been observed.
+- Valid-CSRF sign-in POST returned an HTTPS GitHub authorization URL, with the canonical callback, a populated client ID, state and scope limited to `read:user`. Parameter values were withheld.
+- Sign-in POST without CSRF returned a CSRF challenge rather than a GitHub authorization redirect.
+- Browser reached the GitHub sign-in page naming ChargeGuard. The owner must complete login/2FA and any new-app consent directly on GitHub.
+- Fault injection, recovery and reset through the production BFF still returned 403 after OAuth configuration.
+
+Pending: real approved-account callback and session, unapproved-account rejection through the provider flow, authenticated-session expiry/logout verification, and independent backend action authorization/rate limits. OAuth configuration does not resolve the separately observed Atlas TLS blocker. No cloud incident was created, no Phase D record was reset, and no mutation protection was relaxed.

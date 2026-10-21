@@ -1,0 +1,42 @@
+{
+  "verifiedDate": "2026-10-21",
+  "codeCommit": "8e5dce55aae0bbae20e049697d6e88df1547655e",
+  "deployment": "https://chargeguard-fau3qv4sh-thangak18-7126s-projects.vercel.app",
+  "productionOrigin": "https://chargeguard-web.vercel.app",
+  "environmentMetadata": {
+    "requiredVariableCount": 5,
+    "allPresentInProduction": true,
+    "allSensitiveStorage": true,
+    "valuesDisplayed": false
+  },
+  "liveChecks": {
+    "providersStatus": 200,
+    "githubProviderAvailable": true,
+    "anonymousSessionStatus": 200,
+    "anonymousSessionAuthenticated": false,
+    "csrfStatus": 200,
+    "csrfTokenIssued": true,
+    "csrfFlowCookieCount": 2,
+    "csrfFlowCookiesSecure": true,
+    "csrfFlowCookiesHttpOnly": true,
+    "csrfFlowCookiesSameSiteLax": true,
+    "githubHttpsAuthorizationRedirect": true,
+    "canonicalCallback": true,
+    "scopeReadUserOnly": true,
+    "stateIssued": true,
+    "missingCsrfChallenged": true,
+    "browserReachedGitHubLogin": true,
+    "faultMutationStatus": 403,
+    "recoveryMutationStatus": 403,
+    "resetMutationStatus": 403
+  },
+  "authenticatedLoginVerified": false,
+  "authenticatedSessionCookieVerified": false,
+  "logoutVerified": false,
+  "sessionExpiryVerified": false,
+  "ownerActionRequired": "Complete GitHub login, 2FA and new-app consent in browser; never share credentials or callback codes in chat.",
+  "applicationCodeChanged": false,
+  "atlasNetworkSettingsChanged": false,
+  "cloudMutationProtectionRelaxed": false,
+  "phaseDRecordsChanged": false
+}

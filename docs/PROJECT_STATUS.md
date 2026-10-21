@@ -111,3 +111,8 @@ See [submission checklist](SUBMISSION_CHECKLIST.md) for the final gates. Node 24
 - Local regression: 33 unit API, 12 integration, 5 web policy tests, typechecks, lint and builds pass. Historical and existing Phase D records were not uploaded/reset.
 
 See [deployment report](VERCEL_DEPLOYMENT.md). Earlier local Phase D verification remains historical evidence and must not be represented as a newly verified cloud lifecycle.
+
+
+### GitHub OAuth configuration follow-up — 2026-10-21
+
+Owner configuration was confirmed through Production environment metadata (five variables, all Sensitive). The web project was redeployed; provider/session/CSRF endpoints now return 200. Canonical GitHub redirect, `read:user` scope, state issuance and Secure/HttpOnly/SameSite=Lax CSRF-flow cookies were verified. Missing-CSRF sign-in requests challenge again. The browser reached GitHub's ChargeGuard login page; actual owner login/2FA/consent and session/logout checks remain pending. Production fault/recovery/reset requests still return 403. Atlas TLS and Stage B backend authorization/rate-limit blockers remain unchanged. See [OAuth verification evidence](evidence/vercel-oauth-configuration.json).

@@ -49,7 +49,7 @@ async function main() {
         runs[0].chargerId !== 'demo-charger-01' || runs[0].status !== 'BASELINE' ||
         runs[0].revision !== 0 || (runs[0].actions || []).length !== 0)
       throw new Error('Existing judge run state unexpected');
-    if (!await db.collection('incidents').findOne({ _id: PINN }))
+    if (!await db.collection('incidents').findOne({ _id: PINNED }))
       throw new Error('Pinned Phase D evidence missing');
     const names = new Set((await db.listCollections({}, { nameOnly: true }).toArray()).map(c => c.name));
     const exists = names.has('judge_policy');

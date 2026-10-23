@@ -6,6 +6,8 @@ import {DatabaseService} from '../database/database.service';
 import {JudgeRunService} from './judge-run.service';
 import {verifyOperatorAssertion,verifyOperatorRead,type BoundAction,type DemoOperation} from '../common/operator-preflight';
 import {ObservabilityService} from '../observability/observability.service';
+import {isHostedRuntime} from '../config/runtime';
+import {isScopedJudgeWrite,PRODUCTION_JUDGE_OWNER} from '../common/judge-production-gate';
 
 @Controller({path:'judge/runs',version:'1'})
 export class JudgeController {
@@ -32,6 +34,8 @@ export class JudgeController {
  @Post(':runId/:operation')
  async act(@Req() req:Request&{rawBody?:Buffer},@Param('runId')runId:string,@Param('operation')operation:string,@Body() body:unknown){
   const env=process.env;
+  if ((env.NODE_ENV==='production'||isHostedRuntime(env)) && !isScopedJudgeWrite(env,req.method,req.path))
+   throw new UnauthorizedException('Judge action denied');
   // This additional gate is not a replacement for unconditional production middleware denial.
   if(env.JUDGE_ROUTES_ENABLED!=='true')throw new ServiceUnavailableException('Judge routes disabled');
   const secret=env.OPERATOR_ASSERTION_SECRET,writeKey=env.JUDGE_WRITE_API_KEY,origin=env.OPERATOR_ORIGIN;
@@ -46,7 +50,11 @@ export class JudgeController {
   const run=await this.database.db().collection('judge_runs').findOne({_id:runId as any,synthetic:true});
   const action:BoundAction={runId,operation:operation as DemoOperation,method:'POST',path:req.path,body:req.rawBody,origin:String(req.headers.origin??''),stationId:String(run?.stationId??''),chargerId:String(run?.chargerId??'')};
   let result:{runId:string;status:string;synthetic:boolean};
-  try{await verifyOperatorAssertion(token,action,policy);result=await new JudgeRunService(this.database.db(),policy,writeKey).execute(token,key,action);}
+  try{
+   const identity=await verifyOperatorAssertion(token,action,policy);
+   if((env.NODE_ENV==='production'||isHostedRuntime(env)) && identity.subject!==`github:${PRODUCTION_JUDGE_OWNER}`)throw new Error('Wrong operator');
+   result=await new JudgeRunService(this.database.db(),policy,writeKey).execute(token,key,action);
+  }
   catch{throw new UnauthorizedException('Judge action denied');}
   // Best-effort observability must never turn a committed CAS transition into a retryable denial.
   try{this.obs?.judgeAction(operation,runId,action.chargerId);}catch{/* software state and audit already committed */}

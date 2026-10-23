@@ -4,7 +4,7 @@ import {randomBytes,createHash} from 'node:crypto';
 import {SignJWT} from 'jose';
 import {verifyOperatorAssertion,type BoundAction,type OperatorPolicy} from '../src/common/operator-preflight';
 const policy:OperatorPolicy={secret:randomBytes(32),issuer:'https://web.example.test',audience:'chargeguard-api',origin:'https://web.example.test',githubIds:new Set(['123'])};
-const action:BoundAction={operation:'fault',method:'POST',path:'/api/v1/demo/trigger-fault',body:Buffer.from('{"chargerIndex":1}'),origin:policy.origin,stationId:'demo-station-01',chargerId:'demo-charger-01',runId:'judge-'+'a'.repeat(24)};
+const action:BoundAction={operation:'fault',method:'POST',path:'/api/v1/judge/runs/judge-'+'a'.repeat(24)+'/fault',body:Buffer.from('{"chargerIndex":1}'),origin:policy.origin,stationId:'demo-station-01',chargerId:'demo-charger-01',runId:'judge-'+'a'.repeat(24)};
 async function sign(overrides:Record<string,unknown>={},secret=policy.secret,alg='HS256'){
  const now=Math.floor(Date.now()/1000);
  return new SignJWT({iss:policy.issuer,aud:policy.audience,sub:'github:123',iat:now,exp:now+30,jti:'b'.repeat(32),operation:action.operation,method:action.method,path:action.path,bodySha256:createHash('sha256').update(action.body).digest('hex'),stationId:action.stationId,chargerId:action.chargerId,runId:action.runId,...overrides}).setProtectedHeader({alg}).sign(secret);

@@ -22,7 +22,9 @@
     "demo:incident": "tsx scripts/incident-demo.ts",
     "diagnose:atlas": "tsx scripts/diagnose-atlas.ts",
     "phase:d": "tsx scripts/phase-d-e2e.ts",
-    "historical:check": "tsx scripts/check-local-history.ts"
+    "historical:check": "tsx scripts/check-local-history.ts",
+    "judge:policy:plan": "node scripts/provision-judge-policy.cjs --plan",
+    "judge:policy:audit": "node scripts/provision-judge-policy.cjs --audit"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.0",

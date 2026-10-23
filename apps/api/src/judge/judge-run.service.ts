@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Db } from 'mongodb';
 import { DurableOperatorBudget, verifyOperatorAssertion, type BoundAction, type OperatorPolicy } from '../common/operator-preflight';
+import { isHostedRuntime } from '../config/runtime';
 
 type Run = {_id:string;owner:string;stationId:string;chargerId:string;synthetic:true;status:string;revision:number;observations?:{at:Date;currentA:number;chargingState:string;sourceType:string}[];actions:{actor:string;action:string;at:Date}[]};
 /** Isolated state: never updates chargers, telemetry, incidents or original Phase D evidence. */
@@ -25,6 +26,15 @@ export class JudgeRunService {
     const transitions:Record<string,[string[],string]>={fault:[['BASELINE','RESOLVED'],'OPEN'],acknowledge:[['OPEN'],'ACKNOWLEDGED'],recover:[['ACKNOWLEDGED'],'RESOLVING'],resolve:[['RESOLVING'],'RESOLVED'],reset:[['BASELINE','RESOLVED'],'BASELINE']};
     const [allowed,status]=transitions[action.operation];
     if(!allowed.includes(run.status))throw new Error('Invalid run transition');
+    if(process.env.NODE_ENV==='production'||isHostedRuntime(process.env)) {
+      // Refuse all writes until the separately approved policy provisioning
+      // has explicitly created the TTL index. Never implicitly create it here.
+      const collection=await this.db.listCollections({name:'judge_policy'},{nameOnly:true}).toArray();
+      if(collection.length!==1)throw new Error('Judge policy not provisioned');
+      const indexes=await this.db.collection('judge_policy').listIndexes().toArray();
+      if(!indexes.some(i=>i.name==='expiresAt_ttl'&&i.expireAfterSeconds===0&&i.key?.expiresAt===1))
+        throw new Error('Judge policy index not provisioned');
+    }
     await new DurableOperatorBudget(this.db.collection('judge_policy')).consume(identity,3);
     const at=new Date();
     const observation=action.operation==='fault'?{at,currentA:0,chargingState:'FAULT',sourceType:'SYNTHETIC'}:action.operation==='recover'?{at,currentA:8.25,chargingState:'CHARGING',sourceType:'SYNTHETIC'}:undefined;

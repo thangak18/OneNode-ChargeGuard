@@ -26,9 +26,6 @@ export async function verifyOperatorRead(token:string,path:string,origin:string,
   }catch{throw new Error('Judge read denied');}
 }
 const digest = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
-const routes: Record<Exclude<DemoOperation,'acknowledge'|'resolve'>,string> = {
-  fault:'/api/v1/demo/trigger-fault', recover:'/api/v1/demo/recover', reset:'/api/v1/demo/reset'
-};
 const pinned = 'demo-58a1983cae09';
 
 /** Requires trusted route-derived context and original body bytes, never browser-declared identity. */
@@ -38,11 +35,10 @@ export async function verifyOperatorAssertion(token: string, action: BoundAction
       !DEMO_OPERATIONS.includes(action.operation) || action.body.byteLength > 8192 ||
       action.stationId !== 'demo-station-01' || !/^demo-charger-0[1-5]$/.test(action.chargerId) ||
       !/^judge-[a-f0-9]{24}$/.test(action.runId) || action.incidentId === pinned) throw new Error('Operator action denied');
-  const needsIncident=['acknowledge','recover','resolve'].includes(action.operation);
-  if (needsIncident && !action.path.startsWith('/api/v1/judge/runs/') && (!action.incidentId || !/^demo-[a-f0-9]{12}$/.test(action.incidentId))) throw new Error('Operator action denied');
-  const path = action.operation === 'acknowledge' || action.operation === 'resolve'
-    ? `/api/v1/incidents/${action.incidentId}/${action.operation}` : routes[action.operation];
-  if (action.path !== path && action.path !== `/api/v1/judge/runs/${action.runId}/${action.operation}`) throw new Error('Operator action denied');
+  // Every signed write is scoped to the isolated Judge Run controller. Legacy
+  // demo/incident/telemetry routes must never accept operator assertions.
+  if (action.incidentId !== undefined ||
+      action.path !== `/api/v1/judge/runs/${action.runId}/${action.operation}`) throw new Error('Operator action denied');
   try {
     const {payload} = await jwtVerify(token, policy.secret, {algorithms:['HS256'],issuer:policy.issuer,audience:policy.audience,requiredClaims:['sub','iat','exp','jti']});
     const now=Math.floor(Date.now()/1000);

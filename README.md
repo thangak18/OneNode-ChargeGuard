@@ -142,6 +142,8 @@ Never commit credentials, connection strings, customer/production data, personal
 
 ## Authenticated isolated judge console (production read-only)
 
+Interactive preparation adds a **default-disabled** single-owner/single-run five-action write allowlist in both BFF and NestJS; ordinary telemetry, demo and incident mutations remain blocked in hosted deployments. The future production activation needs fresh explicit owner approval, separate `JUDGE_WRITE_API_KEY`, both `JUDGE_PROD_WRITES_ENABLED` and `JUDGE_ROUTES_ENABLED`, and policy pre-provisioning. The offline `npm --prefix apps/api run judge:policy:plan` prints exact planned collection/index changes with zero network requests; do not run `--provision` without a new owner approval. MongoDB run observations are simulated software values, distinct from time-series measurements; Datadog cloud forwarding remains off. See [security notes](docs/JUDGE_SECURITY_PREPARATION.md) and [one-run procedure](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
+
 `/judge` prepares an authorized run selector, selected virtual charger, recorded `SYNTHETIC` software observations, and its server-derived action timeline. Run GET access requires separately provisioned operator read credentials and an owned run; missing run/credentials show explicit loading, empty or error states. All production mutation controls remain disabled and direct BFF/Nest writes return HTTP 403. See the [one-run provisioning/approval plan](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Cloud Datadog remains disabled; historical ACN is local-only.
 
 **Official rules:** https://mini-hackathon-sep-2026.mugvn.com/terms

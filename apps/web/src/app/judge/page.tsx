@@ -62,7 +62,14 @@ export default function JudgePage(){
    await json(`/api/judge/runs/${run._id}/${operation}`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    setNotice(`${operation} recorded in isolated run. Refreshing verified state.`);
    await refresh(run._id);
-  }catch(e){setError(e instanceof Error?e.message:'Operation denied');}finally{setBusy(false);}
+  }catch(e){
+   const message=e instanceof Error?e.message:'Operation denied';
+   // An upstream timeout can occur after MongoDB commits. Re-read the owned
+   // run instead of automatically repeating a non-idempotent POST.
+   try { setRun(parseJudgeRun(await json<unknown>(`/api/judge/runs/${run._id}`))); }
+   catch { /* Retain the last verified view and show the operation error. */ }
+   setError(`${message}. Verify the refreshed run status before trying another action.`);
+  }finally{setBusy(false);}
  }
 
  const samples=run?runChartSamples(run):[];
@@ -83,7 +90,7 @@ export default function JudgePage(){
      {!session?.authorized&&<p className="mt-3 text-sm"><Link href="/login" className="underline text-cyan-300">Sign in with GitHub</Link> to access owner-scoped runs.</p>}
     </section>
     <section className={card}><h2 className="text-sm font-semibold flex items-center gap-2"><Radio size={15}/> Mutation policy</h2>
-     <p className="mt-3 text-sm text-amber-300">{session?.canMutate?'Local test operation permitted':'Production read-only · HTTP 403'}</p>
+     <p className="mt-3 text-sm text-amber-300">{session?.canMutate?'Authorized Judge operations enabled':'Production read-only · HTTP 403'}</p>
      <p className="mt-2 text-xs text-slate-400">{disabledReason}</p>
     </section>
     <section className={card}><h2 className="text-sm font-semibold flex items-center gap-2"><Activity size={15}/> Evidence source</h2>
@@ -106,9 +113,9 @@ export default function JudgePage(){
      </div><p className="mt-3 text-xs text-slate-500">Reset applies only to this run and preserves its audit timeline.</p>
     </section>
     <section className={card}><h2 className="font-semibold flex items-center gap-2"><Activity size={16} className="text-cyan-400"/> Run-specific synthetic observations</h2>
-     <p className="mt-2 text-xs text-slate-400">Actual recorded software observations from this run. No data are manufactured to fill gaps.</p>
+     <p className="mt-2 text-xs text-slate-400">Recorded SYNTHETIC software scenario values (not sensor measurements or time-series telemetry). No data are manufactured to fill gaps.</p>
      {samples.length?<><div className="mt-4 h-56" aria-label="Recorded synthetic charging current chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={samples}><CartesianGrid stroke="#334155" strokeDasharray="3 3"/><XAxis dataKey="at" tickFormatter={v=>new Date(v as string).toLocaleTimeString()} tick={{fill:'#94a3b8',fontSize:10}}/><YAxis unit=" A" tick={{fill:'#94a3b8',fontSize:10}}/><Tooltip labelFormatter={v=>timestamp(String(v))} contentStyle={{background:'#0f172a',borderColor:'#334155'}}/><Line type="linear" dataKey="currentA" stroke="#22d3ee" strokeWidth={2} dot name="Current (A)"/></LineChart></ResponsiveContainer></div>
-      <div className="mt-3 max-h-36 overflow-auto"><table className="w-full text-left text-xs"><thead><tr className="text-slate-400"><th>Observed at</th><th>Current</th><th>State</th></tr></thead><tbody>{samples.map((s,i)=><tr key={`${s.at}-${i}`} className="border-t border-slate-800"><td className="py-2 font-mono">{timestamp(s.at)}</td><td className="font-mono tabular-nums">{s.currentA} A</td><td>{s.state}</td></tr>)}</tbody></table></div></>:<div className="mt-5 flex items-center gap-2 text-sm text-slate-500"><Clock size={15}/> No observations recorded for this run.</div>}
+      <div className="mt-3 max-h-36 overflow-auto"><table className="w-full text-left text-xs"><thead><tr className="text-slate-400"><th>Scenario time</th><th>Simulated current</th><th>State</th></tr></thead><tbody>{samples.map((s,i)=><tr key={`${s.at}-${i}`} className="border-t border-slate-800"><td className="py-2 font-mono">{timestamp(s.at)}</td><td className="font-mono tabular-nums">{s.currentA} A</td><td>{s.state}</td></tr>)}</tbody></table></div></>:<div className="mt-5 flex items-center gap-2 text-sm text-slate-500"><Clock size={15}/> No observations recorded for this run.</div>}
     </section>
     <section className={`${card} xl:col-span-2`}><h2 className="font-semibold flex items-center gap-2"><CheckCircle2 className="text-emerald-400" size={16}/> Investigation & audit timeline</h2>
      <p className="mt-2 text-xs text-slate-400">Server-derived GitHub actor IDs and timestamps, scoped to this run. No connection to historical Phase D incident records.</p>

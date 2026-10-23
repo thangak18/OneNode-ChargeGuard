@@ -12,3 +12,20 @@ test('cloud transport retries transient status once and bounds network failures'
  let calls=0;const t=new CloudTransport('test-only-key-abcdefghijkl',async()=>{calls++;return new Response(null,{status:calls===1?429:202,headers:{'retry-after':'0'}});});t.metric('ingestion.success',1,'c',[]);await t.flush();assert.equal(calls,2);
  let signalSeen=false;const failing=new CloudTransport('test-only-key-abcdefghijkl',async(_url,init)=>{signalSeen=!!init?.signal;throw new Error('private upstream details');});failing.metric('fault.simulated',1,'c',[]);await failing.flush();assert.equal(failing.failed,1);assert.equal(signalSeen,true);
 });
+test('judge observability is schema-scoped, correlated and never attaches unbounded run metric tags',async()=>{
+ const sent:{url:string;body:any}[]=[];
+ const transport=new CloudTransport('test-only-key-abcdefghijkl',async(url,init)=>{
+   sent.push({url:String(url),body:JSON.parse(String(init?.body))});return new Response(null,{status:202});
+ });
+ const run='judge-'+'a'.repeat(24);
+ transport.log(JSON.stringify({service:'chargeguard-api',env:'prod',message:'judge.action',run_id:run,action:'fault',charger_id:'demo-charger-01',password:'private'}));
+ transport.metric('judge.action',1,'c',['action:fault',`run_id:${run}`]);
+ transport.metric('judge.fault_event',1,'c',[`run_id:${run}`]);
+ await transport.flush();
+ assert.equal(sent.length,2);
+ assert.equal(sent[0].body[0].run_id,run);
+ assert.equal(sent[0].body[0].password,undefined);
+ assert.equal(sent[1].body.series.length,2);
+ assert.ok(sent[1].body.series.every((entry:any)=>!entry.tags.some((tag:string)=>tag.startsWith('run_id:'))));
+ assert.ok(sent[1].body.series.every((entry:any)=>entry.tags.includes('env:prod')));
+});

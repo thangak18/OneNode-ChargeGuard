@@ -6,6 +6,14 @@ type Run = {_id:string;owner:string;stationId:string;chargerId:string;synthetic:
 /** Isolated state: never updates chargers, telemetry, incidents or original Phase D evidence. */
 export class JudgeRunService {
   constructor(private readonly db:Db,private readonly policy:OperatorPolicy,private readonly writeKey:string) {}
+  /** All reads are owner-filtered and contain only isolated judge documents. */
+  async list(owner:string) {
+    return this.db.collection<Run>('judge_runs').find({owner,synthetic:true},{projection:{owner:0}}).sort({_id:-1}).limit(10).toArray();
+  }
+  async detail(owner:string,runId:string) {
+    if(!/^judge-[a-f0-9]{24}$/.test(runId))throw new Error('Invalid judge run');
+    return this.db.collection<Run>('judge_runs').findOne({_id:runId,owner,synthetic:true},{projection:{owner:0}});
+  }
   async execute(token:string,key:string,action:BoundAction) {
     const hash=(v:string)=>createHash('sha256').update(v).digest();
     if(this.writeKey.length<32 || !timingSafeEqual(hash(key),hash(this.writeKey)))throw new Error('Write authentication denied');

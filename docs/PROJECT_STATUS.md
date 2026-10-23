@@ -2,6 +2,8 @@
 
 > **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
 
+**Judge preparation, 2026-10-23:** The new authenticated `/judge` frontend, owner-scoped GET API/assertions, synthetic run observations/audit timeline and disabled production lifecycle controls are prepared for regression/deployment. Dedicated judge reads require separately provisioned read secrets and an owned run; no cloud run is created. The current production hard-403 gates, Phase D incident, ACN local-only policy and Datadog `DD_CLOUD_ENABLED=false` remain in force. Exact one-run provisioning, indexes, tests and approval/rollback boundaries are described in [Judge one-run provisioning](JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
+
 
 **Updated:** 19 October 2026. This is a local development/demo application, not a production charger-control or safety system. **The critical Phase D incident lifecycle is verified; submission packaging remains.**
 

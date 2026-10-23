@@ -138,6 +138,10 @@ The final dataset subset, schema and usage permissions must be verified. Histori
 ## Security and transparency
 Never commit credentials, connection strings, customer/production data, personal information or secrets. Keep `.env` local; use placeholders and secret management in the build phase. Distinguish measured source data, derived fields and synthetic faults in code and demo.
 
+## Authenticated isolated judge console (production read-only)
+
+`/judge` prepares an authorized run selector, selected virtual charger, recorded `SYNTHETIC` software observations, and its server-derived action timeline. Run GET access requires separately provisioned operator read credentials and an owned run; missing run/credentials show explicit loading, empty or error states. All production mutation controls remain disabled and direct BFF/Nest writes return HTTP 403. See the [one-run provisioning/approval plan](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Cloud Datadog remains disabled; historical ACN is local-only.
+
 **Official rules:** https://mini-hackathon-sep-2026.mugvn.com/terms
 
 ## Isolated local historical mode

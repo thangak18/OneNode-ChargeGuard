@@ -2,6 +2,8 @@
 
 Date: 2026-10-23. Baseline e398622. **Not ready to enable public mutations.** No production database writes or cloud incident test were performed. Existing production 403 middleware and BFF denial remain unchanged.
 
+**Judge-run UI/read continuation:** `/judge` displays identity authorization, real run-scoped SYNTHETIC observations, run status and server-derived audit actions with disabled production write controls. The BFF mints short-lived `judge:read` assertions from signed NextAuth cookies; Nest checks the route, origin, signature/allowlist and reads only owned `judge_runs`. Run GET access is deliberately unavailable until separately provisioned; the currently approved code deployment does not authorize new keys, collections or a production run. Full [one-run gate, exact data/indexes and observability distinctions](JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
+
 ## Implemented supporting code
 
 - Server-only NextAuth JWT verification helper derives numeric GitHub identity from the signed session cookie and rechecks current allowlist. It rejects cross-origin/non-same-origin fetches and non-JSON POSTs. No browser-supplied actor or operator ID is accepted. Assertions expire after 30 seconds and bind issuer, audience, operation, route, run, asset and body hash.

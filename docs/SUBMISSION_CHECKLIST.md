@@ -104,6 +104,8 @@ Do not replace timestamps or present an inaccessible state as a current screensh
 
 ## Final actions
 
+- [ ] For a real online interactive judge demo, obtain new approval for [exactly one isolated run](JUDGE_ONE_RUN_PROVISIONING_PLAN.md), then separately approve write activation and cloud fault scope. Until then `/judge` is preparatory and production writes remain 403; Datadog US1 cloud needs a separate $0 cost/owner gate.
+
 - [ ] Recheck the organizer form/instructions for video, slides, link and access details; ask organizers about any format absent from the terms.
 - [x] Complete the existing incident on Atlas, verify its resolved UI/actions and actual US1 metric/log plus ALERT → OK evidence; see Phase D verification.
 - [x] Verify current US1 access and trial banner (14 days left); exact expiry/final-round coverage remains unconfirmed. No paid activation.

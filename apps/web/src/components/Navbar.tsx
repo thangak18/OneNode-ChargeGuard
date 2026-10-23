@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Zap, Activity, AlertOctagon, Sliders, Database, RefreshCw, Menu, X, History } from 'lucide-react';
+import { Zap, Activity, AlertOctagon, Sliders, Database, RefreshCw, Menu, X, History, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   onRefresh?: () => void;
@@ -20,6 +20,7 @@ export function Navbar({ onRefresh, isRefreshing, lastUpdated }: NavbarProps) {
     { href: '/chargers', label: 'Charger Detail', icon: Zap },
     { href: '/incidents', label: 'Incidents', icon: AlertOctagon },
     { href: '/demo', label: 'Demo Controls', icon: Sliders },
+    { href: '/judge', label: 'Judge Run', icon: ShieldCheck },
     ...(process.env.NODE_ENV === 'development' ? [{ href: '/history', label: 'Historical Local', icon: History }] : []),
   ];
 

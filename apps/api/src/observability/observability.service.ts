@@ -86,14 +86,22 @@ export class ObservabilityService implements OnModuleDestroy {
     }
     this.record('info','telemetry.accepted',{...context,source,asset_scope:assetTags[0]==='asset_scope:other'?'other':'demo'});
   }
+  /** Isolated software state changes: never equate these with Atlas telemetry or monitor ALERT/OK. */
+  judgeAction(action:string,runId:string,chargerId:string):void {
+    if(!['fault','acknowledge','recover','resolve','reset'].includes(action)||!/^judge-[a-f0-9]{24}$/.test(runId)||!chargers.has(chargerId))return;
+    this.metric('judge.action',1,'c',[`action:${action}`]);
+    if(action==='fault')this.metric('judge.fault_event',1,'c');
+    this.record('info','judge.action',{action,run_id:runId,charger_id:chargerId,source:'synthetic'});
+  }
   /** Only explicitly allowed operational fields reach disk/stdout; never raw errors, payloads or headers. */
   record(level:'info'|'warning'|'error',event:string,fields:Record<string,unknown>={}):void {
-    const allowedEvents=['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action'];
+    const allowedEvents=['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action','judge.action'];
     const safe:Record<string,unknown>={};
     for(const key of ['status_code','duration_ms']) if(typeof fields[key]==='number' && Number.isFinite(fields[key])) safe[key]=fields[key];
-    const values:Record<string,string[]>={mode:['single','batch'],outcome:['success','failure'],source:['synthetic','derived','acn_replay'],asset_scope:['demo','other'],action:['baseline','fault_injected','investigate','recovery_requested','resolved']};
+    const values:Record<string,string[]>={mode:['single','batch'],outcome:['success','failure'],source:['synthetic','derived','acn_replay'],asset_scope:['demo','other'],action:['baseline','fault_injected','investigate','recovery_requested','resolved','fault','acknowledge','recover','resolve','reset']};
     for(const [key,options] of Object.entries(values)) if(typeof fields[key]==='string' && options.includes(fields[key] as string)) safe[key]=fields[key];
     if(typeof fields.demo_id==='string' && /^[a-f0-9]{12}$/.test(fields.demo_id)) safe.demo_id=fields.demo_id;
+    if(typeof fields.run_id==='string' && /^judge-[a-f0-9]{24}$/.test(fields.run_id))safe.run_id=fields.run_id;
     if(typeof fields.incident_id==='string' && /^demo-[a-f0-9]{12}$/.test(fields.incident_id)) safe.incident_id=fields.incident_id;
     if(fields.station_id===station) safe.station_id=station;
     if(typeof fields.charger_id==='string' && chargers.has(fields.charger_id)) safe.charger_id=fields.charger_id;

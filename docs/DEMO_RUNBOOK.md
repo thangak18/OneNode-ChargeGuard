@@ -141,6 +141,10 @@ Read [Phase D verification](PHASE_D_VERIFICATION.md) before recording. The JSON 
 
 ## Optional private historical inspection
 
+### Prepared authenticated judge console — future isolated workflow
+
+After GitHub sign-in, `/judge` displays operator authorization, production read-only status and SYNTHETIC provenance. Until a separately authorized read setup and run exist, it shows no run/a 503 instead of substituting Phase D records. Once a run is legitimately present, select it and inspect stored charger, status, observed synthetic software samples and verified actor audit timeline. Fault, acknowledge, recover, resolve and reset remain disabled online with HTTP 403. Follow the [one-run approval plan](JUDGE_ONE_RUN_PROVISIONING_PLAN.md) before considering an interactive cloud test. Incident state, fault count, monitor ALERT/OK and synthetic recovery evidence are independent signals.
+
 Use [Historical Local Mode](HISTORICAL_LOCAL_MODE.md) for the exact dry-run command and permission matrix. With Node 24 and the already-held ignored files, run `npm --prefix apps/api run historical:check`, then start the loopback web dev server with `CHARGEGUARD_HISTORICAL_LOCAL=true`. `/history` displays historical current/source state/energy and separately labels derived state and the mapped replay clock. Play/Pause/scrubbing never ingest data. No NestJS API, Atlas or Agent is required for this dedicated path.
 
 The five sessions share one exported prefix, shown as one local EVSE alias; they are not five physical chargers. Missing sensor channels stay unavailable, and energy resets are not corrected into invented totals. Keep the view private while public-display/reuse permissions remain unconfirmed. Do not put source traces in the submission video or replay them into cloud telemetry. The existing `--execute` replay path is blocked until an owner-reviewed ignored permission record covers both third-party sinks and every selected content hash. Use SYNTHETIC operational pages for the verified public-facing incident narrative.

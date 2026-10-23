@@ -11,6 +11,20 @@ export type BoundAction = {
 };
 export type OperatorPolicy = { secret: Uint8Array; issuer: string; audience: string; origin: string; githubIds: ReadonlySet<string> };
 export type OperatorIdentity = { subject: string; nonce: string; expiresAt: number; operation: DemoOperation };
+/** Read assertions are independently signed by the BFF, bound to one route and never authorize writes. */
+export async function verifyOperatorRead(token:string,path:string,origin:string,policy:OperatorPolicy):Promise<string> {
+  if(!policy.issuer.startsWith('https://')||policy.secret.byteLength<32||origin!==policy.origin||
+    !(/^\/api\/v1\/judge\/runs$/.test(path)||/^\/api\/v1\/judge\/runs\/judge-[a-f0-9]{24}$/.test(path)))throw new Error('Judge read denied');
+  try {
+    const {payload}=await jwtVerify(token,policy.secret,{algorithms:['HS256'],issuer:policy.issuer,audience:policy.audience,requiredClaims:['sub','iat','exp','jti']});
+    const now=Math.floor(Date.now()/1000);
+    if(typeof payload.sub!=='string'||!/^github:[1-9][0-9]*$/.test(payload.sub)||!policy.githubIds.has(payload.sub.slice(7))||
+      payload.method!=='GET'||payload.scope!=='judge:read'||payload.path!==path||
+      typeof payload.iat!=='number'||payload.iat>now||typeof payload.exp!=='number'||payload.exp<=payload.iat||payload.exp-payload.iat>60||
+      typeof payload.jti!=='string'||!/^[a-f0-9]{32}$/.test(payload.jti))throw new Error();
+    return payload.sub;
+  }catch{throw new Error('Judge read denied');}
+}
 const digest = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const routes: Record<Exclude<DemoOperation,'acknowledge'|'resolve'>,string> = {
   fault:'/api/v1/demo/trigger-fault', recover:'/api/v1/demo/recover', reset:'/api/v1/demo/reset'

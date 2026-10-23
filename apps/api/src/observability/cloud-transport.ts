@@ -5,12 +5,12 @@ export class CloudTransport {
   constructor(private key:string,private send:typeof fetch=fetch) {if(key.length<16)throw new Error('Cloud intake key required');}
   log(line:string){try{const item=JSON.parse(line);if(item.service!=='chargeguard-api'||item.env!=='prod')return;
     // Only sanitized logger output is accepted; allowlist again at the transport boundary.
-    if(!['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action'].includes(item.message))return;
-    const safe:Record<string,unknown>={};for(const k of ['timestamp','status','service','env','message','demo_id','incident_id','station_id','charger_id','action','outcome','duration_ms','status_code'])if(item[k]!==undefined)safe[k]=item[k];
+    if(!['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action','judge.action'].includes(item.message))return;
+    const safe:Record<string,unknown>={};for(const k of ['timestamp','status','service','env','message','demo_id','incident_id','run_id','station_id','charger_id','action','outcome','duration_ms','status_code'])if(item[k]!==undefined)safe[k]=item[k];
     this.enqueue(this.logs,safe);}catch{this.dropped++;}}
   metric(name:string,value:number,type:'c'|'g'|'ms',tags:string[]){
-    if(!/^(ingestion\.(success|failure|processing_ms)|telemetry\.(accepted|duplicate)|charger\.(current_a|operational_status)|fault\.simulated)$/.test(name)||!Number.isFinite(value))return;
-    const safeTags=tags.filter(t=>/^(mode:(batch|single)|status_class:[1-5]xx|outcome:(success|failure)|source:(synthetic|derived|acn_replay)|origin:(synthetic|derived|measured|source_reported)|station_id:demo-station-01|charger_id:demo-charger-0[1-5]|status:(available|charging|not_charging|idle|fault|offline)|asset_scope:other)$/.test(t));
+    if(!/^(ingestion\.(success|failure|processing_ms)|telemetry\.(accepted|duplicate)|charger\.(current_a|operational_status)|fault\.simulated|judge\.(action|fault_event))$/.test(name)||!Number.isFinite(value))return;
+    const safeTags=tags.filter(t=>/^(mode:(batch|single)|status_class:[1-5]xx|outcome:(success|failure)|source:(synthetic|derived|acn_replay)|origin:(synthetic|derived|measured|source_reported)|station_id:demo-station-01|charger_id:demo-charger-0[1-5]|status:(available|charging|not_charging|idle|fault|offline)|asset_scope:other|action:(fault|acknowledge|recover|resolve|reset))$/.test(t));
     // Latency is a per-event gauge here, deliberately not Agent histogram percentile semantics.
     this.enqueue(this.metrics,{metric:'chargeguard.'+name+(type==='ms'?'.sample':''),type:type==='c'?1:3,...(type==='c'?{interval:1}:{}),points:[{timestamp:Math.floor(Date.now()/1000),value}],tags:['service:chargeguard-api','env:prod',...safeTags]});
   }

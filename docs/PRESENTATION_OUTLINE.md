@@ -1,5 +1,8 @@
 # Dàn ý thuyết trình ChargeGuard
 
+> **BẢN 23/10/2026 (áp dụng cho slide cuối):** Source `f19f69f`; cloud read-only Vercel/Render/Atlas; GitHub OAuth Judge Run đã diễn tập thực tế 4 bước và một re-arm, **cycle 2 BASELINE revision 5**; production writes OFF, Datadog cloud OFF. Các dòng bên dưới là outline giai đoạn 19/10, gồm một số nhận định deployment đã cũ. Bộ 10 slide cuối phải theo [FINAL_RELEASE_AND_SUBMISSION.md](FINAL_RELEASE_AND_SUBMISSION.md) và [FINAL_DEMO_VIDEO_SCRIPT.md](FINAL_DEMO_VIDEO_SCRIPT.md). Slide 8 thể hiện **2 nguồn bằng chứng tách biệt**: (A) Phase D local Datadog `env:dev` ALERT → OK, (B) production Judge lifecycle 23/10 với audit và re-arm; tuyệt đối không khẳng định Datadog production monitor đã alert. Slide 9 ghi kiểm thử mới 55 API unit / 24 integration / 29 web / 6 HTTPS E2E. Slide 10 dành cho privacy, $0 gate và quyền dataset chưa được cấp.
+
+
 Bản chuẩn bị tiếng Việt, 19/10/2026. Mười slide là đề xuất của đội; chưa tạo/export slide cuối. Không dùng hình ACN khi quyền công khai chưa xác nhận. Dùng sơ đồ và số liệu tổng hợp; ảnh Datadog phải che thông tin và duyệt lại theo [storyboard](DEMO_VIDEO_STORYBOARD.md).
 
 | Slide | Nội dung trên slide | Lời dẫn / điều cần tránh |

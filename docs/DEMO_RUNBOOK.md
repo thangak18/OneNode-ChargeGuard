@@ -1,5 +1,7 @@
 # ChargeGuard local demo runbook
 
+> **CẬP NHẬT 23/10/2026:** Run hiện có đã diễn tập rồi re-arm một lần, hiện **cycle 2 / BASELINE / revision 5**. Production khóa cả ba gate ghi và Datadog cloud OFF. Không chạy thêm action để chuẩn bị hồ sơ. [Quy trình quay cycle 2 chỉ ở dạng kế hoạch](FINAL_RELEASE_AND_SUBMISSION.md) · [Lời dẫn video](FINAL_DEMO_VIDEO_SCRIPT.md). Các dòng “signing secret chưa cấu hình” và “loopback only” bên dưới là ghi nhận từ giai đoạn trước.
+
 > **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
 
 ## Online read-only walkthrough

@@ -1,5 +1,7 @@
 # Repeatable Judge Demo — preparation and rehearsal runbook
 
+> **CẬP NHẬT 23/10/2026:** Production rehearsal đã PASS: 4 bước + 1 re-arm, run về **cycle 2 BASELINE revision 5**, ba gate ghi OFF. Nội dung dưới là kế hoạch trước rehearsal. [Kịch bản ghi hình tiếp theo](FINAL_RELEASE_AND_SUBMISSION.md) vẫn **chưa được phê duyệt thực hiện**.
+
 This release is a security/UI preparation. Production write flags and Datadog cloud remain OFF. No production rehearsal or re-arm is authorized. The only existing production scope is run `judge-4afc45f4427ab21f48d61c89`, owner `github:138879141`, virtual charger `demo-charger-01`. Never use the legacy demo reset or mutate pinned Phase D incident `demo-58a1983cae09`.
 
 ## Feature and architecture checklist

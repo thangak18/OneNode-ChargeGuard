@@ -1,5 +1,7 @@
 # Judge access plan — owner actions pending
 
+> **Cập nhật 23/10/2026:** App Vercel/Render/Atlas **public read-only**, GitHub OAuth operator đọc Judge Run đã được kiểm chứng; rehearsal production đã thành công và cycle 2 BASELINE revision 5, hiện khóa các action. Các đoạn “loopback only”, “remote authentication incomplete” bên dưới là lịch sử 19/10. Vấn đề **repo GitHub cá nhân private không có role collaborator chỉ đọc** vẫn cần owner cùng BTC thống nhất; không tự đổi visibility hay invite. Xem [hồ sơ nộp](FINAL_RELEASE_AND_SUBMISSION.md).
+
 Verified 19 October 2026: `thangak18/OneNode-ChargeGuard` is private and owned by a **User**, not an organization. No access invitation, repository transfer or visibility change was made.
 
 The [competition terms §7.4](https://mini-hackathon-sep-2026.mugvn.com/terms) require organizer-specified judge accounts to have read access before 31 October 2026, 23:59 ICT, maintained through 22 November 2026. Submitted materials may be publicly showcased (§9); do not treat submission as confidential.

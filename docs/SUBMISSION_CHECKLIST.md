@@ -1,9 +1,11 @@
 # MUGVN Hackathon 2026 — submission readiness
 
+> **CẬP NHẬT 23/10/2026:** Rehearsal production đã xác minh 4 lifecycle POST + 1 re-arm, Judge Run hiện **cycle 2 BASELINE revision 5**; sau shutdown 22/22 mutation checks 403. OAuth operator READ đã xác minh trong rehearsal. Cloud Datadog OFF, bằng chứng US1 là `env:dev`. Không tạo run mới hoặc thao tác production trước phê duyệt riêng. [Hồ sơ cuối](FINAL_RELEASE_AND_SUBMISSION.md) · [Kịch bản video](FINAL_DEMO_VIDEO_SCRIPT.md). Dòng “Judge access gate” ngay dưới là nhật ký provisioning trước rehearsal, hiện đã bị thay thế.
+
 **Judge access gate, 2026-10-23:** Exactly one synthetic judge run (`judge-4afc45f4427ab21f48d61c89`) has been created without changing baseline Phase D. Read-only signing-secret provisioning was blocked by a tool safety check; authenticated judge-run rendering and cross-operator production negatives remain pending. Production mutation POST endpoints remain 403 and Datadog cloud is disabled. See [Phase 1 provisioning status](JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Do not mark interactive cloud demo or signed-in judge reads complete.
 
 **Deadline:** 23:59 ICT, 31 October 2026.
-**Last checked against official pages:** 19 October 2026.
+**Last checked against official pages:** 23 October 2026.
 **Official sources:** [Terms](https://mini-hackathon-sep-2026.mugvn.com/terms), [Hackathon overview and minimum technical requirements](https://mini-hackathon-sep-2026.mugvn.com/#requirements).
 
 The official terms list the required submission items below. They do **not** specify video duration, resolution, file format, slide count/file type, or an upload/hosting platform in the text reviewed. The suggested storyboard and deck below are team recommendations, not organizer requirements. Confirm any later submission-form instructions before recording/finalizing.

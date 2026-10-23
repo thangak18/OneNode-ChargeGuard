@@ -1,5 +1,7 @@
 # Kịch bản video ChargeGuard — hai luồng dữ liệu tách biệt
 
+> **Bản hiện hành 23/10/2026:** [FINAL_DEMO_VIDEO_SCRIPT.md](FINAL_DEMO_VIDEO_SCRIPT.md) cập nhật production Judge rehearsal (4 bước + re-arm, cycle 2 BASELINE revision 5), bài test mới và phân tách Datadog `env:dev` / cloud `env:prod`. Bản 19/10 bên dưới giữ làm **lịch sử biên tập**. Không khởi chạy recording cycle 2 cho đến khi owner duyệt riêng.
+
 Bản chuẩn bị ngày 19/10/2026. Gợi ý thời lượng 4–5 phút của đội, không phải yêu cầu BTC. Chưa ghi video. Xác nhận định dạng/thời lượng trong form chính thức trước khi quay.
 
 ## Ranh giới nội dung được dùng

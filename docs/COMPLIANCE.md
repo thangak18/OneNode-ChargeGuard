@@ -1,5 +1,7 @@
 # Hackathon compliance and source disclosure
 
+> **Trạng thái 23/10/2026:** App đã triển khai Vercel/Render/Atlas có GitHub OAuth; write production OFF sau Judge rehearsal; local Datadog `env:dev` đã xác minh, cloud OFF. Các dòng về “remote deployment blocked” bên dưới là **ghi chú trước khi triển khai**, không áp dụng cho app read-only hiện hành. ACN reuse/public visualization vẫn chưa được cấp phép. Tài liệu [FINAL_RELEASE_AND_SUBMISSION.md](FINAL_RELEASE_AND_SUBMISSION.md) là nguồn chuẩn cho disclosure và danh sách phải làm trước submission.
+
 ## Organizer timeline
 Per 13 October 2026 organizer email to team OneNode, the judged core solution must be built **17–31 October 2026**. Pre-period commits here document only preparation, not operational implementation. Confirm ambiguity with organizers if necessary.
 

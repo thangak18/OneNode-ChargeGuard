@@ -1,5 +1,7 @@
 # Datadog observability — integration and preparation history
 
+> **GATE HIỆN HÀNH 23/10/2026:** Dashboard/monitor/Log Management US1 đã được xác minh với ứng dụng local `env:dev`. Chưa có bằng chứng Datadog `env:prod` hoặc monitor kết nối Judge Run production. `DD_CLOUD_ENABLED=false` và chưa được phép `cloud-intake-check --send`. [Hồ sơ release và cost gate](FINAL_RELEASE_AND_SUBMISSION.md) · [Điều kiện trial](DATADOG_TRIAL_INTAKE_GATE.md). Các dấu mốc Datadog bên dưới là bằng chứng lịch sử có ngày.
+
 **Status note (19 October 2026):** The implementation and verification records below include timestamped evidence from Datadog US1 and MongoDB Atlas. They describe the state observed during those runs; live Datadog account, monitor, and notification state was not rechecked during the latest local UI validation. The next section preserves the original preparation snapshot.
 
 ## Preparation snapshot — 14 October 2026

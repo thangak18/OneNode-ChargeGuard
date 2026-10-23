@@ -1,4 +1,7 @@
-# ChargeGuard architecture — Phases A–C implemented locally
+# ChargeGuard architecture — cloud read-only, isolated Judge Run and local history
+
+> **Hiện hành (23/10/2026):** Browser → Vercel Next.js UI/BFF → Render Free NestJS → MongoDB Atlas Free. NextAuth GitHub OAuth xác thực operator; BFF ký assertion ngắn hạn; backend tự xác minh assertion, chủ sở hữu, tài nguyên và gate ghi. Luồng production đã thực hiện một lần rồi khóa: cycle 2, BASELINE, revision 5. ACN historical chỉ chạy **local**, không có đường truyền ACN tới Atlas/Datadog. Datadog Agent/DogStatsD và log JSON **`env:dev`** đã có bằng chứng; Render `env:prod` chưa gửi/kiểm chứng. Sơ đồ loopback bên dưới là lịch sử giai đoạn đầu. Sơ đồ nộp thi hiện hành: [FINAL_RELEASE_AND_SUBMISSION.md](FINAL_RELEASE_AND_SUBMISSION.md).
+
 
 ## Implemented telemetry and incident path
 

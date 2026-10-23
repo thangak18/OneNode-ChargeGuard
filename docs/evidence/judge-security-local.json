@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-23",
+  "scope": "local disposable MongoDB and NextAuth encrypted-cookie fixtures",
+  "tests": {
+    "apiUnit": 51,
+    "apiIntegration": 19,
+    "webPolicy": 11,
+    "apiTypecheckBuild": true,
+    "webLintTypecheckBuild": true
+  },
+  "renderMetadata": {
+    "serviceId": "srv-dbcc2rd9fdbs73chm9e0",
+    "DD_API_KEY_namePresent": true,
+    "DD_API_KEY_valueRead": false,
+    "DD_CLOUD_ENABLED_namePresent": false,
+    "cloudDefaultEnabled": false
+  },
+  "cloudDatabaseWrites": 0,
+  "datadogRequests": 0,
+  "productionMutationEnabled": false,
+  "phaseDEvidenceUnchanged": true,
+  "limitations": [
+    "no deployed judge route activation",
+    "no new judge investigation UI",
+    "no Datadog production intake or alert proof",
+    "no cloud secret/run provisioning"
+  ]
+}

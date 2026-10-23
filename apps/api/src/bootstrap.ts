@@ -34,7 +34,7 @@ export function configureApplication(app:INestApplication):INestApplication {
   // Register before Nest's JSON parser so malformed JSON failures are observed too.
   const ingestionMetrics=new IngestionMetricsMiddleware(obs);
   app.use(ingestionMetrics.use.bind(ingestionMetrics));
-  (app as NestExpressApplication).useBodyParser('json', {limit: isHostedRuntime(process.env) || process.env.NODE_ENV === 'production' ? '8kb' : '100kb'});
+  (app as NestExpressApplication).useBodyParser('json', {limit: isHostedRuntime(process.env) || process.env.NODE_ENV === 'production' ? '8kb' : '100kb',verify:(req:Request,_res:Response,buffer:Buffer)=>{(req as Request & {rawBody?:Buffer}).rawBody=Buffer.from(buffer);}});
   app.setGlobalPrefix('api');
   app.enableVersioning({type:VersioningType.URI,defaultVersion:'1'});
   app.useGlobalFilters(new SanitizedExceptionFilter());

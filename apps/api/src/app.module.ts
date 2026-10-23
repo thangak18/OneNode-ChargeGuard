@@ -1,3 +1,4 @@
+import { JudgeController } from './judge/judge.controller';
 import { ObservabilityModule } from './observability/observability.module';
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
@@ -23,7 +24,7 @@ import { DemoController } from './demo/demo.controller';
     ChargersService,IncidentsService,DemoService
   ],
   controllers:[
-    HealthController,AtlasDiagnosticsController,TelemetryController,AnalyticsController,
+    JudgeController,HealthController,AtlasDiagnosticsController,TelemetryController,AnalyticsController,
     ChargersController,StationsController,IncidentsController,DemoController
   ]
 })

@@ -10,7 +10,7 @@
 
 ## Judge interactive preparation — 23 October
 
-Security and app-scoped HTTPS observability supporting code is under preparation, not enabled in production. See [security gates and cloud test scope](docs/JUDGE_SECURITY_PREPARATION.md). Checks: 48 API unit, 17 integration, 9 web policy tests; API and web typecheck/build and web lint passed. Cloud writes remain 403; env:prod Datadog intake awaits owner key/quota confirmation and live verification.
+Security and app-scoped HTTPS observability supporting code is under preparation, not enabled in production. See [security gates and cloud test scope](docs/JUDGE_SECURITY_PREPARATION.md). Checks: 51 API unit, 19 integration, 11 web policy tests; API and web typecheck/build and web lint passed. Cloud writes remain 403; env:prod Datadog intake awaits owner key/quota confirmation and live verification.
 
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.

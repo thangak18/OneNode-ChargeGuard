@@ -1,5 +1,7 @@
 # ChargeGuard
 
+> **Judge Phase 1, 23 October 2026:** Exactly one isolated Atlas judge run `judge-4afc45f4427ab21f48d61c89` has been provisioned with `BASELINE`/`SYNTHETIC` state, without changing original Phase D collections. Authenticated read-only cloud access remains blocked on server-side signing-secret setup; do not claim that `/judge` displays the owned run yet. All production POST operations remain HTTP 403; Datadog cloud remains disabled. See [exact audit and next steps](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
+
 > **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](docs/RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
 
 **Real-time EV Charging Station Monitoring & Incident Response**

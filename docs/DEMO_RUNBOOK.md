@@ -4,6 +4,8 @@
 
 ## Online read-only walkthrough
 
+**Judge-run Phase 1 status (2026-10-23):** One owner-scoped synthetic `BASELINE` run `judge-4afc45f4427ab21f48d61c89` has been inserted in Atlas. Vercel/Render signing-secret provisioning was blocked before execution, so the authenticated `/judge` run selector cannot yet be validated in production. Do not present it as a completed interactive judge demo. `/judge` itself renders, but all lifecycle buttons remain disabled and all production POST calls remain 403. Complete the protected read-only environment setup and authenticated desktop/mobile walkthrough described in [the provisioning report](JUDGE_ONE_RUN_PROVISIONING_PLAN.md) before judge access is advertised.
+
 1. Open https://chargeguard-web.vercel.app; allow bounded loading if Render is waking. If unavailable, wait the displayed retry interval and retry a read; do not run a keep-alive loop.
 2. Overview: show five configured virtual assets and honest NO DATA/N/A when the 24-hour window is empty.
 3. Chargers: inspect database-backed metadata and the unchanged source timestamps; no live physical measurements are claimed.

@@ -1,5 +1,7 @@
 # MUGVN Hackathon 2026 — submission readiness
 
+**Judge access gate, 2026-10-23:** Exactly one synthetic judge run (`judge-4afc45f4427ab21f48d61c89`) has been created without changing baseline Phase D. Read-only signing-secret provisioning was blocked by a tool safety check; authenticated judge-run rendering and cross-operator production negatives remain pending. Production mutation POST endpoints remain 403 and Datadog cloud is disabled. See [Phase 1 provisioning status](JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Do not mark interactive cloud demo or signed-in judge reads complete.
+
 **Deadline:** 23:59 ICT, 31 October 2026.
 **Last checked against official pages:** 19 October 2026.
 **Official sources:** [Terms](https://mini-hackathon-sep-2026.mugvn.com/terms), [Hackathon overview and minimum technical requirements](https://mini-hackathon-sep-2026.mugvn.com/#requirements).

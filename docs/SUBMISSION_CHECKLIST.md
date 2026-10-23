@@ -2,7 +2,7 @@
 
 > **CẬP NHẬT 23/10/2026:** Rehearsal production đã xác minh 4 lifecycle POST + 1 re-arm, Judge Run hiện **cycle 2 BASELINE revision 5**; sau shutdown 22/22 mutation checks 403. OAuth operator READ đã xác minh trong rehearsal. Cloud Datadog OFF, bằng chứng US1 là `env:dev`. Không tạo run mới hoặc thao tác production trước phê duyệt riêng. [Hồ sơ cuối](FINAL_RELEASE_AND_SUBMISSION.md) · [Kịch bản video](FINAL_DEMO_VIDEO_SCRIPT.md). Dòng “Judge access gate” ngay dưới là nhật ký provisioning trước rehearsal, hiện đã bị thay thế.
 
-**Judge access gate, 2026-10-23:** Exactly one synthetic judge run (`judge-4afc45f4427ab21f48d61c89`) has been created without changing baseline Phase D. Read-only signing-secret provisioning was blocked by a tool safety check; authenticated judge-run rendering and cross-operator production negatives remain pending. Production mutation POST endpoints remain 403 and Datadog cloud is disabled. See [Phase 1 provisioning status](JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Do not mark interactive cloud demo or signed-in judge reads complete.
+**Historical judge access gate (superseded by production rehearsal later on 23 October 2026):** Exactly one synthetic judge run (`judge-4afc45f4427ab21f48d61c89`) has been created without changing baseline Phase D. Read-only signing-secret provisioning was blocked by a tool safety check; authenticated judge-run rendering and cross-operator production negatives remain pending. Production mutation POST endpoints remain 403 and Datadog cloud is disabled. See [Phase 1 provisioning status](JUDGE_ONE_RUN_PROVISIONING_PLAN.md). Do not mark interactive cloud demo or signed-in judge reads complete.
 
 **Deadline:** 23:59 ICT, 31 October 2026.
 **Last checked against official pages:** 23 October 2026.
@@ -18,12 +18,12 @@ The official terms list the required submission items below. They do **not** spe
 | Team and contact information | Team name: OneNode, solo. | Fill in the requested leader/contact details privately in the organizer form; do not add personal details to public docs. |
 | Solution/application architecture | Mermaid system boundary and notes in [Architecture](ARCHITECTURE.md). | Prepared; update the diagram only if deployment/runtime topology changes. |
 | MongoDB data architecture and model | Time-series `telemetry`, bounded aggregation, regular assets/incidents/actions/receipts, TTL and idempotency are documented in [Architecture](ARCHITECTURE.md) and [schema design](MONGODB_SCHEMA_DESIGN.md). | Prepared; capture final Atlas schema/architecture evidence without credentials, addresses, or personal data. |
-| Datadog observability architecture | Metrics/log flow and dated dashboard/monitor records in [Datadog preparation](DATADOG_PREPARATION.md). | Current same-incident US1 metrics/logs and monitor ALERT → OK are verified; see [Phase D report](PHASE_D_VERIFICATION.md). |
+| Datadog observability architecture | Metrics/log flow and dated dashboard/monitor records in [Datadog preparation](DATADOG_PREPARATION.md). | Current same-incident US1 metrics/logs and monitor ALERT → OK were verified in the dated local run; see [Phase D report](PHASE_D_VERIFICATION.md). |
 | Source repository link and installation guide | Private GitHub repository and root [README](../README.md), plus [local demo runbook](DEMO_RUNBOOK.md). | Prepared. Resolve the personal-repository permission limitation with owner/BTC, then grant agreed access to official judge accounts before the deadline; maintain access through 22 November 2026. See [judge access plan](JUDGE_ACCESS_PLAN.md). |
-| README: environment, deployment/configuration, tests | Node 24, private env files, loopback services and test commands documented. | Prepared for local run. No public deployment is prepared or authorized; keep the demo loopback-only unless real operator authentication, authorization, CSRF and rate limits are implemented and reviewed. |
-| Running MVP or accessible demo | Runnable local operational UI plus a fifth, development-only historical inspection route. | Local run path prepared. Public demo is blocked by missing operator authentication and unauthenticated read APIs; ask organizers whether a live local/screen-shared demo meets their judging process if needed. |
+| README: environment, deployment/configuration, tests | Node 24, private env files, local build/test steps, current Vercel/Render deployment and historical setup notes. | Public read-only Vercel/Render deployment is verified; write endpoints remain denied, and operator reads require GitHub OAuth. |
+| Running MVP or accessible demo | Public Next.js operational pages + GitHub OAuth Judge Console via Vercel/Render/Atlas; `/history` is development-only. | Read-only production MVP verified. Interactive production rehearsal completed on 23 October under prior authorization; additional production mutations remain disabled. |
 | Demo video | Storyboard below; use only synthetic incident input and scrub identifying account/environment details. | To record and link in the official form. No official duration, resolution, codec or host specified in the checked terms. |
-| Final-round presentation slides | Suggested slide outline below. | To create/export according to any later organizer instructions. The checked terms do not specify slide count or file format. |
+| Final-round presentation slides | Editable [13-slide PowerPoint](submission/ChargeGuard_MUGVN_2026.pptx), [PDF](submission/ChargeGuard_MUGVN_2026.pdf), and historical outline below. | Prepared; confirm accepted upload format with organizers. The checked terms do not specify slide count or file format. |
 | Demonstrated operational scenario | Detect → investigate → recover → resolve with MongoDB evidence and Datadog confirmation. | Verified for original incident demo-58a1983cae09, including persisted investigation/recovery/resolution and Datadog ALERT → OK. |
 | Reused code, external datasets, AI tools | Disclosures below and in [Compliance](COMPLIANCE.md). | Prepared; final form/video must disclose all relevant dependencies/data/AI assistance. |
 
@@ -33,9 +33,9 @@ The terms also prohibit uploading personal, confidential, production or regulate
 
 | Area | Official minimum | Evidence in project | Readiness |
 | --- | --- | --- | --- |
-| MongoDB primary data platform | MongoDB is the primary operational datastore. | NestJS persistence and MongoDB Atlas schemas/queries documented in [Architecture](ARCHITECTURE.md). Current API `/health/ready` returned connected during the Phase D session. | Implementation present; include a dated live read/write evidence run in final package. |
+| MongoDB primary data platform | MongoDB is the primary operational datastore. | NestJS persistence and MongoDB Atlas schemas/queries documented in [Architecture](ARCHITECTURE.md). Cloud readiness and scoped reads were verified in the dated production rehearsal. | Implementation present; use dated Judge action evidence and fresh read-only verification. Do not run new production writes for submission packaging. |
 | MongoDB data design/access | Sound model and efficient access patterns; the use must be tied to the problem. | Telemetry time-series metadata, bounded indexed ranges, receipt fingerprinting and regular incident collections. | Documented; recheck final explain/query evidence if a submission-form rubric requires it. |
-| MongoDB analytics | Use an Aggregation Pipeline for use-case analytics. | Analytics services aggregate current averages, state counts/activity and station summaries; see API source and [Architecture](ARCHITECTURE.md). | Implementation present; capture one reproducible query/result before submission. |
+| MongoDB analytics | Use an Aggregation Pipeline for use-case analytics. | Analytics services aggregate current averages, state counts/activity and station summaries; see API source and [Architecture](ARCHITECTURE.md). | Implementation present; capture one reproducible read-only query/result if still available within the seven-day TTL before submission. |
 | Datadog dashboard | At least one dashboard for operational signals/system health. | Dashboard definition and dated US1 evidence in [Datadog preparation](DATADOG_PREPARATION.md). | Existing dashboard retained; current authenticated US1 access and exact-run telemetry verified in Phase D. |
 | Datadog monitor/alert | At least one monitor tied to meaningful failure/degradation/risk. | Two monitor definitions and historical run evidence documented. | Current Phase D fault monitor ALERT → OK verified; separate ingestion-error monitor was not artificially triggered. |
 | Additional Datadog capability | At least one of Log Management, APM, Distributed Tracing, RUM, Anomaly Detection, Agent Observability. | Sanitized application logs and historical US1 parsed-log evidence recorded; Agent forwarding configuration exists. | Current US1 logs verified by exact demo/incident context, including the resolved action. |
@@ -43,7 +43,7 @@ The terms also prohibit uploading personal, confidential, production or regulate
 
 Recommended MongoDB Time Series Collections, window functions, TTL and other advanced MongoDB features are recommendations in the official page, not all mandatory gates. ChargeGuard uses a time-series collection and seven-day TTL.
 
-## Suggested video storyboard (team recommendation, not an official format)
+## Historical draft storyboard (superseded by `FINAL_DEMO_VIDEO_SCRIPT.md`; team recommendation, not an official format)
 
 Target **4–5 minutes** only as a production suggestion; the official terms reviewed specify a demo video but no duration or technical format. Record one continuous truthful run if feasible; otherwise label edited/archived evidence with its original timestamps.
 
@@ -61,7 +61,7 @@ Target **4–5 minutes** only as a production suggestion; the official terms rev
 
 If a live system is unavailable, use clearly dated screenshots/recorded logs and state that they are historical; do not splice old monitor states into a new run as if current.
 
-## Suggested slide outline (team recommendation)
+## Historical draft slide outline (superseded by editable final deck in `submission/`; team recommendation)
 
 1. **Title / team / one-sentence value:** ChargeGuard; virtual EV charging operations and incident response.
 2. **Problem and scenario:** why current, faults, missing telemetry, and operator evidence matter.

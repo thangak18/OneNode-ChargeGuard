@@ -2,17 +2,17 @@
 
 > **RELEASE 23/10/2026 — nguồn `f19f69faac42f4bddaa34d2497adfac823acf15a`.** Vercel Next.js → Render Free NestJS → MongoDB Atlas phục vụ **đọc công khai** và **đọc Judge Run có xác thực GitHub OAuth**. Rehearsal trên production đã xác nhận đúng năm thao tác: fault → acknowledge → recover → resolve → một re-arm. Judge Run `judge-4afc45f4427ab21f48d61c89` hiện ở **cycle 2 / BASELINE / revision 5**. **Ba gate ghi production đều OFF**, `DD_CLOUD_ENABLED=false`; Datadog US1 chỉ đã xác minh cho local `env:dev`, chưa xác minh intake production. [Bằng chứng](docs/PRODUCTION_JUDGE_REHEARSAL.md) · [Hồ sơ phát hành và nộp thi](docs/FINAL_RELEASE_AND_SUBMISSION.md) · [Kịch bản video mới](docs/FINAL_DEMO_VIDEO_SCRIPT.md). Những trạng thái cũ bên dưới là nhật ký các giai đoạn trước.
 
-> **Judge Phase 1, 23 October 2026:** Exactly one isolated Atlas judge run `judge-4afc45f4427ab21f48d61c89` has been provisioned with `BASELINE`/`SYNTHETIC` state, without changing original Phase D collections. Authenticated read-only cloud access remains blocked on server-side signing-secret setup; do not claim that `/judge` displays the owned run yet. All production POST operations remain HTTP 403; Datadog cloud remains disabled. See [exact audit and next steps](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
+> **Historical Judge Phase 1 snapshot, superseded by the release banner above (23 October 2026):** Exactly one isolated Atlas judge run `judge-4afc45f4427ab21f48d61c89` has been provisioned with `BASELINE`/`SYNTHETIC` state, without changing original Phase D collections. Authenticated read-only cloud access remains blocked on server-side signing-secret setup; do not claim that `/judge` displays the owned run yet. All production POST operations remain HTTP 403; Datadog cloud remains disabled. See [exact audit and next steps](docs/JUDGE_ONE_RUN_PROVISIONING_PLAN.md).
 
-> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](docs/RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+> **Historical read-only deployment milestone, superseded by the release banner (23 October 2026):** Vercel → Render Free Singapore → Atlas read operations were verified after approval of two shared CIDRs. At that earlier milestone, interactive Judge Demo had not yet been verified; the production rehearsal was completed later on 23 October. See [deployment history](docs/RENDER_MIGRATION.md).
 
 **Real-time EV Charging Station Monitoring & Incident Response**
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations
 
-> **Status (19 October 2026):** The existing Phase D incident `demo-58a1983cae09` completed its verified Atlas → Datadog ALERT → investigation → recovery → RESOLVED → monitor OK lifecycle. Node 24 checks pass: API 24 unit + 11 integration tests; web lint, two BFF policy tests, typecheck and production build. See [current verification](docs/PHASE_D_VERIFICATION.md). Video recording, final slide export and organizer form/access steps remain submission preparation. Keep the app loopback-only; the BFF is not operator authentication and rejects production mutations. Raw ACN redistribution remains unresolved.
+> **Historical status (19 October 2026), superseded for deployment by the release banner:** The existing Phase D incident `demo-58a1983cae09` completed its verified Atlas → Datadog ALERT → investigation → recovery → RESOLVED → monitor OK lifecycle. Node 24 checks pass: API 24 unit + 11 integration tests; web lint, two BFF policy tests, typecheck and production build. See [current verification](docs/PHASE_D_VERIFICATION.md). Video recording, final slide export and organizer form/access steps remain submission preparation. Keep the app loopback-only; the BFF is not operator authentication and rejects production mutations. Raw ACN redistribution remains unresolved.
 
-## Judge interactive preparation — 23 October
+## Historical Judge interactive preparation — 23 October (superseded by completed rehearsal)
 
 Security and app-scoped HTTPS observability supporting code is under preparation, not enabled in production. See [security gates and cloud test scope](docs/JUDGE_SECURITY_PREPARATION.md). Checks: 51 API unit, 19 integration, 11 web policy tests; API and web typecheck/build and web lint passed. Cloud writes remain 403; env:prod Datadog intake awaits owner key/quota confirmation and live verification.
 
@@ -27,7 +27,7 @@ ChargeGuard is a monitoring and incident-response prototype for EV charging stat
 4. Visualize operational health and configure monitors with **Datadog**.
 5. Demonstrate **Detect → Investigate → Resolve**, including an auditable incident timeline.
 
-## Planned MVP (solo-developer scope)
+## Historical MVP plan (solo-developer scope; already implemented where described above)
 - 5–10 *virtual* charging connectors (not physical chargers)
 - Charging power/current and session timeline; temperature and fault codes clearly marked **synthetic**
 - Station/connector dashboard with near-real-time updates
@@ -43,6 +43,8 @@ ChargeGuard is a monitoring and incident-response prototype for EV charging stat
 The API includes charger views, incident lifecycle actions, and synthetic demo controls. Phase B instrumentation sends bounded DogStatsD metrics and sanitized JSON logs to the local Agent; current same-incident US1 proof is documented in the Phase D verification report. Only five virtual connectors are modeled; no physical charger data stream is connected.
 
 See [Architecture](docs/ARCHITECTURE.md), [Project Status](docs/PROJECT_STATUS.md), [Local Demo Runbook](docs/DEMO_RUNBOOK.md), [Data Plan](docs/DATA_PLAN.md), [Build Plan](docs/BUILD_PLAN.md), [Demo Scenarios](docs/DEMO_SCENARIOS.md), and [Compliance](docs/COMPLIANCE.md).
+Final submission materials: [Vietnamese/English description](docs/submission/PROJECT_DESCRIPTION_VI_EN.md), [technical/aggregation evidence](docs/submission/TECHNICAL_EVIDENCE.md), [editable PowerPoint](docs/submission/ChargeGuard_MUGVN_2026.pptx), [slide PDF](docs/submission/ChargeGuard_MUGVN_2026.pdf), [organizer access inquiry](docs/submission/ORGANIZER_ACCESS_INQUIRY.md), [official form checklist](docs/submission/FINAL_FORM_CHECKLIST.md), [future recording runbook](docs/submission/RECORDING_DAY_RUNBOOK.md), [Datadog support draft](docs/DATADOG_SUPPORT_DRAFT.md), and [video narration](docs/FINAL_DEMO_VIDEO_SCRIPT.md).
+
 See also the evidence-based [Submission Checklist](docs/SUBMISSION_CHECKLIST.md) for official criteria, unresolved verification gates, video/storyboard guidance, screenshot shots, and data/AI disclosures.
 
 **Project evidence:** [Preparation and Atlas history](docs/PREPARATION_REPORT.md) · [Dataset analysis](docs/DATASET_ANALYSIS.md) · [Data dictionary](docs/DATA_DICTIONARY.md) · [Data provenance](docs/DATA_PROVENANCE.md) · [Atlas setup](docs/MONGODB_ATLAS_SETUP.md) · [MongoDB schema design](docs/MONGODB_SCHEMA_DESIGN.md) · [Datadog preparation](docs/DATADOG_PREPARATION.md). Five static sessions (20,228 source rows) were inspected locally; those raw files remain Git-ignored. The preparation report preserves earlier TLS failures; the current local API readiness result supersedes them only for the running application's connection check.

@@ -86,3 +86,7 @@ No actions means an empty result, not manufactured timestamps. Counts and elapse
 - Independent review found no security blocker; the reported terminal re-arm UI defect was fixed and retested. Limit-exceeded assertion errors may return 401 before a service-level 403; all fail closed.
 
 These tests do not prove a production write or a production Datadog monitor cycle. The dev-mode BFF fixture verifies encrypted session cookies against the focused Nest controller module, not the GitHub external OAuth exchange or a full production bootstrap. Chart/presentation unit tests do not substitute for a live browser rehearsal. Production authenticated reads and baseline layout must be rechecked after deployment, and recording readiness remains gated on the separately authorized rehearsal.
+
+### Read-only release verification
+
+The initial cycle release `58dbe61` was verified on both existing services with real OAuth owner-scoped GET, BASELINE/revision 0/empty actions, readiness 200, five charger and incident reads, 22/22 Judge/legacy POST denials (403), anonymous Judge GET 401, historical API 403 and `/history` 404. Atlas protected fingerprints matched baseline and `judge_policy` remained empty. No configuration, cloud ingestion, rehearsal or re-arm was performed. Browser QA covered desktop and iPhone 393 × 852 baseline views; it found a narrow run-selector overflow, corrected in the subsequent UI-only patch. Populated charts/cycle archives were verified by local tests, not production writes.

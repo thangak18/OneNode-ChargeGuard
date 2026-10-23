@@ -116,7 +116,7 @@ export default function JudgePage(){
     </section>
     <section className={card}><h2 className="text-sm font-semibold flex items-center gap-2"><Radio size={15}/> Mutation policy</h2>
      <p className="mt-3 text-sm text-amber-300">{!session?'Checking permissions…':session.canMutate?'Authorized judge operations enabled':'Read-only · mutations disabled'}</p>
-     <p className="mt-2 text-xs text-slate-400">{disabledReason}</p>
+     <p className="mt-2 text-xs text-slate-400">{session?.canMutate?'Access is limited to this owned run. Re-arm requires its separate permission.':disabledReason}</p>
     </section>
     <section className={card}><h2 className="text-sm font-semibold flex items-center gap-2"><Activity size={15}/> Evidence source</h2>
      <div className="mt-3"><ProvenanceBadge sourceType="SYNTHETIC"/></div><p className="mt-2 text-xs text-slate-400">Only recorded samples and audited actions are displayed.</p>

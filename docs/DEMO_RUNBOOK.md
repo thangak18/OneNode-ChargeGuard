@@ -167,3 +167,7 @@ Before an online interactive recording, complete the secure Atlas egress decisio
 ## Repeatable Judge Console preparation — 23 October 2026
 
 The latest preparation adds revision/cycle-bound requests, preserved cycle history and separately gated re-arm (`JUDGE_REARM_ENABLED`, default OFF). Fault is allowed only at BASELINE; re-arm only at RESOLVED. Earlier statements describing immediate fault from RESOLVED or empty JSON action bodies are superseded. The production run remains untouched; production write flags and cloud Datadog stay OFF. See [the current rehearsal and recording runbook](JUDGE_REPEATABLE_DEMO.md) for precise write scope, emergency handling, MongoDB aggregation and evidence limitations. Deployment/test evidence must be verified before claiming interactive or recording readiness.
+
+### Controlled production rehearsal verified — 23 October 2026
+
+The owner-authorized four-action lifecycle and one conditional re-arm passed actual browser → BFF → NestJS → Atlas verification. The existing run is cycle 2 BASELINE/revision 5; cycle 1 history is preserved. Production write/re-arm flags and Datadog cloud are OFF. The earlier preparation-only production status is superseded by [the verified rehearsal report](PRODUCTION_JUDGE_REHEARSAL.md). Another lifecycle or re-arm needs new owner approval.

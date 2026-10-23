@@ -185,3 +185,7 @@ The Free Singapore service [chargeguard-api-m9ji.onrender.com](https://chargegua
 ### Repeatable Judge Console preparation
 
 See [repeatable judge demo and rehearsal runbook](docs/JUDGE_REPEATABLE_DEMO.md) for cycle isolation, separate re-arm authorization, preserved audit history and the recording sequence. Production write flags and Datadog cloud remain OFF. No production rehearsal/reset is authorized by this release.
+
+### Controlled production rehearsal verified — 23 October 2026
+
+The owner-authorized four-action lifecycle and one conditional re-arm passed actual browser → BFF → NestJS → Atlas verification. The existing run is cycle 2 BASELINE/revision 5; cycle 1 history is preserved. Production write/re-arm flags and Datadog cloud are OFF. The earlier preparation-only production status is superseded by [the verified rehearsal report](docs/PRODUCTION_JUDGE_REHEARSAL.md). Another lifecycle or re-arm needs new owner approval.

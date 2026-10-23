@@ -1,4 +1,7 @@
 # ChargeGuard
+
+> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](docs/RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+
 **Real-time EV Charging Station Monitoring & Incident Response**
 
 **Team:** OneNode (solo) · **Event:** MUGVN Hackathon 2026 — IoT Monitoring System: Real-time Operations

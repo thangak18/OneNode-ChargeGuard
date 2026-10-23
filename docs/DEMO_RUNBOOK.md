@@ -1,5 +1,20 @@
 # ChargeGuard local demo runbook
 
+> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+
+## Online read-only walkthrough
+
+1. Open https://chargeguard-web.vercel.app; allow bounded loading if Render is waking. If unavailable, wait the displayed retry interval and retry a read; do not run a keep-alive loop.
+2. Overview: show five configured virtual assets and honest NO DATA/N/A when the 24-hour window is empty.
+3. Chargers: inspect database-backed metadata and the unchanged source timestamps; no live physical measurements are claimed.
+4. Incidents: select demo-58a1983cae09; show its four historical actions and RESOLVED state. The recorded Datadog correlation belongs to local env:dev verification.
+5. Demo: explain SYNTHETIC labels and disabled controls. Do not reset baseline or trigger a new cloud incident.
+6. /history is unavailable online. ACN analysis remains local-only and permission-gated; five sessions do not establish five physical chargers.
+7. Operator /login supports GitHub login/logout; signing in does not authorize cloud writes. Before recording, review screenshots for credentials, identities and restricted records.
+
+The following service-start and interactive steps apply only to the original loopback development demo.
+
+
 ChargeGuard is a local virtual-charger demonstration. It does not actuate physical charging hardware. Keep both services bound to loopback; do not expose the web app or API to a LAN, tunnel, or public host. The BFF's local mutation boundary is not operator authentication.
 
 ## Prerequisites

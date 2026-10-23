@@ -1,5 +1,8 @@
 # ChargeGuard project status
 
+> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+
+
 **Updated:** 19 October 2026. This is a local development/demo application, not a production charger-control or safety system. **The critical Phase D incident lifecycle is verified; submission packaging remains.**
 
 ## Implemented

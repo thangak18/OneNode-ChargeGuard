@@ -1,5 +1,8 @@
 # Vercel deployment — restricted Stage A
 
+> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+
+
 Audit date: 2026-10-21 (Asia/Ho_Chi_Minh). Starting Git HEAD: `334afdb56297d8d5d1492e636a37bf49dafd88e7`.
 
 ## Verified account and architecture

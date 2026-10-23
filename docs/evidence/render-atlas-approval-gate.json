@@ -1,6 +1,6 @@
 {
   "date": "2026-10-21",
-  "gate": "ATLAS_NETWORK_CHANGE_REJECTED",
+  "gate": "APPROVED_NETWORK_CHANGE_VERIFIED",
   "approvalStatus": "APPROVED_SUPERSEDES_REJECTION",
   "startingCommit": "12f2e84f1c0807f4c06486446154b2e0086f2dac",
   "service": {
@@ -53,7 +53,82 @@
     "paidFeaturesEnabled": false,
     "newPaymentMethodAdded": false
   },
-  "httpChecks": [
+  "notVerifiedBeforeApproval": [
+    "Atlas TLS",
+    "MongoDB authentication",
+    "MongoDB ping",
+    "authenticated database readiness",
+    "synthetic charger reads",
+    "Vercel BFF to Render switch",
+    "browser data rendering through Render",
+    "OAuth regression after origin switch",
+    "actual idle cold start",
+    "Datadog production intake"
+  ],
+  "tests": {
+    "nodeMajor": 24,
+    "apiUnit": 42,
+    "apiIntegration": 13,
+    "webPolicy": 5,
+    "apiTypecheckAndBuild": true,
+    "webLintTypecheckAndBuild": true,
+    "renderBlueprintValidation": true
+  },
+  "preservation": {
+    "phaseDEvidenceBytesUnchanged": true,
+    "oauthApplicationFilesUnchanged": true,
+    "vercelBffOriginChanged": true,
+    "rawAcnUploaded": false,
+    "localEnvCommitted": false,
+    "databasePrivilegesChanged": false,
+    "credentialsReset": false,
+    "tlsVerificationDisabled": false
+  },
+  "vercelPreservationChecks": [
+    {
+      "path": "/history",
+      "status": 404
+    },
+    {
+      "path": "/api/historical",
+      "status": 403
+    },
+    {
+      "path": "/api/auth/providers",
+      "status": 200,
+      "githubProviderAvailable": true
+    },
+    {
+      "path": "/api/auth/session",
+      "status": 200,
+      "anonymousSessionOnly": true,
+      "responseIsAnonymous": true
+    }
+  ],
+  "ownerDecision": {
+    "date": "2026-10-21",
+    "instruction": "Owner approved Option A and only the two reverified Render shared CIDRs, superseding earlier rejection.",
+    "networkChangeAuthorized": true,
+    "renderToAtlasMigrationMayProceed": true
+  },
+  "atlasChangeVerification": {
+    "date": "2026-10-21",
+    "originalCount": 3,
+    "finalCount": 5,
+    "originalsPreserved": true,
+    "approvedStatuses": [
+      {
+        "cidr": "74.220.52.0/24",
+        "active": true
+      },
+      {
+        "cidr": "74.220.60.0/24",
+        "active": true
+      }
+    ],
+    "automaticExpiry": false
+  },
+  "historicalPreApprovalChecks": [
     {
       "path": "/healthz",
       "method": "GET",
@@ -104,79 +179,20 @@
       "status": 404
     }
   ],
-  "notVerifiedBeforeApproval": [
-    "Atlas TLS",
-    "MongoDB authentication",
-    "MongoDB ping",
-    "authenticated database readiness",
-    "synthetic charger reads",
-    "Vercel BFF to Render switch",
-    "browser data rendering through Render",
-    "OAuth regression after origin switch",
-    "actual idle cold start",
-    "Datadog production intake"
-  ],
-  "tests": {
-    "nodeMajor": 24,
-    "apiUnit": 42,
-    "apiIntegration": 13,
-    "webPolicy": 5,
-    "apiTypecheckAndBuild": true,
-    "webLintTypecheckAndBuild": true,
-    "renderBlueprintValidation": true
-  },
-  "preservation": {
-    "phaseDEvidenceBytesUnchanged": true,
-    "oauthApplicationFilesUnchanged": true,
-    "vercelBffOriginChanged": false,
-    "rawAcnUploaded": false,
-    "localEnvCommitted": false,
-    "databasePrivilegesChanged": false,
-    "credentialsReset": false,
-    "tlsVerificationDisabled": false
-  },
-  "vercelPreservationChecks": [
-    {
-      "path": "/history",
-      "status": 404
-    },
-    {
-      "path": "/api/historical",
-      "status": 403
-    },
-    {
-      "path": "/api/auth/providers",
-      "status": 200,
-      "githubProviderAvailable": true
-    },
-    {
-      "path": "/api/auth/session",
-      "status": 200,
-      "anonymousSessionOnly": true,
-      "responseIsAnonymous": true
-    }
-  ],
-  "ownerDecision": {
-    "date": "2026-10-21",
-    "instruction": "Owner approved Option A and only the two reverified Render shared CIDRs, superseding earlier rejection.",
-    "networkChangeAuthorized": true,
-    "renderToAtlasMigrationMayProceed": true
-  },
-  "atlasChangeVerification": {
-    "date": "2026-10-21",
-    "originalCount": 3,
-    "finalCount": 5,
-    "originalsPreserved": true,
-    "approvedStatuses": [
-      {
-        "cidr": "74.220.52.0/24",
-        "active": true
-      },
-      {
-        "cidr": "74.220.60.0/24",
-        "active": true
-      }
-    ],
-    "automaticExpiry": false
+  "currentResults": {
+    "sourceCommit": "6d439bc09db93ec8f4bcfd2f7194508cb5c3db1a",
+    "tlsVerified": true,
+    "authentication": true,
+    "ping": true,
+    "readinessStatus": 200,
+    "chargers": 5,
+    "incidents": 5,
+    "sevenDaySyntheticSamplesAtVerification": 397,
+    "oauthLoginLogoutRelogin": true,
+    "productionMutationsStatus": 403,
+    "diagnosticEndpointDisabled": true,
+    "realIdleColdStartVerified": false,
+    "datadogCloudVerified": false,
+    "interactiveReady": false
   }
 }

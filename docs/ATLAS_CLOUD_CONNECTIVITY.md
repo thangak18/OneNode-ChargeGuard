@@ -1,5 +1,8 @@
 # Atlas connectivity investigation — Vercel Hobby
 
+> **Current status, 23 October 2026:** Read-only cloud operation through Vercel → Render Free Singapore → Atlas was verified after the owner's explicit approval of the two shared CIDRs. Production writes remain 403; Datadog cloud and interactive demo are not verified. See [current deployment evidence and remaining gates](RENDER_MIGRATION.md). Earlier dated statements below describe historical/local stages and are superseded for cloud read-only status.
+
+
 Date: 2026-10-21 (Asia/Ho_Chi_Minh). Baseline commit: `354a942166c197e6f711794ad3a41de5b9833008`.
 
 **Outcome: unresolved. Cloud MongoDB reads still fail.** This investigation establishes the failure stage and a network-policy incompatibility; it does not claim an authenticated cloud connection or a proven Atlas server-side rejection reason.

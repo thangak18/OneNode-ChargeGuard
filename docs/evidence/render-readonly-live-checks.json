@@ -1,0 +1,66 @@
+{
+  "verificationDate": "2026-10-23",
+  "checks": [
+    {
+      "path": "/api/v1/health/ready",
+      "method": "GET",
+      "status": 200,
+      "expected": 200,
+      "ms": 24241,
+      "database": "connected"
+    },
+    {
+      "path": "/api/v1/chargers",
+      "method": "GET",
+      "status": 200,
+      "expected": 200,
+      "ms": 178,
+      "count": 5
+    },
+    {
+      "path": "/api/v1/incidents",
+      "method": "GET",
+      "status": 200,
+      "expected": 200,
+      "ms": 160,
+      "count": 5
+    },
+    {
+      "path": "/api/v1/demo/reset",
+      "method": "POST",
+      "status": 403,
+      "expected": 403,
+      "ms": 136
+    },
+    {
+      "path": "/history",
+      "method": "GET",
+      "status": 404,
+      "expected": 404,
+      "ms": 532
+    },
+    {
+      "path": "/api/historical",
+      "method": "GET",
+      "status": 403,
+      "expected": 403,
+      "ms": 761
+    }
+  ],
+  "latencyInterpretation": "First observed readiness took 24.241 seconds; actual provider idle/suspension not independently established. This is not a confirmed cold-start measurement.",
+  "tests": {
+    "nodeMajor": 24,
+    "apiUnit": 45,
+    "apiIntegration": 15,
+    "webPolicy": 9,
+    "apiTypecheckBuild": true,
+    "webLintTypecheckBuild": true
+  },
+  "preservation": {
+    "phaseDEvidenceUnchanged": true,
+    "rawAcnUploaded": false,
+    "productionMutationsEnabled": false
+  },
+  "productionSourceCommit": "6d439bc09db93ec8f4bcfd2f7194508cb5c3db1a",
+  "operatorSupportingCode": "Tested locally, dormant and not deployed or registered in production"
+}

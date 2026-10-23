@@ -1,5 +1,42 @@
 # Render Free migration — preparation and Atlas approval gate
 
+## Current cloud status — 23 October 2026
+
+The owner approved Option A, superseding the earlier rejection preserved below. The approved architecture is browser → Vercel Next.js/BFF → Render Free Singapore → existing Atlas Free. [Frontend](https://chargeguard-web.vercel.app) · [Backend liveness](https://chargeguard-api-m9ji.onrender.com/healthz).
+
+On 21 October the authenticated Render API independently reconfirmed exactly `74.220.52.0/24` and `74.220.60.0/24`. Both were added to Atlas with comment `ChargeGuard Render Free SG (shared)` and verified Active. The original three /32 entries were preserved. These are **512 shared IPv4 addresses**, not dedicated application IPs. Other tenants in those ranges pass the network filter but still need valid database authentication and TLS. No all-address rule, paid feature, privilege expansion or credential reset was used.
+
+**Expiry:** neither entry expires automatically. Atlas temporary entries are limited to seven days, insufficient for the 31 October deadline and November judging. Owner must review access after submission, keep it only for the agreed judging period, and remove only these two Render entries when cloud access is no longer needed. No renewal or cleanup automation has been installed.
+
+### Verified deployment evidence
+
+The 21 October native Render diagnostic (Node 24.22.0) passed SRV/TXT, IPv4, TCP 27017, TLS 1.3 and TLS 1.2 with normal certificate validation on all three nodes. The official MongoDB driver authenticated the expected application account, pinged successfully and read a charger. Effective-role checks confirmed only the expected custom role, absence of broad administrative roles, and privileges scoped to chargeguard. The temporary diagnostic flags were removed, redeployed, and its endpoint returned 404.
+
+Authenticated readiness returned 200/database connected; charger reads returned five assets, incidents returned five persisted records, and aggregation returned 200. A bounded seven-day read returned five latest SYNTHETIC readings and 397 samples, latest timestamp `2026-10-19T06:50:35.474Z`. Default 24-hour data was empty: NO DATA/N/A is correct, not a fabricated live stream. Counts can later change under the existing retention policy.
+
+Vercel project Environment Variables now point NEST_API_BASE_URL to the Render HTTPS origin (Production and Preview). OAuth and read-key settings were preserved; the legacy Vercel API was not deleted. Web and Render deployed reviewed source `6d439bc`. Browser checks on 21 October passed Overview, database-backed charger details, five persisted incidents including the existing Phase D timeline, synthetic-only disabled demo controls, desktop and iPhone-emulated 393×852 layouts/menu. GitHub login → logout → re-login passed, verified by session-presence booleans without logging profiles/tokens.
+
+Production writes remain independently denied with 403, backend reads without the service key return 401, /history returns 404, and /api/historical returns 403. No accepted mutation, schema initialization, raw ACN upload or Phase D reset occurred.
+
+23 October recheck: BFF readiness 200/database connected in **24.241 seconds**, then five chargers in 178 ms and five incidents in 160 ms. Reset POST 403; /history 404; /api/historical 403. Provider suspension was not independently established, so the first latency is not a confirmed cold-start measurement. [Sanitized current receipt](evidence/render-readonly-live-checks.json). Node 24: **45 API unit + 15 integration + 9 web policy tests**, API typecheck/build and web lint/typecheck/build all passed. Phase D evidence is byte-identical to starting commit 3e031ef. Supporting security code remains local/tested until a later deployment; production runtime source is 6d439bc.
+
+### Cold starts and interactive-security boundary
+
+Read-only BFF budget is 85 seconds for Render, route maxDuration 120 seconds; browser read budget 95 seconds. The actual Vercel project has Fluid enabled; its documented Hobby maximum is 300 seconds. Reads deduplicate, cancel on hidden/unmounted pages and poll serially with bounded Retry-After backoff. Render HTML wake pages become sanitized 503 responses. A delayed local fixture tests deadlines/cancellation, **not** an actual Render cold start. Real idle/suspension provenance is not established; no guaranteed wake-up time is claimed. No keep-alive cron or background warming was added.
+
+`operator-preflight.ts` is dormant supporting code, not registered in AppModule or wired to a route. It verifies short-lived HS256 operator assertions bound to issuer, audience, allowlisted GitHub identity, operation, method, path, body hash and synthetic resources; protects the pinned Phase D incident; and supplies Mongo-backed nonce/quota primitives tested against disposable local MongoDB. It creates nothing in Atlas. The configurable 1–10/minute ceiling is an abuse-control demo policy, not an EV safety threshold. Fixed windows allow boundary bursts; nonce consumption fails closed and is not an exactly-once business transaction.
+
+Before public mutations: implement trusted BFF assertion minting and separate server-only write credentials, backend guard wiring, same-origin/CSRF enforcement, durable policy collection lifecycle/indexes, server-side ownership checks for isolated new judge runs, atomic action/idempotency semantics, audit actors derived from verified identity, and independent end-to-end abuse tests. Current reset touches shared demo scope and must be redesigned to isolate new runs. Then request separate final owner authorization. OAuth alone does not unlock actions.
+
+### Datadog and release status
+
+DEPLOYED: yes. DATABASE CONNECTED: verified. READ-ONLY ONLINE FUNCTIONAL: verified. INTERACTIVE DEMO READY: no. DATADOG CLOUD VERIFIED: no.
+
+Local env:dev Phase D ALERT → OK evidence remains intact and is not cloud proof. Render emits sanitized stdout with env:prod and cloud metrics disabled. Render Hobby log streams default to the whole workspace and cannot omit the two unrelated services; workspace forwarding was not enabled. Prefer ChargeGuard-only application HTTPS transport to US1 after verifying authorized API-key use and free/trial quotas. Metrics require correct count intervals/distribution semantics, bounded buffering/retries and sanitized fields. Verify real env:prod ingestion and alert/recovery before claiming success; do not duplicate local monitors blindly or enable paid features.
+
+Sources checked: [Render Free](https://render.com/docs/free), [Vercel limits](https://vercel.com/docs/functions/limitations), [Render log-stream scope](https://render.com/docs/log-streams), [Atlas access-list expiry](https://www.mongodb.com/docs/atlas/security/ip-access-list/), [Datadog logs](https://docs.datadoghq.com/api/latest/logs/send-logs/), [Datadog metrics](https://docs.datadoghq.com/api/latest/metrics/submit-metrics/).
+
+
 Date: 2026-10-21 (Asia/Ho_Chi_Minh). Starting code: `12f2e84`.
 
 Owner-selected target: existing Next.js/GitHub OAuth on Vercel Hobby, NestJS on a Render Free Node web service in Singapore, existing Atlas Free cluster, total new paid services $0. No Atlas network entry may change before a separate approval of the actual service CIDRs.

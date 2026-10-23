@@ -161,6 +161,11 @@ function getNestBase(): URL {
 }
 
 async function proxy(request: NextRequest, path: string[]): Promise<Response> {
+  // Production is read-only at the BFF HTTP boundary, including unsupported
+  // write paths: never forward a mutation or hide the denial behind a 404.
+  if (process.env.NODE_ENV === 'production' && request.method !== 'GET' && request.method !== 'HEAD') {
+    return badRequest('This deployment is read-only.', 403);
+  }
   if (!isAllowedApiRoute(request.method, path)) {
     return badRequest('Unsupported API operation.', 404);
   }

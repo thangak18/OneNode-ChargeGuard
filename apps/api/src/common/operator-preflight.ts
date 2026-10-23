@@ -7,6 +7,7 @@ export const DEMO_OPERATIONS = ['fault', 'acknowledge', 'recover', 'resolve', 'r
 export type DemoOperation = typeof DEMO_OPERATIONS[number];
 export type BoundAction = {
   operation: DemoOperation; method: 'POST'; path: string; body: Uint8Array;
+  expectedRevision: number; expectedCycle: number;
   origin: string; stationId: string; chargerId: string; runId: string; incidentId?: string;
 };
 export type OperatorPolicy = { secret: Uint8Array; issuer: string; audience: string; origin: string; githubIds: ReadonlySet<string> };
@@ -33,6 +34,8 @@ export async function verifyOperatorAssertion(token: string, action: BoundAction
   if (policy.secret.byteLength < 32 || !policy.issuer.startsWith('https://') || !policy.audience ||
       !policy.origin.startsWith('https://') || action.origin !== policy.origin || action.method !== 'POST' ||
       !DEMO_OPERATIONS.includes(action.operation) || action.body.byteLength > 8192 ||
+      !Number.isSafeInteger(action.expectedRevision) || action.expectedRevision < 0 || action.expectedRevision >= 100 ||
+      !Number.isSafeInteger(action.expectedCycle) || action.expectedCycle < 1 || action.expectedCycle > 20 ||
       action.stationId !== 'demo-station-01' || !/^demo-charger-0[1-5]$/.test(action.chargerId) ||
       !/^judge-[a-f0-9]{24}$/.test(action.runId) || action.incidentId === pinned) throw new Error('Operator action denied');
   // Every signed write is scoped to the isolated Judge Run controller. Legacy
@@ -46,6 +49,7 @@ export async function verifyOperatorAssertion(token: string, action: BoundAction
         !policy.githubIds.has(payload.sub.slice(7)) || typeof payload.iat !== 'number' || typeof payload.exp !== 'number' ||
         payload.iat > now || payload.exp-payload.iat > 60 || payload.exp <= payload.iat ||
         typeof payload.jti !== 'string' || !/^[a-f0-9]{32}$/.test(payload.jti) ||
+        payload.expectedRevision !== action.expectedRevision || payload.expectedCycle !== action.expectedCycle ||
         payload.operation !== action.operation || payload.method !== action.method || payload.path !== action.path ||
         payload.stationId !== action.stationId || payload.chargerId !== action.chargerId || payload.runId !== action.runId ||
         payload.incidentId !== action.incidentId || typeof payload.bodySha256 !== 'string' ||

@@ -12,7 +12,8 @@ export function isScopedJudgeWrite(env: NodeJS.ProcessEnv, method: string, path:
       !(env.OPERATOR_GITHUB_IDS ?? '').split(',').map(v => v.trim()).includes(PRODUCTION_JUDGE_OWNER) ||
       !env.OPERATOR_ASSERTION_SECRET || env.OPERATOR_ASSERTION_SECRET.length < 32 ||
       !env.JUDGE_WRITE_API_KEY || env.JUDGE_WRITE_API_KEY.length < 32 ||
-      env.JUDGE_WRITE_API_KEY === env.BFF_READ_API_KEY || env.JUDGE_WRITE_API_KEY === env.INGEST_API_KEY) return false;
+      env.JUDGE_WRITE_API_KEY === env.OPERATOR_ASSERTION_SECRET || env.JUDGE_WRITE_API_KEY === env.BFF_READ_API_KEY || env.JUDGE_WRITE_API_KEY === env.INGEST_API_KEY) return false;
   const prefix = `/api/v1/judge/runs/${PRODUCTION_JUDGE_RUN}/`;
-  return path.startsWith(prefix) && actions.has(path.slice(prefix.length));
+  const action=path.slice(prefix.length);
+  return path.startsWith(prefix) && actions.has(action) && (action!=='reset'||env.JUDGE_REARM_ENABLED==='true');
 }

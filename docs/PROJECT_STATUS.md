@@ -141,3 +141,7 @@ The owner selected a Singapore Render Free backend with the existing Vercel fron
 ### Render service created — Atlas shared CIDRs rejected
 
 The Free Singapore service [chargeguard-api-m9ji.onrender.com](https://chargeguard-api-m9ji.onrender.com) is Live on source `693de56`; liveness and read-only access controls passed HTTP checks. Its assigned shared egress ranges are `74.220.52.0/24` and `74.220.60.0/24` (512 distinct addresses). No Atlas rule or Vercel BFF origin has changed. The owner rejected these shared CIDRs on 2026-10-21. Atlas and the Vercel BFF remain unchanged; Render-to-Atlas migration is blocked and end-to-end functionality is not verified. [Decision details and evidence](RENDER_MIGRATION.md).
+
+## Repeatable Judge Console preparation — 23 October 2026
+
+The latest preparation adds revision/cycle-bound requests, preserved cycle history and separately gated re-arm (`JUDGE_REARM_ENABLED`, default OFF). Fault is allowed only at BASELINE; re-arm only at RESOLVED. Earlier statements describing immediate fault from RESOLVED or empty JSON action bodies are superseded. The production run remains untouched; production write flags and cloud Datadog stay OFF. See [the current rehearsal and recording runbook](JUDGE_REPEATABLE_DEMO.md) for precise write scope, emergency handling, MongoDB aggregation and evidence limitations. Deployment/test evidence must be verified before claiming interactive or recording readiness.

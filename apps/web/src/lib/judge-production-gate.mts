@@ -8,10 +8,10 @@ export function canEnableProductionJudgeWrites(env:Record<string,string|undefine
   !!env.NEXTAUTH_SECRET && env.NEXTAUTH_SECRET.length>=32 &&
   !!env.OPERATOR_ASSERTION_SECRET && env.OPERATOR_ASSERTION_SECRET.length>=32 &&
   !!env.JUDGE_WRITE_API_KEY && env.JUDGE_WRITE_API_KEY.length>=32 &&
-  env.JUDGE_WRITE_API_KEY!==env.NEST_READ_API_KEY && env.JUDGE_WRITE_API_KEY!==env.NEST_API_KEY;
+  env.JUDGE_WRITE_API_KEY!==env.OPERATOR_ASSERTION_SECRET && env.JUDGE_WRITE_API_KEY!==env.NEXTAUTH_SECRET && env.JUDGE_WRITE_API_KEY!==env.NEST_READ_API_KEY && env.JUDGE_WRITE_API_KEY!==env.NEST_API_KEY;
 }
 export function mayWriteJudgeAction(env:Record<string,string|undefined>,operator:string|null,run:string,action:string):boolean {
- if(!operations.has(action))return false;
+ if(!operations.has(action)||(action==='reset'&&env.JUDGE_REARM_ENABLED!=='true'))return false;
  if(env.NODE_ENV==='production')return canEnableProductionJudgeWrites(env,operator)&&run===JUDGE_PRODUCTION_RUN;
  return env.JUDGE_ROUTES_ENABLED==='true';
 }

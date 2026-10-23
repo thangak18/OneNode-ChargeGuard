@@ -76,3 +76,7 @@ For **fault → acknowledge → recover → resolve → optional reset**, each s
 | Run `observations` | Server-timestamped synthetic scenario samples | Real measured current or Atlas telemetry ingestion |
 
 Sanitized planned local instrumentation: `judge.action` structured logs with bounded action/charger and run-ID correlation, `chargeguard.judge.action` counter with bounded action tag, and `chargeguard.judge.fault_event` counter. Run IDs must not become metric tags. Datadog US1 production ingestion is disabled and the one-shot validation is dry-run; no claim of actual production ALERT→OK.
+
+## Repeatable Judge Console preparation — 23 October 2026
+
+The latest preparation adds revision/cycle-bound requests, preserved cycle history and separately gated re-arm (`JUDGE_REARM_ENABLED`, default OFF). Fault is allowed only at BASELINE; re-arm only at RESOLVED. Earlier statements describing immediate fault from RESOLVED or empty JSON action bodies are superseded. The production run remains untouched; production write flags and cloud Datadog stay OFF. See [the current rehearsal and recording runbook](JUDGE_REPEATABLE_DEMO.md) for precise write scope, emergency handling, MongoDB aggregation and evidence limitations. Deployment/test evidence must be verified before claiming interactive or recording readiness.

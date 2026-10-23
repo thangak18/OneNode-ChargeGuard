@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test test/*.test.ts",
     "test:integration": "node --import tsx --test test/*.integration.ts",
+    "test:judge:bff": "node --import tsx --test test/judge-bff.http-e2e.ts",
     "db:init": "tsx scripts/init-db.ts",
     "db:seed": "tsx scripts/seed-virtual.ts",
     "replay:acn": "tsx scripts/replay-acn.ts",

@@ -3,7 +3,7 @@ import type { Db } from 'mongodb';
 import { DurableOperatorBudget, verifyOperatorAssertion, type BoundAction, type OperatorPolicy } from '../common/operator-preflight';
 import { isHostedRuntime } from '../config/runtime';
 
-type Run = {_id:string;owner:string;stationId:string;chargerId:string;synthetic:true;status:string;revision:number;observations?:{at:Date;currentA:number;chargingState:string;sourceType:string}[];actions:{actor:string;action:string;at:Date}[]};
+type Run = {_id:string;owner:string;stationId:string;chargerId:string;synthetic:true;status:string;revision:number;cycle?:number;observations?:{cycle?:number;at:Date;currentA:number;chargingState:string;sourceType:string}[];actions:{cycle?:number;actor:string;action:string;at:Date}[]};
 /** Isolated state: never updates chargers, telemetry, incidents or original Phase D evidence. */
 export class JudgeRunService {
   constructor(private readonly db:Db,private readonly policy:OperatorPolicy,private readonly writeKey:string) {}
@@ -22,9 +22,12 @@ export class JudgeRunService {
     const runs=this.db.collection<Run>('judge_runs');
     const run=await runs.findOne({_id:action.runId,owner:identity.subject,synthetic:true,stationId:action.stationId,chargerId:action.chargerId});
     if(!run)throw new Error('Run ownership denied');
+    const cycle=run.cycle??1;
+    if(!Number.isSafeInteger(cycle)||cycle<1||cycle>20||run.revision!==action.expectedRevision||cycle!==action.expectedCycle)throw new Error('Stale run precondition');
     if(run.revision>=100)throw new Error('Run action limit reached');
-    const transitions:Record<string,[string[],string]>={fault:[['BASELINE','RESOLVED'],'OPEN'],acknowledge:[['OPEN'],'ACKNOWLEDGED'],recover:[['ACKNOWLEDGED'],'RESOLVING'],resolve:[['RESOLVING'],'RESOLVED'],reset:[['BASELINE','RESOLVED'],'BASELINE']};
+    const transitions:Record<string,[string[],string]>={fault:[['BASELINE'],'OPEN'],acknowledge:[['OPEN'],'ACKNOWLEDGED'],recover:[['ACKNOWLEDGED'],'RESOLVING'],resolve:[['RESOLVING'],'RESOLVED'],reset:[['RESOLVED'],'BASELINE']};
     const [allowed,status]=transitions[action.operation];
+    if(action.operation==='reset'&&(process.env.JUDGE_REARM_ENABLED!=='true'||cycle>=20))throw new Error('Re-arm not authorized');
     if(!allowed.includes(run.status))throw new Error('Invalid run transition');
     if(process.env.NODE_ENV==='production'||isHostedRuntime(process.env)) {
       // Refuse all writes until the separately approved policy provisioning
@@ -37,10 +40,10 @@ export class JudgeRunService {
     }
     await new DurableOperatorBudget(this.db.collection('judge_policy')).consume(identity,3);
     const at=new Date();
-    const observation=action.operation==='fault'?{at,currentA:0,chargingState:'FAULT',sourceType:'SYNTHETIC'}:action.operation==='recover'?{at,currentA:8.25,chargingState:'CHARGING',sourceType:'SYNTHETIC'}:undefined;
-    const result=await runs.updateOne({_id:run._id,owner:identity.subject,revision:run.revision,status:run.status},{$set:{status},$inc:{revision:1},$push:{actions:{actor:identity.subject,action:action.operation,at},...(observation?{observations:observation}:{})}});
+    const observation=action.operation==='fault'?{cycle,at,currentA:0,chargingState:'FAULT',sourceType:'SYNTHETIC'}:action.operation==='recover'?{cycle,at,currentA:8.25,chargingState:'CHARGING',sourceType:'SYNTHETIC'}:undefined;
+    const result=await runs.updateOne({_id:run._id,owner:identity.subject,revision:run.revision,status:run.status},{$set:{status,cycle:action.operation==='reset'?cycle+1:cycle},$inc:{revision:1},$push:{actions:{cycle:action.operation==='reset'?cycle+1:cycle,actor:identity.subject,action:action.operation,at},...(observation?{observations:observation}:{})}});
     if(result.modifiedCount!==1)throw new Error('Run conflict');
-    return {runId:run._id,status,synthetic:true};
+    return {runId:run._id,status,synthetic:true,cycle:action.operation==='reset'?cycle+1:cycle,revision:run.revision+1};
   }
   /** Provisioning is an explicit owner-controlled step, not a browser endpoint. */
   async provision(owner:string,chargerId:string){

@@ -18,12 +18,13 @@ test('judge observability is schema-scoped, correlated and never attaches unboun
    sent.push({url:String(url),body:JSON.parse(String(init?.body))});return new Response(null,{status:202});
  });
  const run='judge-'+'a'.repeat(24);
- transport.log(JSON.stringify({service:'chargeguard-api',env:'prod',message:'judge.action',run_id:run,action:'fault',charger_id:'demo-charger-01',password:'private'}));
+ transport.log(JSON.stringify({service:'chargeguard-api',env:'prod',message:'judge.action',run_id:run,cycle:2,revision:6,action:'fault',charger_id:'demo-charger-01',password:'private'}));
  transport.metric('judge.action',1,'c',['action:fault',`run_id:${run}`]);
  transport.metric('judge.fault_event',1,'c',[`run_id:${run}`]);
  await transport.flush();
  assert.equal(sent.length,2);
  assert.equal(sent[0].body[0].run_id,run);
+ assert.equal(sent[0].body[0].cycle,2);assert.equal(sent[0].body[0].revision,6);
  assert.equal(sent[0].body[0].password,undefined);
  assert.equal(sent[1].body.series.length,2);
  assert.ok(sent[1].body.series.every((entry:any)=>!entry.tags.some((tag:string)=>tag.startsWith('run_id:'))));

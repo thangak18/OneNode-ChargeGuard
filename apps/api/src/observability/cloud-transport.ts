@@ -7,6 +7,7 @@ export class CloudTransport {
     // Only sanitized logger output is accepted; allowlist again at the transport boundary.
     if(!['ingestion.request','telemetry.accepted','fault.simulated','observability.delivery_unavailable','framework.log','framework.error','framework.warning','application.startup_failed','database.connected','database.unavailable','demo.action','judge.action'].includes(item.message))return;
     const safe:Record<string,unknown>={};for(const k of ['timestamp','status','service','env','message','demo_id','incident_id','run_id','station_id','charger_id','action','outcome','duration_ms','status_code'])if(item[k]!==undefined)safe[k]=item[k];
+    for(const k of ['cycle','revision'])if(Number.isSafeInteger(item[k])&&item[k]>=0&&item[k]<=100)safe[k]=item[k];
     this.enqueue(this.logs,safe);}catch{this.dropped++;}}
   metric(name:string,value:number,type:'c'|'g'|'ms',tags:string[]){
     if(!/^(ingestion\.(success|failure|processing_ms)|telemetry\.(accepted|duplicate)|charger\.(current_a|operational_status)|fault\.simulated|judge\.(action|fault_event))$/.test(name)||!Number.isFinite(value))return;

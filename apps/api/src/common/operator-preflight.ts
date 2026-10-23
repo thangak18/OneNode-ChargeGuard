@@ -25,10 +25,10 @@ export async function verifyOperatorAssertion(token: string, action: BoundAction
       action.stationId !== 'demo-station-01' || !/^demo-charger-0[1-5]$/.test(action.chargerId) ||
       !/^judge-[a-f0-9]{24}$/.test(action.runId) || action.incidentId === pinned) throw new Error('Operator action denied');
   const needsIncident=['acknowledge','recover','resolve'].includes(action.operation);
-  if (needsIncident && (!action.incidentId || !/^demo-[a-f0-9]{12}$/.test(action.incidentId))) throw new Error('Operator action denied');
+  if (needsIncident && !action.path.startsWith('/api/v1/judge/runs/') && (!action.incidentId || !/^demo-[a-f0-9]{12}$/.test(action.incidentId))) throw new Error('Operator action denied');
   const path = action.operation === 'acknowledge' || action.operation === 'resolve'
     ? `/api/v1/incidents/${action.incidentId}/${action.operation}` : routes[action.operation];
-  if (action.path !== path) throw new Error('Operator action denied');
+  if (action.path !== path && action.path !== `/api/v1/judge/runs/${action.runId}/${action.operation}`) throw new Error('Operator action denied');
   try {
     const {payload} = await jwtVerify(token, policy.secret, {algorithms:['HS256'],issuer:policy.issuer,audience:policy.audience,requiredClaims:['sub','iat','exp','jti']});
     const now=Math.floor(Date.now()/1000);

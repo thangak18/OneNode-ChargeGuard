@@ -1,0 +1,36 @@
+# Judge security and cloud observability preparation
+
+Date: 2026-10-23. Baseline e398622. **Not ready to enable public mutations.** No production database writes or cloud incident test were performed. Existing production 403 middleware and BFF denial remain unchanged.
+
+## Implemented supporting code
+
+- Server-only NextAuth JWT verification helper derives numeric GitHub identity from the signed session cookie and rechecks current allowlist. It rejects cross-origin/non-same-origin fetches and non-JSON POSTs. No browser-supplied actor or operator ID is accepted. Assertions expire after 30 seconds and bind issuer, audience, operation, route, run, asset and body hash.
+- Nest-side verification independently checks signature/algorithm, scope and identity. JudgeRunService additionally requires a separate write credential, validates stored run ownership and asset scope, consumes a Mongo nonce and durable three-per-minute per-action budget, then uses revision/status compare-and-swap for transitions. Different runs cannot modify each other. Audit actor is the verified subject.
+- Isolated judge_runs state machine: BASELINE → OPEN → ACKNOWLEDGED → RESOLVING → RESOLVED; reset is permitted only from BASELINE/RESOLVED and changes only that run. It never updates existing incidents/chargers/telemetry. Original Phase D evidence is untouched. Provisioning is owner-controlled, not an exposed endpoint.
+- Integration tests use disposable MongoDB only: lifecycle, other-run and original-incident preservation, wrong owner, read credential rejection, invalid transition, replay, concurrent faults, shared quota and fail-closed behavior.
+
+## Remaining security gates
+
+These are prerequisites, not an enabled interactive route. The assertion helper is not called by the BFF; JudgeRunService is not registered as a public controller. There are no production signing/write secrets or judge collections initialized by this change. Existing production denial is unconditional.
+
+Before enabling: wire and test the actual BFF/session-to-backend guard route end to end (including logout/expired session/CSRF abuse); provision distinct read/write/signing keys; ensure backend write key differs from read/ingestion keys; implement isolated telemetry/outbox delivery and recovery proof before resolution; provision run ownership and policy cleanup explicitly; test crash/partial delivery semantics and audit retention; then request owner authorization. The current isolated state machine alone is not evidence of Atlas telemetry or Datadog recovery. Rate limits use fixed minute windows (boundary bursts possible); nonces are consumed on failed quota attempts; application state update and nonce consumption are not one transaction. Durable policy cleanup must not remove live nonce/quota records. Do not reuse the old station-wide reset.
+
+## App-scoped Datadog HTTPS
+
+CloudTransport integrates with the existing sanitized logger/metrics, disabled by default. DD_CLOUD_ENABLED=true with DD_ENV=prod and DD_API_KEY enables ChargeGuard-only US1 HTTPS intake. No workspace log stream is configured. Owner must first verify active trial/free quotas and store the key privately in Render. Never copy local .env or use NEXT_PUBLIC variables.
+
+Fixed destinations: https://api.datadoghq.com/api/v2/series and https://http-intake.logs.datadoghq.com/api/v2/logs. Metric names and asset tags are allowlisted. Run IDs are log correlation fields, never metric tags. Counters use type count and one-second intervals; latency uses chargeguard.ingestion.processing_ms.sample as a per-event gauge, not local Agent histogram percentiles. Queue bound 100 per signal, five-second flush, three-second HTTP deadline, at most two attempts on 429/transient HTTP errors; auth failures are not retried. Dropped/failed counters are process-local diagnostics. Delivery is best effort: ephemeral process loss drops queued records, ambiguous retries may duplicate counts/logs, and flush can wait for the bounded transport budget. No production intake or fault alert is claimed.
+
+Local monitors 334137536 and 334137944 are historical env:dev proof, not verified env:prod coverage. Before any cloud test, inspect their actual queries; use proposed prod-specific queries below rather than silently changing existing monitors:
+
+- Fault: sum(last_1m):sum:chargeguard.fault.simulated{service:chargeguard-api,env:prod}.as_count() >= 1, no-data disabled, recovery at zero after window expires.
+- Ingestion errors: sum(last_5m):sum:chargeguard.ingestion.failure{service:chargeguard-api,env:prod}.as_count() >= 3; demo abuse threshold, not charger safety.
+- Missing heartbeat: not proposed until reliable cloud heartbeat instrumentation exists.
+
+No monitors, recipients, paid resources or production fault events were created. API key acceptance (202) alone would not prove searchable intake or alert behavior. Owner must confirm trial/quotas, then observe real env:prod metric/log arrival and separately approve a fault test.
+
+Official references: [metric submission](https://docs.datadoghq.com/api/latest/metrics/submit-metrics/), [logs](https://docs.datadoghq.com/api/latest/logs/send-logs/), [Render stream scope](https://render.com/docs/log-streams).
+
+## Proposed future cloud-test approval scope — not executed
+
+After all remaining security gates pass, ask approval for exactly one owner-scoped run and one virtual charger: create one judge_runs document; consume up to five nonce and five quota records; append five lifecycle actions (fault/acknowledge/recover/resolve/reset if separately requested); write only explicitly isolated synthetic fault/recovery observations via a reviewed outbox. Exact telemetry/receipt/outbox counts must be enumerated after that implementation, before approval. No existing charger document or Phase D incident may be changed. Cleanup may remove only new run-tagged documents after preserving sanitized evidence; Datadog intake cannot be assumed retractable. Do not request approval to execute this incomplete plan yet.

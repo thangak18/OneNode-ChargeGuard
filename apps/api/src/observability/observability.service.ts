@@ -1,3 +1,4 @@
+import { CloudTransport } from './cloud-transport';
 import { isHostedRuntime } from '../config/runtime';
 import { LoggerService, OnModuleDestroy } from '@nestjs/common';
 import { createSocket, Socket } from 'node:dgram';
@@ -27,9 +28,15 @@ export function observabilityConfig(env:NodeJS.ProcessEnv):ObsConfig {
 /** Fixed metric names, fixed local destination, bounded tags. Observability never blocks ingestion. */
 export class ObservabilityService implements OnModuleDestroy {
   private socket?:Socket;
+  private cloud?:CloudTransport;
+  private cloudTimer?:ReturnType<typeof setInterval>;
   private pending=new Set<Promise<void>>();
   private warned=false;
   constructor(readonly config:ObsConfig) {
+    if(process.env.DD_CLOUD_ENABLED==='true' && config.env==='prod') {
+      this.cloud=new CloudTransport(process.env.DD_API_KEY??'');
+      this.cloudTimer=setInterval(()=>{void this.cloud?.flush();},5000);this.cloudTimer.unref();
+    }
     if(config.enabled) {
       this.socket=createSocket('udp4');
       this.socket.on('error',()=>this.deliveryWarning());
@@ -40,6 +47,7 @@ export class ObservabilityService implements OnModuleDestroy {
     if(!this.warned) {this.warned=true;this.record('warning','observability.delivery_unavailable');}
   }
   private metric(name:string,value:number,type:'c'|'g'|'ms',tags:string[]=[]):void {
+    this.cloud?.metric(name,value,type,tags);
     if(!this.socket || !Number.isFinite(value)) return;
     const packet=`chargeguard.${name}:${value}|${type}|#service:chargeguard-api,env:${this.config.env},${tags.join(',')}`.replace(/,$/,'');
     let done!:()=>void;
@@ -90,6 +98,7 @@ export class ObservabilityService implements OnModuleDestroy {
     if(fields.station_id===station) safe.station_id=station;
     if(typeof fields.charger_id==='string' && chargers.has(fields.charger_id)) safe.charger_id=fields.charger_id;
     const line=JSON.stringify({timestamp:new Date().toISOString(),status:level,service:'chargeguard-api',env:this.config.env,message:allowedEvents.includes(event)?event:'framework.log',...safe})+'\n';
+    this.cloud?.log(line);
     if(this.config.stdout) process.stdout.write(line);
     if(this.config.logFile) {
       try {
@@ -99,8 +108,9 @@ export class ObservabilityService implements OnModuleDestroy {
       } catch {if(!this.warned) {this.warned=true;process.stderr.write('{"status":"warning","service":"chargeguard-api","message":"observability.delivery_unavailable"}\n');}}
     }
   }
-  async flush():Promise<void> {await Promise.all([...this.pending]);}
+  async flush():Promise<void> {await Promise.all([...this.pending]);await this.cloud?.flush();}
   async onModuleDestroy():Promise<void> {
+    if(this.cloudTimer)clearInterval(this.cloudTimer);
     await this.flush();
     // A never-used UDP socket has not auto-bound; close can throw in that case.
     try {this.socket?.close();} catch { /* no bound socket to close */ }

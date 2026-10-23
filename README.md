@@ -8,6 +8,10 @@
 
 > **Status (19 October 2026):** The existing Phase D incident `demo-58a1983cae09` completed its verified Atlas → Datadog ALERT → investigation → recovery → RESOLVED → monitor OK lifecycle. Node 24 checks pass: API 24 unit + 11 integration tests; web lint, two BFF policy tests, typecheck and production build. See [current verification](docs/PHASE_D_VERIFICATION.md). Video recording, final slide export and organizer form/access steps remain submission preparation. Keep the app loopback-only; the BFF is not operator authentication and rejects production mutations. Raw ACN redistribution remains unresolved.
 
+## Judge interactive preparation — 23 October
+
+Security and app-scoped HTTPS observability supporting code is under preparation, not enabled in production. See [security gates and cloud test scope](docs/JUDGE_SECURITY_PREPARATION.md). Checks: 48 API unit, 17 integration, 9 web policy tests; API and web typecheck/build and web lint passed. Cloud writes remain 403; env:prod Datadog intake awaits owner key/quota confirmation and live verification.
+
 ## Problem
 EV charging operators need to detect overload, device faults, and charging interruptions; investigate what happened; and respond with evidence that service has recovered.
 

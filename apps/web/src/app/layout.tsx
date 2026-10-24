@@ -33,7 +33,10 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#030712" />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">{process.env.NODE_ENV === 'production' && <div role="note" className="bg-amber-950 text-amber-100 px-4 py-2 text-center text-sm">Synthetic operations · Shared APIs are read-only · Judge actions require separate authorization</div>}{process.env.NODE_ENV === 'production' && <BackendReadNotice/>}{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">
+        {process.env.NODE_ENV === 'production' && <BackendReadNotice />}
+        {children}
+      </body>
     </html>
   );
 }

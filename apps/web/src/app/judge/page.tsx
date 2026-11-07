@@ -100,8 +100,8 @@ export default function JudgePage(){
  const samples=run?runChartSamples(run,selectedCycle):[];
  const timeline=run?runTimeline(run,selectedCycle):[];
  const disabledReason='Production operations require separate owner approval and backend provisioning.';
- return <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col"><Navbar/>
-  <main className="mx-auto w-full max-w-7xl flex-1 space-y-5 px-4 py-7 sm:px-6">
+ return <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row"><Navbar/>
+  <main className="flex-1 min-w-0 max-w-7xl mx-auto w-full space-y-5 px-4 py-7 sm:px-6">
    <header className="flex flex-wrap items-start justify-between gap-3">
     <div><div className="flex items-center gap-2"><ShieldCheck className="text-cyan-400" size={23}/><h1 className="text-xl font-semibold">Isolated Judge Run</h1></div>
      <p className="mt-1 text-sm text-slate-400">Owner-scoped incident investigation · DETECT → INVESTIGATE → RECOVER → RESOLVE</p></div>
@@ -112,7 +112,7 @@ export default function JudgePage(){
     <section className={card}><h2 className="text-sm font-semibold text-slate-200 flex items-center gap-2"><LockKeyhole size={15}/> Operator access</h2>
      <p className="mt-3 text-sm" role="status">{!session?'Checking session…':session.authorized?'GitHub operator verified':'Sign-in required'}</p>
      <span className={`mt-2 inline-flex rounded-full border px-2 py-1 text-xs ${session?.authorized?'border-emerald-800 text-emerald-300':'border-amber-800 text-amber-300'}`}>{session?.authorized?'Authorized identity':'Not authorized'}</span>
-     {!session?.authorized&&<p className="mt-3 text-sm"><Link href="/login" className="underline text-cyan-300">Sign in with GitHub</Link> to access owner-scoped runs.</p>}
+     {!session?.authorized&&<p className="mt-3 text-sm flex items-center gap-2"><Link href="/login" className="inline-flex items-center gap-1.5 rounded-md border border-cyan-700/60 bg-cyan-950/40 px-2.5 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-900/50 hover:text-cyan-200 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none">Sign in</Link><span className="text-xs text-slate-400">to access owner-scoped runs.</span></p>}
     </section>
     <section className={card}><h2 className="text-sm font-semibold flex items-center gap-2"><Radio size={15}/> Mutation policy</h2>
      <p className="mt-3 text-sm text-amber-300">{!session?'Checking permissions…':session.canMutate?'Authorized judge operations enabled':'Read-only · mutations disabled'}</p>

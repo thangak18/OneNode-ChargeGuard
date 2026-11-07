@@ -21,13 +21,13 @@ export default function HistoryPage() {
   useEffect(()=>{if(!playing || !duration)return;const timer=setInterval(()=>setElapsed(previous=>Math.min(duration,previous+100)),100);return()=>clearInterval(timer);},[playing,duration]);
   const point=data?.points.filter(p=>Date.parse(p.replayAt)-Date.parse(data.replayAnchor)<=elapsed).at(-1);
   function select(nextSession:string,nextSpeed:number){setPlaying(false);setElapsed(0);setData(null);setError(null);setSession(nextSession);setSpeed(nextSpeed);}
-  return <div className="min-h-screen bg-slate-950 text-slate-100"><Navbar/><main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+  return <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row"><Navbar/><main className="flex-1 min-w-0 max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div><h1 className="text-xl font-semibold">Local Historical ACN Analysis</h1><p className="text-sm text-slate-400 mt-2">Read-only local files. No Atlas writes, DogStatsD metrics, Datadog logs or fault controls on this path.</p></div>
     <div role="note" className="p-4 border border-amber-800 rounded-lg text-amber-200 text-sm">Reuse/third-party processing permission remains unconfirmed. Local inspection is not a license grant. Do not publish this trace, screen-share it publicly, export it or upload it to cloud services. Use the synthetic demo for public presentation.</div>
     <section aria-label="Data modes" className="grid md:grid-cols-3 gap-4 text-sm">
       <div className="p-4 bg-slate-900 rounded-lg"><ProvenanceBadge sourceType="ACN_REPLAY"/><p className="mt-2">Observed historical current and source-reported state/energy. Original timestamps stay visible. These are not live measurements.</p></div>
       <div className="p-4 bg-slate-900 rounded-lg"><ProvenanceBadge sourceType="DERIVED"/><p className="mt-2">Application charging state uses current &gt; 0.5 A. This heuristic does not establish a physical fault or availability.</p></div>
-      <div className="p-4 bg-slate-900 rounded-lg"><ProvenanceBadge sourceType="SYNTHETIC"/><p className="mt-2">Operational faults and operator actions remain separate.</p><Link href="/demo" className="text-cyan-300 underline">Open synthetic incident controls</Link></div>
+      <div className="p-4 bg-slate-900 rounded-lg"><ProvenanceBadge sourceType="SYNTHETIC"/><p className="mt-2">Operational faults and operator actions remain separate.</p><Link href="/demo" className="text-cyan-300 underline">Open Incident Drill Sandbox</Link></div>
     </section>
     <section aria-label="Historical controls" className="flex flex-wrap gap-5 items-end">
       <label className="text-sm">Local session<select aria-label="Local session" className="block mt-1 p-2 bg-slate-900 border border-slate-700 rounded" value={session} onChange={e=>select(e.target.value,speed)}>{[1,2,3,4,5].map(i=><option key={i} value={`sample_0${i}`}>Session {i} (same source prefix)</option>)}</select></label>

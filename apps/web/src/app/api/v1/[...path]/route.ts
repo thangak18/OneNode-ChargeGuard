@@ -137,7 +137,12 @@ function validateMutationBody(path: string[], rawBody: string, contentType: stri
     ) {
       return { error: badRequest('Incident action accepts only an optional actor label up to 64 characters.') };
     }
-    return { body: JSON.stringify({ actor: 'local-demo-operator' }) };
+    // Keep the operator label the UI sent so the audit trail shows who acted
+    // (local development only; production never reaches this point). The API
+    // accepts only [A-Za-z0-9_.:-], so map anything else (e.g. "@" in an
+    // email) to "_" rather than letting the action fail.
+    const actor = typeof value.actor === 'string' ? value.actor.replace(/[^A-Za-z0-9_.:-]/g, '_') : '';
+    return { body: JSON.stringify({ actor: actor || 'local-demo-operator' }) };
   }
 
   return { error: badRequest('Unsupported API operation.', 404) };

@@ -2,23 +2,53 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { startPolling } from '@/lib/utils';
 import { Navbar } from '@/components/Navbar';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Notice } from '@/components/Notice';
+import { LockedAction } from '@/components/LockedAction';
+import { LifecycleStepper } from '@/components/LifecycleStepper';
 import { api, Incident } from '@/lib/api';
 import { errorMessage } from '@/lib/utils';
+import { SCENARIOS, scenarioLabel } from '@/lib/labels';
 import {
   Sliders,
   AlertOctagon,
   CheckCircle2,
   Play,
   RotateCcw,
-  ShieldAlert,
+  Info,
   ArrowRight,
   Zap,
+  Lock,
+  Loader2,
 } from 'lucide-react';
 
+const STEP_GUIDE: Record<1 | 2 | 3 | 4, { title: string; body: string }> = {
+  1: {
+    title: 'Baseline — all connectors normal',
+    body: 'Every connector emits a steady synthetic 8.25 A. Pick a connector and a failure scenario, then inject a fault.',
+  },
+  2: {
+    title: 'Fault detected',
+    body: 'Current on the target connector drops to 0 A and an incident opens. Acknowledge it, then send recovery telemetry.',
+  },
+  3: {
+    title: 'Recovering',
+    body: 'Recovery telemetry is flowing. Check the connector is healthy (and the Datadog monitor has recovered), then close the incident.',
+  },
+  4: {
+    title: 'Resolved — drill complete',
+    body: 'The incident is closed with a full audit trail. Reset to baseline to run another drill.',
+  },
+};
+
 export default function DemoPage() {
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated';
+  const operatorActor = session?.user?.email || 'operator@chargeguard.com';
+  const mutationsLocked = process.env.NODE_ENV === 'production';
   const [selectedChargerIndex, setSelectedChargerIndex] = useState(1);
   const [scenario, setScenario] = useState('SIM_OVERHEAT');
   const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
@@ -71,7 +101,7 @@ export default function DemoPage() {
     setError(null);
     setStatusMessage(null);
     try {
-      await api.acknowledgeIncident(activeIncidentId, 'hackathon-judge');
+      await api.acknowledgeIncident(activeIncidentId, operatorActor);
       setStatusMessage(`Incident ${activeIncidentId} acknowledged by operator.`);
       try {
         const inc = await api.getIncident(activeIncidentId);
@@ -114,7 +144,7 @@ export default function DemoPage() {
     setError(null);
     setStatusMessage(null);
     try {
-      await api.resolveIncident(activeIncidentId, 'hackathon-judge');
+      await api.resolveIncident(activeIncidentId, operatorActor);
       setStep(4);
       setStatusMessage(`Incident ${activeIncidentId} resolved and lifecycle closed with audit evidence.`);
       try {
@@ -148,169 +178,140 @@ export default function DemoPage() {
     }
   };
 
+  const drillInProgress = Boolean(activeIncident && activeIncident.status !== 'RESOLVED');
+  const canAcknowledge = activeIncident?.status === 'OPEN';
+  const canRecover = Boolean(
+    activeIncident &&
+      (activeIncident.status === 'ACKNOWLEDGED' || (activeIncident.status === 'RESOLVING' && !activeIncident.recoveryTelemetryAt)),
+  );
+  const canResolve = Boolean(activeIncident && activeIncident.status === 'RESOLVING' && activeIncident.recoveryTelemetryAt);
+  const guide = STEP_GUIDE[step];
+  const selectedScenario = SCENARIOS.find((s) => s.code === scenario);
+
+  const btnBase =
+    'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+  const spinner = <Loader2 size={14} className="animate-spin" aria-hidden="true" />;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col lg:flex-row">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 min-w-0 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-              <Sliders size={20} className="text-cyan-400" />
-              Demo Control Center & Incident Lifecycle Simulator
+            <h1 className="text-xl font-semibold tracking-tight text-slate-100 flex items-center gap-2">
+              <Sliders size={20} className="text-cyan-400" aria-hidden="true" />
+              Incident Drill
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Interactive demonstration for judges: DETECT → INVESTIGATE → RESOLVE
+            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+              Rehearse the full response loop — detect, investigate, resolve — on a simulated fault. No physical equipment is affected.
             </p>
           </div>
 
-          <button
-            onClick={handleReset}
-            disabled={process.env.NODE_ENV === 'production' || loading}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-medium self-start sm:self-auto transition-colors disabled:opacity-50"
-          >
-            <RotateCcw size={13} />
-            Reset Baseline (All Normal)
-          </button>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={mutationsLocked || loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-medium self-start transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RotateCcw size={13} aria-hidden="true" />
+              Reset to baseline
+            </button>
+          ) : (
+            <LockedAction action="Reset baseline" className="self-start" />
+          )}
         </div>
 
-        {/* Disclaimer Card */}
-        <div className="bg-amber-950/40 border border-amber-800/80 rounded-lg p-3.5 text-xs text-amber-200 flex items-start gap-2.5">
-          <ShieldAlert size={16} className="text-amber-400 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <p className="font-semibold text-amber-100">
-              MUGVN Hackathon Demonstration Environment
-            </p>
-            <p className="text-[11px] text-amber-300 leading-relaxed">
-              ChargeGuard does NOT actuate physical charging hardware. All operations and fault stimuli are
-              software simulations injected into the NestJS pipeline and persisted into MongoDB Atlas time-series.
-              Verify current Datadog US1 monitor state directly; this UI does not confirm alert delivery.
-            </p>
-          </div>
+        {/* Context: sandbox + role, in one compact card */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3 text-xs">
+          <Info size={16} className="hidden sm:block shrink-0 text-cyan-400" aria-hidden="true" />
+          <p className="flex-1 text-slate-300 leading-relaxed">
+            <span className="font-semibold text-slate-100">Safe sandbox.</span> Faults are software stimuli injected into the telemetry pipeline and logged in MongoDB Atlas.{' '}
+            {isAuthenticated ? (
+              <span className="text-emerald-300">You&apos;re signed in as an operator — all drill controls are enabled.</span>
+            ) : (
+              <span className="text-amber-300">You&apos;re viewing as a guest — sign in as an operator to run the drill.</span>
+            )}
+          </p>
+          {!isAuthenticated && (
+            <Link
+              href="/login?callbackUrl=%2Fdemo"
+              className="self-start sm:self-auto shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium transition-colors"
+            >
+              <Lock size={12} aria-hidden="true" />
+              Sign in
+            </Link>
+          )}
         </div>
 
-        {/* Status Alerts */}
+        {/* Feedback */}
         {statusMessage && (
-          <div role="status" className="p-3.5 rounded-lg bg-cyan-950/70 border border-cyan-800 text-cyan-200 text-xs flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-cyan-400 shrink-0" />
-              {statusMessage}
-            </span>
-            <button onClick={() => setStatusMessage(null)} className="text-cyan-400 hover:underline text-[11px]">
-              Dismiss
-            </button>
-          </div>
+          <Notice tone="success" onDismiss={() => setStatusMessage(null)}>
+            {statusMessage}
+          </Notice>
         )}
-
         {error && (
-          <div role="alert" className="p-3.5 rounded-lg bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <AlertOctagon size={16} className="text-rose-400 shrink-0" />
-              {error}
-            </span>
-            <button onClick={() => setError(null)} className="text-rose-400 hover:underline text-[11px]">
-              Dismiss
-            </button>
-          </div>
+          <Notice tone="error" onDismiss={() => setError(null)}>
+            {error}
+          </Notice>
         )}
 
-        {/* 4-Step Interactive Lifecycle Flow */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          {/* Step 1: Baseline */}
+        {/* Lifecycle progress + "what now" */}
+        <section aria-labelledby="drill-progress-heading" className="rounded-xl border border-slate-800 bg-slate-900/90 p-4 sm:p-6 space-y-5">
+          <h2 id="drill-progress-heading" className="sr-only">Drill progress</h2>
+          <LifecycleStepper
+            ariaLabel="Drill lifecycle"
+            current={step - 1}
+            complete={step === 4}
+            steps={[
+              { label: 'Baseline', caption: 'Normal', tone: 'cyan' },
+              { label: 'Fault', caption: 'Detect', tone: 'rose' },
+              { label: 'Recovery', caption: 'Investigate', tone: 'amber' },
+              { label: 'Resolved', caption: 'Close', tone: 'emerald' },
+            ]}
+          />
           <div
-            className={`p-4 rounded-lg border transition-all ${
+            aria-live="polite"
+            className={`rounded-lg border px-4 py-3 ${
               step === 1
-                ? 'bg-slate-900 border-cyan-500 shadow-sm shadow-cyan-950'
-                : 'bg-slate-900/60 border-slate-800 opacity-80'
+                ? 'border-cyan-800/50 bg-cyan-950/20'
+                : step === 2
+                  ? 'border-rose-800/60 bg-rose-950/25'
+                  : step === 3
+                    ? 'border-amber-800/60 bg-amber-950/20'
+                    : 'border-emerald-800/60 bg-emerald-950/25'
             }`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase font-bold text-cyan-400">Step 1</span>
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-            </div>
-            <h3 className="text-xs font-bold text-slate-100">Baseline Normal</h3>
-            <p className="text-[11px] text-slate-400 mt-1">
-              The baseline reset emits synthetic 8.25 A readings. Verify monitor state directly in Datadog.
-            </p>
+            <p className="text-[10px] font-mono uppercase tracking-wider text-slate-400">Step {step} of 4</p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-100">{guide.title}</p>
+            <p className="mt-1 text-xs text-slate-300 leading-relaxed">{guide.body}</p>
           </div>
+        </section>
 
-          {/* Step 2: Fault Injection */}
-          <div
-            className={`p-4 rounded-lg border transition-all ${
-              step === 2
-                ? 'bg-rose-950/40 border-rose-500 shadow-sm shadow-rose-950'
-                : 'bg-slate-900/60 border-slate-800 opacity-80'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase font-bold text-rose-400">Step 2: DETECT</span>
-              <span className={`w-2 h-2 rounded-full ${step >= 2 ? 'bg-rose-500 animate-pulse' : 'bg-slate-700'}`} />
-            </div>
-            <h3 className="text-xs font-bold text-slate-100">Fault Injected</h3>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Synthetic current drops to 0 A and state switches to FAULT. Check Datadog for monitor evaluation.
-            </p>
-          </div>
-
-          {/* Step 3: Recovery */}
-          <div
-            className={`p-4 rounded-lg border transition-all ${
-              step === 3
-                ? 'bg-amber-950/40 border-amber-500 shadow-sm shadow-amber-950'
-                : 'bg-slate-900/60 border-slate-800 opacity-80'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase font-bold text-amber-400">Step 3: INVESTIGATE</span>
-              <span className={`w-2 h-2 rounded-full ${step >= 3 ? 'bg-amber-400' : 'bg-slate-700'}`} />
-            </div>
-            <h3 className="text-xs font-bold text-slate-100">Recovery Triggered</h3>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Operator investigates logs and telemetry, then dispatches recovery telemetry.
-            </p>
-          </div>
-
-          {/* Step 4: Resolved */}
-          <div
-            className={`p-4 rounded-lg border transition-all ${
-              step === 4
-                ? 'bg-emerald-950/40 border-emerald-500 shadow-sm shadow-emerald-950'
-                : 'bg-slate-900/60 border-slate-800 opacity-80'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase font-bold text-emerald-400">Step 4: RESOLVE</span>
-              <span className={`w-2 h-2 rounded-full ${step === 4 ? 'bg-emerald-400' : 'bg-slate-700'}`} />
-            </div>
-            <h3 className="text-xs font-bold text-slate-100">Incident Closed</h3>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Confirm monitor recovery in Datadog; the incident is marked RESOLVED after operator confirmation.
-            </p>
-          </div>
-        </div>
-
-        {/* Simulator Control Dashboard */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-6 shadow-sm space-y-6">
-          <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-            <Play size={16} className="text-cyan-400" />
-            Interactive Fault Injection Parameters
+        {/* Controls */}
+        <section aria-labelledby="drill-controls-heading" className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 sm:p-6 shadow-sm space-y-5">
+          <h2 id="drill-controls-heading" className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <Play size={16} className="text-cyan-400" aria-hidden="true" />
+            Drill controls
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="charger-select" className="block text-xs font-medium text-slate-300 mb-1.5">
-                Target Connector
+                Target connector
               </label>
               <select
                 id="charger-select"
                 value={selectedChargerIndex}
                 onChange={(e) => setSelectedChargerIndex(Number(e.target.value))}
-                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                disabled={drillInProgress}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-60"
               >
                 {[1, 2, 3, 4, 5].map((idx) => (
                   <option key={idx} value={idx}>
-                    demo-charger-0{idx} (Connector #{idx})
+                    demo-charger-0{idx} · Connector #{idx}
                   </option>
                 ))}
               </select>
@@ -318,105 +319,137 @@ export default function DemoPage() {
 
             <div>
               <label htmlFor="scenario-select" className="block text-xs font-medium text-slate-300 mb-1.5">
-                Synthetic Failure Scenario
+                Failure scenario
               </label>
               <select
                 id="scenario-select"
                 value={scenario}
                 onChange={(e) => setScenario(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                disabled={drillInProgress}
+                aria-describedby="scenario-help"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 disabled:opacity-60"
               >
-                <option value="SIM_OVERHEAT">SIM_OVERHEAT (Synthetic 72 °C stimulus; illustrative only)</option>
-                <option value="SIM_POWER_LOSS">SIM_POWER_LOSS (Synthetic zero-current signal)</option>
-                <option value="SIM_HARDWARE_FAULT">SIM_HARDWARE_FAULT (Synthetic generic fault signal)</option>
+                {SCENARIOS.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.label}
+                  </option>
+                ))}
               </select>
+              <p id="scenario-help" className="mt-1.5 text-[11px] text-slate-400 leading-relaxed">
+                {selectedScenario?.detail}. <span className="font-mono text-slate-500">{scenario}</span>
+              </p>
             </div>
           </div>
-          <p className="text-[11px] text-slate-400">
-            Every scenario emits a synthetic zero-current fault event. Only SIM_OVERHEAT adds a 72 °C synthetic
-            stimulus; the Datadog monitor counts simulated fault events, not a temperature safety threshold.
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Every scenario emits a synthetic zero-current fault event. The Datadog monitor counts simulated fault events — it is not a temperature safety threshold.
           </p>
 
-          {/* Action Trigger Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              onClick={handleTriggerFault}
-              disabled={Boolean(process.env.NODE_ENV === 'production' || loading || (activeIncident && activeIncident.status !== 'RESOLVED'))}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 disabled:opacity-50"
-            >
-              <AlertOctagon size={14} />
-              Inject Synthetic Fault
-            </button>
-
-            {activeIncident && activeIncident.status === 'OPEN' && (
-              <button
-                onClick={handleAcknowledge}
-                disabled={process.env.NODE_ENV === 'production' || loading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-amber-950 hover:bg-amber-900 text-amber-200 border border-amber-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 disabled:opacity-50"
-              >
-                Acknowledge Alert
-              </button>
-            )}
-
-            {activeIncident && (activeIncident.status === 'ACKNOWLEDGED' || (activeIncident.status === 'RESOLVING' && !activeIncident.recoveryTelemetryAt)) && (
-              <button
-                onClick={handleRecover}
-                disabled={process.env.NODE_ENV === 'production' || loading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-cyan-950 hover:bg-cyan-900 text-cyan-200 border border-cyan-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 disabled:opacity-50"
-              >
-                <Zap size={14} />
-                Send Recovery Telemetry
-              </button>
-            )}
-
-            {activeIncident && activeIncident.status === 'RESOLVING' && activeIncident.recoveryTelemetryAt && (
-              <button
-                onClick={handleResolve}
-                disabled={process.env.NODE_ENV === 'production' || loading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-800 text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50"
-              >
-                <CheckCircle2 size={14} />
-                Confirm & Close Incident (RESOLVED)
-              </button>
+          {/* Action buttons: the next lifecycle action is the primary button */}
+          <div className="pt-4 border-t border-slate-800">
+            {isAuthenticated ? (
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5">
+                {!drillInProgress && (
+                  <button
+                    type="button"
+                    onClick={handleTriggerFault}
+                    disabled={mutationsLocked || loading}
+                    className={`${btnBase} bg-rose-600 hover:bg-rose-500 text-white`}
+                  >
+                    {loading ? spinner : <AlertOctagon size={14} aria-hidden="true" />}
+                    Inject fault
+                  </button>
+                )}
+                {canAcknowledge && (
+                  <button
+                    type="button"
+                    onClick={handleAcknowledge}
+                    disabled={mutationsLocked || loading}
+                    className={`${btnBase} bg-amber-500 hover:bg-amber-400 text-slate-950`}
+                  >
+                    {loading ? spinner : <CheckCircle2 size={14} aria-hidden="true" />}
+                    Acknowledge alert
+                  </button>
+                )}
+                {canRecover && (
+                  <button
+                    type="button"
+                    onClick={handleRecover}
+                    disabled={mutationsLocked || loading}
+                    className={`${btnBase} bg-cyan-600 hover:bg-cyan-500 text-white`}
+                  >
+                    {loading ? spinner : <Zap size={14} aria-hidden="true" />}
+                    Send recovery telemetry
+                  </button>
+                )}
+                {canResolve && (
+                  <button
+                    type="button"
+                    onClick={handleResolve}
+                    disabled={mutationsLocked || loading}
+                    className={`${btnBase} bg-emerald-600 hover:bg-emerald-500 text-white`}
+                  >
+                    {loading ? spinner : <CheckCircle2 size={14} aria-hidden="true" />}
+                    Resolve &amp; close incident
+                  </button>
+                )}
+                {drillInProgress && (
+                  <span className="text-[11px] text-slate-500 sm:ml-1">
+                    Connector and scenario are locked until this drill is resolved or reset.
+                  </span>
+                )}
+                {mutationsLocked && (
+                  <span className="text-[11px] text-slate-500">Drill controls are read-only in the production preview.</span>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <LockedAction action="Inject fault" />
+                <span className="text-[11px] text-slate-400">
+                  Guests can explore scenarios; running a drill needs operator sign-in.
+                </span>
+              </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Active Incident Status Bar */}
+        {/* Active Incident Summary */}
         {activeIncident && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-bold text-slate-100">{activeIncident._id}</span>
-                <StatusBadge status={activeIncident.status} />
+          <section aria-labelledby="drill-incident-heading" className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm space-y-3 animate-in">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id="drill-incident-heading" className="text-sm font-semibold text-slate-100">
+                  Drill incident
+                </h2>
+                <StatusBadge status={activeIncident.status} size="sm" />
+                <span className="font-mono text-[11px] text-slate-500">{activeIncident._id}</span>
               </div>
               <Link
                 href={`/incidents?selected=${activeIncident._id}`}
-                className="text-xs font-medium text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                className="text-xs font-medium text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1"
               >
-                Full Investigation View <ArrowRight size={13} />
+                Open in Incidents <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono bg-slate-950 p-3 rounded border border-slate-800/80">
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-950/70 p-3 rounded-lg border border-slate-800/80">
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Target</span>
-                <span className="text-slate-200 font-bold">{activeIncident.chargerId}</span>
+                <dt className="text-slate-400 text-[10px] uppercase tracking-wider">Connector</dt>
+                <dd className="mt-0.5 font-mono text-slate-200 font-semibold truncate">{activeIncident.chargerId}</dd>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Scenario</span>
-                <span className="text-slate-200 font-bold">{activeIncident.scenario}</span>
+                <dt className="text-slate-400 text-[10px] uppercase tracking-wider">Scenario</dt>
+                <dd className="mt-0.5 text-slate-200 font-semibold">{scenarioLabel(activeIncident.scenario)}</dd>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Detected</span>
-                <span className="text-slate-200">{new Date(activeIncident.detectedAt).toLocaleTimeString()}</span>
+                <dt className="text-slate-400 text-[10px] uppercase tracking-wider">Detected</dt>
+                <dd className="mt-0.5 font-mono text-slate-200 tabular-nums">{new Date(activeIncident.detectedAt).toLocaleTimeString()}</dd>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px] uppercase">Actions Logged</span>
-                <span className="text-cyan-400 font-bold">{activeIncident.actions?.length || 1} steps</span>
+                <dt className="text-slate-400 text-[10px] uppercase tracking-wider">Audit entries</dt>
+                <dd className="mt-0.5 font-mono text-cyan-300 font-semibold">{activeIncident.actions?.length || 1}</dd>
               </div>
-            </div>
-          </div>
+            </dl>
+          </section>
         )}
       </main>
     </div>

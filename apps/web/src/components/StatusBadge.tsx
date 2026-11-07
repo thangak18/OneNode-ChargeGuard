@@ -30,6 +30,7 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
       Icon = Circle;
       break;
     case 'WARNING':
+    case 'STALE':
     case 'ACKNOWLEDGED':
     case 'RESOLVING':
       bg = 'bg-amber-950/70 text-amber-300 border-amber-800/80';
@@ -52,8 +53,7 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-medium rounded-full border ${padding} ${bg} tabular-nums`}
-      role="status"
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-medium rounded-full border ${padding} ${bg} tabular-nums`}
     >
       <Icon size={iconSize} aria-hidden="true" className="shrink-0" />
       <span>{norm}</span>

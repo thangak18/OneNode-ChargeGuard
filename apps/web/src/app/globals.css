@@ -26,6 +26,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* === Consistent keyboard focus (WCAG 2.4.7) ===
+   Low-specificity default; components that ship their own
+   focus-visible:ring-* utilities still win. */
+:where(a, button, select, input, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
 /* === Tabular figures for telemetry data === */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
@@ -160,7 +173,7 @@ body {
 
 /* === Animated Entry === */
 .animate-in {
-  animation: fade-in-up 0.4s ease-out both;
+  animation: fade-in-up 0.3s ease-out both;
 }
 
 /* === Gradient Text Accent === */

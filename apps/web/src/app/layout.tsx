@@ -1,4 +1,5 @@
 import { BackendReadNotice } from '@/components/BackendReadNotice';
+import { Providers } from '@/components/Providers';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -34,8 +35,10 @@ export default function RootLayout({
         <meta name="theme-color" content="#030712" />
       </head>
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">
-        {process.env.NODE_ENV === 'production' && <BackendReadNotice />}
-        {children}
+        <Providers>
+          {process.env.NODE_ENV === 'production' && <BackendReadNotice />}
+          {children}
+        </Providers>
       </body>
     </html>
   );

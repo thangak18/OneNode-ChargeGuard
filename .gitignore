@@ -25,3 +25,7 @@ dist/
 
 # Local structured application logs
 logs/
+
+# Local agent/browser tooling artifacts
+.playwright-mcp/
+.agents/

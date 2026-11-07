@@ -5,9 +5,10 @@ interface MetricCardProps {
   value: string | number;
   unit?: string;
   subtitle?: string;
+  /** Plain-language explanation shown as a tooltip on the title. */
+  hint?: string;
   icon?: React.ReactNode;
   variant?: 'default' | 'cyan' | 'emerald' | 'amber' | 'rose';
-  animationDelay?: number;
 }
 
 export function MetricCard({
@@ -15,9 +16,9 @@ export function MetricCard({
   value,
   unit,
   subtitle,
+  hint,
   icon,
   variant = 'default',
-  animationDelay = 0,
 }: MetricCardProps) {
   let border = 'border-slate-800';
   let accent = 'text-slate-100';
@@ -62,8 +63,7 @@ export function MetricCard({
 
   return (
     <div
-      className={`${glowClass} relative overflow-hidden bg-slate-900/90 border ${border} rounded-xl p-4 shadow-sm backdrop-blur-sm animate-in`}
-      style={{ animationDelay: `${animationDelay}ms` }}
+      className={`${glowClass} relative overflow-hidden bg-slate-900/90 border ${border} rounded-xl p-4 shadow-sm backdrop-blur-sm`}
     >
       {/* Subtle gradient overlay */}
       {gradientOverlay && (
@@ -75,7 +75,10 @@ export function MetricCard({
 
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">
+          <span
+            className={`text-[11px] text-slate-400 font-medium uppercase tracking-wider ${hint ? 'cursor-help underline decoration-dotted decoration-slate-600 underline-offset-4' : ''}`}
+            title={hint}
+          >
             {title}
           </span>
           {icon && (
@@ -85,7 +88,7 @@ export function MetricCard({
           )}
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className={`text-2xl font-bold font-mono tabular-nums ${accent} tracking-tight`}>
+          <span className={`text-2xl sm:text-[1.7rem] leading-none font-bold font-mono tabular-nums ${accent} tracking-tight`}>
             {value}
           </span>
           {unit && (
@@ -94,8 +97,9 @@ export function MetricCard({
             </span>
           )}
         </div>
+        {hint && <span className="sr-only">{hint}</span>}
         {subtitle && (
-          <p className="text-[11px] text-slate-400/80 mt-2 truncate leading-relaxed">
+          <p className="text-[11px] text-slate-400 mt-2.5 line-clamp-2 leading-snug">
             {subtitle}
           </p>
         )}

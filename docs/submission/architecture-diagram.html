@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>ChargeGuard Architecture</title>
+<style>
+  :root {
+    --bg: #030712; --panel: #0b1222; --card: #0f172a; --line: #1e293b; --line2: #334155;
+    --text: #f1f5f9; --muted: #94a3b8; --dim: #64748b;
+    --cyan: #22d3ee; --emerald: #34d399; --amber: #fbbf24; --rose: #fb7185;
+    --mongo: #00ed64; --dd: #a78bfa; --nest: #f43f5e; --violet: #c4b5fd;
+    --mono: "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 904px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(1200px 500px at 15% -10%, rgba(34,211,238,0.07), transparent 60%),
+      radial-gradient(900px 500px at 95% 110%, rgba(167,139,250,0.07), transparent 60%),
+      linear-gradient(rgba(30,41,59,0.25) 1px, transparent 1px) 0 0/48px 48px,
+      linear-gradient(90deg, rgba(30,41,59,0.25) 1px, transparent 1px) 0 0/48px 48px,
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    position: relative;
+  }
+  .abs { position: absolute; }
+
+  /* Header */
+  .header { left: 40px; top: 28px; right: 40px; height: 84px; display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .logo { width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center;
+    background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(8,51,68,0.6)); border: 1.5px solid rgba(34,211,238,0.5); }
+  .title { font-size: 34px; font-weight: 750; letter-spacing: -0.5px; }
+  .title span { background: linear-gradient(90deg,#67e8f9,#22d3ee,#38bdf8); -webkit-background-clip: text; color: transparent; }
+  .subtitle { font-size: 16px; color: var(--muted); margin-top: 4px; }
+  .legend { display: flex; gap: 22px; font-size: 13px; color: var(--muted); align-items: center;
+    background: rgba(15,23,42,0.8); border: 1px solid var(--line); padding: 12px 18px; border-radius: 12px; }
+  .legend i { display: inline-block; width: 30px; height: 0; border-top: 2.5px solid var(--cyan); vertical-align: middle; margin-right: 8px; }
+  .legend i.dash { border-top-style: dashed; border-color: var(--dim); }
+  .legend i.dd { border-color: var(--dd); }
+  .legend i.mg { border-color: var(--mongo); }
+
+  /* Columns */
+  .col { border-radius: 18px; border: 1px solid var(--line); background: rgba(11,18,34,0.82); padding: 18px; }
+  .colhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; }
+  .h { font-size: 21px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .chip { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); white-space: nowrap; }
+  .chip.cy { color: #a5f3fc; border-color: rgba(34,211,238,0.45); background: rgba(8,51,68,0.5); }
+  .chip.am { color: #fde68a; border-color: rgba(251,191,36,0.45); background: rgba(69,26,3,0.5); }
+  .chip.em { color: #a7f3d0; border-color: rgba(52,211,153,0.45); background: rgba(2,44,34,0.5); }
+  .chip.ro { color: #fecdd3; border-color: rgba(251,113,133,0.45); background: rgba(76,5,25,0.5); }
+  .chip.mg { color: #bbf7d0; border-color: rgba(0,237,100,0.45); background: rgba(0,40,20,0.6); }
+  .chip.dd { color: #ddd6fe; border-color: rgba(167,139,250,0.5); background: rgba(46,16,101,0.5); }
+  .card { background: var(--card); border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; }
+  .card + .card { margin-top: 10px; }
+  .ct { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+  .cd { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 4px; }
+  .mono { font-family: var(--mono); }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+  /* Source column */
+  .src .card { padding: 14px; }
+  .src .big { font-size: 15px; font-weight: 650; }
+  .conn { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .conn div { height: 34px; border-radius: 8px; border: 1px solid rgba(34,211,238,0.4); background: rgba(8,51,68,0.45);
+    display: grid; place-items: center; font-family: var(--mono); font-size: 11px; color: #a5f3fc; }
+  .acn { border-style: dashed !important; background: rgba(15,23,42,0.5) !important; }
+
+  /* Web */
+  .pages { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .page { background: var(--card); border: 1px solid var(--line2); border-radius: 10px; padding: 9px 11px; }
+  .page b { font-size: 13.5px; font-weight: 650; display: block; }
+  .page span { font-size: 11.5px; color: var(--muted); }
+  .bff { border-color: rgba(34,211,238,0.55) !important; background: linear-gradient(180deg, rgba(8,51,68,0.45), var(--card)) !important; }
+
+  /* API modules */
+  .mod { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1px solid var(--line2);
+    border-radius: 12px; padding: 11px 13px; }
+  .mod + .mod { margin-top: 9px; }
+  .mi { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex: none; font-size: 17px; }
+  .mod b { font-size: 14.5px; font-weight: 650; }
+  .mod p { font-size: 12px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+
+  /* Mongo */
+  .mongo { border-color: rgba(0,237,100,0.35); background: linear-gradient(180deg, rgba(0,40,20,0.35), rgba(11,18,34,0.85)); }
+  .colls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .coll { background: var(--card); border: 1px solid var(--line2); border-radius: 10px; padding: 8px 11px; }
+  .coll b { font-family: var(--mono); font-size: 13.5px; font-weight: 600; color: #dcfce7; }
+  .coll span { display: block; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .coll.ts { border-color: rgba(0,237,100,0.6); background: rgba(0,48,24,0.55); }
+  .coll.jd { border-style: dashed; }
+  .agg { margin-top: 10px; font-family: var(--mono); font-size: 12px; color: #bbf7d0; background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(0,237,100,0.25); border-radius: 9px; padding: 8px 11px; }
+
+  /* Datadog */
+  .dd { border-color: rgba(167,139,250,0.4); background: linear-gradient(180deg, rgba(46,16,101,0.35), rgba(11,18,34,0.85)); }
+  .ddgrid { display: grid; grid-template-columns: 190px 1fr; gap: 34px; }
+  .ddi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ddi .card { margin: 0 !important; padding: 9px 11px; }
+  .ddi .ct { font-size: 13.5px; }
+  .ddi .cd { font-size: 11.5px; }
+
+  /* Lifecycle strip */
+  .strip { left: 40px; right: 40px; top: 902px; height: 150px; border-radius: 18px; border: 1px solid var(--line);
+    background: rgba(11,18,34,0.85); padding: 16px 20px; display: grid; grid-template-columns: 170px repeat(4, 1fr); gap: 14px; align-items: stretch; }
+  .strip .lab { display: flex; flex-direction: column; justify-content: center; }
+  .strip .lab b { font-size: 19px; font-weight: 750; line-height: 1.2; }
+  .step { position: relative; border-radius: 12px; border: 1px solid var(--line2); background: var(--card); padding: 12px 14px; }
+  .step .n { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; }
+  .step .t { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  .step .e { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .step .e em { font-style: normal; font-family: var(--mono); font-size: 11.5px; }
+  .step:not(:last-child)::after { content: "➜"; position: absolute; right: -14px; top: 50%; transform: translate(50%,-50%);
+    color: var(--dim); font-size: 16px; z-index: 3; }
+
+  svg.wires { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  .lbl { font-family: "SF Mono", Menlo, monospace; font-size: 12px; fill: #cbd5e1; }
+  .lblbg { fill: #030712; stroke: #334155; stroke-width: 1; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="abs header">
+  <div class="brand">
+    <div class="logo">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(34,211,238,0.25)" stroke="#22d3ee" stroke-width="2" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div>
+      <div class="title"><span>ChargeGuard</span> — Kiến trúc hệ thống</div>
+      <div class="subtitle">Giám sát trạm sạc EV thời gian thực &amp; phản ứng sự cố · Detect → Investigate → Resolve · MongoDB Atlas + Datadog</div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i></i>Luồng dữ liệu / API</span>
+    <span><i class="mg"></i>Ghi MongoDB</span>
+    <span><i class="dd"></i>Metric &amp; log Datadog</span>
+    <span><i class="dash"></i>Chỉ local / không lên cloud</span>
+  </div>
+</div>
+
+<!-- COL 1: SOURCES & USERS -->
+<div class="abs col src" style="left:40px; top:140px; width:310px; height:740px;">
+  <div class="colhead"><div><div class="kicker">01 · Nguồn &amp; người dùng</div></div></div>
+
+  <div class="card">
+    <div class="ct">👤 Người dùng</div>
+    <div class="cd" style="margin-top:8px"><span class="dot" style="background:var(--emerald)"></span>&nbsp; <b style="color:var(--text)">Operator</b> — báo cáo, xác nhận, xử lý, chạy diễn tập</div>
+    <div class="cd"><span class="dot" style="background:var(--amber)"></span>&nbsp; <b style="color:var(--text)">Guest</b> — chỉ xem (read-only)</div>
+  </div>
+
+  <div class="card" style="margin-top:48px">
+    <div class="ct">🧪 Kịch bản sự cố mô phỏng</div>
+    <div class="cd">Kích hoạt từ trang <b style="color:var(--text)">Incident Drill</b> hoặc <b style="color:var(--text)">Report Incident</b></div>
+    <div class="row"><span class="chip ro">SIM_OVERHEAT</span><span class="chip ro">SIM_POWER_LOSS</span><span class="chip ro">SIM_HARDWARE_FAULT</span></div>
+  </div>
+
+  <div class="card" style="margin-top:30px">
+    <div class="ct">⚡ Trạm sạc ảo <span class="chip am" style="margin-left:auto">SYNTHETIC</span></div>
+    <div class="cd mono">demo-station-01 · 11 kW / cổng</div>
+    <div class="conn"><div>01</div><div>02</div><div>03</div><div>04</div><div>05</div></div>
+    <div class="cd" style="margin-top:8px">Telemetry 8.25 A mỗi <b style="color:var(--text)">8 giây</b>; lỗi → 0 A, FAULT</div>
+  </div>
+
+  <div class="card acn" style="margin-top:30px">
+    <div class="ct" style="color:#cbd5e1">📚 Caltech ACN-Data <span class="chip" style="margin-left:auto">LOCAL ONLY</span></div>
+    <div class="cd">5 phiên sạc thật · 20.228 dòng · chỉ phân tích trên máy cá nhân, <b style="color:#fda4af">không đưa lên cloud</b></div>
+  </div>
+</div>
+
+<!-- COL 2: FRONTEND -->
+<div class="abs col" style="left:420px; top:140px; width:390px; height:520px;">
+  <div class="colhead">
+    <div><div class="kicker">02 · Frontend</div><div class="h">▲ Next.js 16 <span style="font-size:14px;color:var(--muted);font-weight:500">App Router</span></div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip cy">Vercel</span><span class="chip">localhost:3000</span></div>
+  </div>
+  <div class="pages">
+    <div class="page"><b>Operations Overview</b><span>KPI, biểu đồ dòng, 5 connector</span></div>
+    <div class="page"><b>Charger Detail</b><span>A · ≈kW · lịch sử · nguồn gốc</span></div>
+    <div class="page"><b>Incidents</b><span>Hàng đợi · lifecycle · audit</span></div>
+    <div class="page"><b>Incident Drill</b><span>Inject → Recover → Resolve</span></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="ct">🔐 NextAuth <span class="chip" style="margin-left:auto">JWT session · 1 h</span></div>
+    <div class="cd">Guest (read-only) ↔ Operator (full access) · GitHub OAuth trên cloud</div>
+  </div>
+  <div class="card bff">
+    <div class="ct">🛡️ BFF proxy <span class="mono" style="font-size:12px;color:#a5f3fc;margin-left:auto">/api/v1/[...path]</span></div>
+    <div class="cd">Kiểm tra origin/CSRF · gắn nhãn actor · <b style="color:#fecdd3">chặn ghi trên production</b> · polling 6–7 s</div>
+  </div>
+</div>
+
+<!-- ingest channel label under frontend -->
+
+<!-- COL 3: BACKEND -->
+<div class="abs col" style="left:880px; top:140px; width:390px; height:740px;">
+  <div class="colhead">
+    <div><div class="kicker">03 · Backend API</div><div class="h"><span style="color:var(--nest)">◆</span> NestJS 11</div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip cy">Render Free · SG</span><span class="chip">localhost:3001/api/v1</span></div>
+  </div>
+  <div class="mod"><div class="mi" style="background:rgba(34,211,238,0.15)">📥</div><div><b>Telemetry Ingest</b><p>POST /telemetry · /batch · x-api-key · Zod schema · chống trùng bằng receipt</p></div></div>
+  <div class="mod"><div class="mi" style="background:rgba(0,237,100,0.12)">📊</div><div><b>Analytics</b><p>Station summary · latest · current-averages — Aggregation Pipeline</p></div></div>
+  <div class="mod"><div class="mi" style="background:rgba(251,113,133,0.15)">🚨</div><div><b>Incidents</b><p>OPEN → ACKNOWLEDGED → RESOLVING → RESOLVED · audit chỉ-thêm</p></div></div>
+  <div class="mod"><div class="mi" style="background:rgba(251,191,36,0.15)">🎛️</div><div><b>Demo / Drill</b><p>trigger-fault · recover · reset baseline · ticker 8 s</p></div></div>
+  <div class="mod"><div class="mi" style="background:rgba(148,163,184,0.15)">💓</div><div><b>Health</b><p>/health/live · /health/ready (ping Atlas)</p></div></div>
+  <div class="mod" style="border-color:rgba(167,139,250,0.55)"><div class="mi" style="background:rgba(167,139,250,0.18)">🔭</div><div><b>Observability</b><p>Metric DogStatsD + log JSON đã lọc · tag giới hạn 5 trụ</p></div></div>
+</div>
+
+<!-- COL 4a: MONGODB ATLAS -->
+<div class="abs col mongo" style="left:1340px; top:140px; width:540px; height:400px;">
+  <div class="colhead">
+    <div><div class="kicker">04 · Lưu trữ vận hành</div>
+      <div class="h"><svg width="18" height="22" viewBox="0 0 16 32"><path d="M8 0c1 3 5 6 6 12 1 8-4 12-5 14l-1 6-1-6C6 24 1 20 2 12 3 6 7 3 8 0z" fill="#00ed64"/></svg>MongoDB Atlas</div></div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="chip mg">Atlas Free · DB chargeguard</span><span class="chip">TLS · IP access list</span></div>
+  </div>
+  <div class="colls">
+    <div class="coll ts"><b>telemetry</b><span>⏱ TIME SERIES · ts + meta · TTL 7 ngày</span></div>
+    <div class="coll"><b>ingestion_receipts</b><span>Fingerprint chống trùng · TTL 7 ngày</span></div>
+    <div class="coll"><b>incidents</b><span>Trạng thái · bằng chứng · mốc thời gian</span></div>
+    <div class="coll"><b>incident_actions</b><span>Audit trail chỉ-thêm · _id ổn định</span></div>
+    <div class="coll"><b>stations</b><span>Metadata trạm ảo</span></div>
+    <div class="coll"><b>chargers</b><span>5 connector · 11 kW</span></div>
+    <div class="coll jd"><b>judge_runs</b><span>Judge Run tách biệt · revision</span></div>
+    <div class="coll jd"><b>judge_policy</b><span>Nonce · quota · TTL</span></div>
+  </div>
+  <div class="agg">$match → $dateTrunc(minute) → $group($avg currentA) → $sort → $limit</div>
+</div>
+
+<!-- COL 4b: DATADOG -->
+<div class="abs col dd" style="left:1340px; top:560px; width:540px; height:320px;">
+  <div class="colhead" style="margin-bottom:10px">
+    <div><div class="kicker">05 · Quan sát &amp; cảnh báo</div>
+      <div class="h"><span style="color:var(--dd)">🐶</span> Datadog</div></div>
+    <span class="chip dd">US1 · env:dev</span>
+  </div>
+  <div class="card" style="border-color:rgba(167,139,250,0.55);display:flex;align-items:center;gap:10px;padding:9px 12px">
+    <div class="ct" style="white-space:nowrap">Datadog Agent <span style="font-weight:400;color:var(--muted);font-size:12px">(local)</span></div>
+    <div class="cd mono" style="margin:0;color:#ddd6fe;font-size:11.5px">UDP :8125 · tail api.jsonl</div>
+    <div class="cd" style="margin:0 0 0 auto;white-space:nowrap;color:#ddd6fe">⟶ HTTPS ⟶ US1</div>
+  </div>
+  <div class="ddi" style="margin-top:9px">
+    <div class="card"><div class="ct">📈 Metrics</div><div class="cd mono">charger.current_a · fault.simulated · ingestion.*</div></div>
+    <div class="card"><div class="ct">🖥️ Dashboard</div><div class="cd">Operations Dashboard · <span class="mono">875-kis-zg2</span></div></div>
+    <div class="card" style="border-color:rgba(251,113,133,0.55)"><div class="ct">🔔 Monitors</div><div class="cd"><span class="mono">334137944</span> fault ≥ 1 / 1 phút<br><span class="mono">334137536</span> lỗi ingest</div></div>
+    <div class="card"><div class="ct">🔎 Log Explorer</div><div class="cd">Tương quan <span class="mono">@demo_id</span> ↔ incident trong MongoDB</div></div>
+  </div>
+</div>
+
+<!-- WIRES -->
+<svg class="wires" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <marker id="aC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#22d3ee"/></marker>
+    <marker id="aG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#00ed64"/></marker>
+    <marker id="aD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#a78bfa"/></marker>
+    <marker id="aR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#fb7185"/></marker>
+  </defs>
+
+  <!-- Users -> Web -->
+  <path d="M350 230 H418" stroke="#22d3ee" stroke-width="2.5" fill="none" marker-end="url(#aC)"/>
+  <rect class="lblbg" x="352" y="200" width="62" height="20" rx="5"/><text class="lbl" x="383" y="214" text-anchor="middle">HTTPS</text>
+
+  <!-- Drill scenarios -> Web -->
+  <path d="M350 420 H418" stroke="#fb7185" stroke-width="2.5" fill="none" marker-end="url(#aR)"/>
+  <rect class="lblbg" x="354" y="390" width="58" height="20" rx="5"/><text class="lbl" x="383" y="404" text-anchor="middle">inject</text>
+
+  <!-- Web BFF -> API (REST) -->
+  <path d="M810 590 H878" stroke="#22d3ee" stroke-width="2.5" fill="none" marker-end="url(#aC)"/>
+  <path d="M878 560 H812" stroke="#22d3ee" stroke-width="1.6" fill="none" stroke-dasharray="1 0" opacity="0.55" marker-end="url(#aC)"/>
+  <rect class="lblbg" x="806" y="606" width="76" height="34" rx="5"/>
+  <text class="lbl" x="844" y="620" text-anchor="middle">REST</text>
+  <text class="lbl" x="844" y="634" text-anchor="middle" style="font-size:10.5px;fill:#94a3b8">JSON</text>
+
+  <!-- Virtual connectors -> API ingest (below frontend) -->
+  <path d="M350 610 H372 Q385 610 385 623 V677 Q385 690 398 690 H878" stroke="#22d3ee" stroke-width="2.5" fill="none" marker-end="url(#aC)"/>
+  <rect class="lblbg" x="636" y="700" width="230" height="44" rx="7"/>
+  <text class="lbl" x="751" y="718" text-anchor="middle">POST /telemetry · x-api-key</text>
+  <text class="lbl" x="751" y="735" text-anchor="middle" style="fill:#94a3b8">5 events / 8 s · SYNTHETIC</text>
+
+  <!-- ACN local only (blocked) -->
+  <path d="M350 780 H560" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6" fill="none"/>
+  <circle cx="574" cy="780" r="12" fill="#030712" stroke="#fb7185" stroke-width="2"/>
+  <path d="M567 773 581 787 M581 773 567 787" stroke="#fb7185" stroke-width="2"/>
+  <text class="lbl" x="596" y="784" style="fill:#94a3b8">không gửi lên Atlas / Datadog</text>
+
+  <!-- API -> Atlas -->
+  <path d="M1270 300 H1338" stroke="#00ed64" stroke-width="2.5" fill="none" marker-end="url(#aG)"/>
+  <path d="M1338 340 H1272" stroke="#00ed64" stroke-width="1.6" fill="none" opacity="0.55" marker-end="url(#aG)"/>
+  <rect class="lblbg" x="1272" y="250" width="66" height="36" rx="5"/>
+  <text class="lbl" x="1305" y="265" text-anchor="middle">Driver</text>
+  <text class="lbl" x="1305" y="279" text-anchor="middle" style="font-size:10.5px;fill:#94a3b8">TLS</text>
+
+  <!-- API -> Datadog Agent -->
+  <path d="M1270 652 H1338" stroke="#a78bfa" stroke-width="2.5" fill="none" marker-end="url(#aD)"/>
+  <rect class="lblbg" x="1272" y="602" width="66" height="36" rx="5"/>
+  <text class="lbl" x="1305" y="617" text-anchor="middle">UDP</text>
+  <text class="lbl" x="1305" y="631" text-anchor="middle" style="font-size:10.5px;fill:#94a3b8">+ log</text>
+
+</svg>
+
+</body>
+</html>

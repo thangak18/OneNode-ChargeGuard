@@ -1,5 +1,7 @@
 # Render Free migration — preparation and Atlas approval gate
 
+> **Update 7 November 2026 — synthetic live feed on Render.** The hosted Render API now writes labelled `SYNTHETIC` baseline telemetry for the five virtual chargers every 8 seconds while the free instance is awake (`apps/api/src/demo/synthetic-ticker.ts`), so the public read-only dashboard shows fresh data instead of "waiting for telemetry" once the 7-day TTL has expired older readings. It runs only on Render (`RENDER=true`), never on Vercel, and can be turned off with `CHARGEGUARD_SYNTHETIC_TICKER=false`. It writes telemetry and idempotency receipts only (7-day TTL); it never creates, changes or closes incidents, and HTTP mutations remain 403. Render's `autoDeployTrigger` is off, so a manual Render deploy is required to pick up this change.
+
 ## Current cloud status — 23 October 2026
 
 The owner approved Option A, superseding the earlier rejection preserved below. The approved architecture is browser → Vercel Next.js/BFF → Render Free Singapore → existing Atlas Free. [Frontend](https://chargeguard-web.vercel.app) · [Backend liveness](https://chargeguard-api-m9ji.onrender.com/healthz).

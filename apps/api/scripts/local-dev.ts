@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { randomBytes } from 'node:crypto';
 import { NestFactory } from '@nestjs/core';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -13,8 +12,7 @@ import { DatabaseService } from '../src/database/database.service';
 import { APP_CONFIG } from '../src/config/tokens';
 import { initializeCollections } from '../src/database/initialize';
 import { DemoService } from '../src/demo/demo.service';
-import { TelemetryService } from '../src/telemetry/telemetry.service';
-import { demoReading } from '../src/observability/demo-scenario';
+import { startSyntheticTicker, SYNTHETIC_TICK_MS } from '../src/demo/synthetic-ticker';
 import { JsonFrameworkLogger, ObservabilityService, observabilityConfig } from '../src/observability/observability.service';
 
 async function seedData(db: Db): Promise<void> {
@@ -116,35 +114,8 @@ async function main() {
     console.log('[ChargeGuard API] Synthetic telemetry ticker is OFF for Atlas (set CHARGEGUARD_LOCAL_TICKER=true to enable).');
   }
   if (tickerEnabled) {
-    const database = app.get(DatabaseService);
-    const telemetryService = app.get(TelemetryService);
-    let tickerSeq = 1;
-    const ticker = setInterval(async () => {
-      try {
-        const activeIncident = await database.collection('incidents').findOne({
-          stationId: 'demo-station-01',
-          status: { $in: ['OPEN', 'ACKNOWLEDGED', 'RESOLVING'] },
-        });
-        const now = new Date();
-        const run = randomBytes(6).toString('hex');
-        const faultChargerId = activeIncident?.chargerId;
-        const events = [];
-        for (let i = 1; i <= 5; i++) {
-          const chargerId = `demo-charger-${String(i).padStart(2, '0')}`;
-          if (faultChargerId === chargerId) continue;
-          events.push(demoReading(run, tickerSeq, i, false, now));
-        }
-        if (events.length > 0) {
-          await telemetryService.ingestBatch({ events });
-          tickerSeq++;
-        }
-      } catch {
-        // Safe skip on teardown or temporary conflict
-      }
-    }, 8000);
-
-    if (ticker.unref) ticker.unref();
-    console.log(`[ChargeGuard API] Synthetic telemetry ticker: every 8 s → ${useLocalFallback ? 'IN-MEMORY MongoDB' : 'MongoDB Atlas'}.`);
+    startSyntheticTicker(app);
+    console.log(`[ChargeGuard API] Synthetic telemetry ticker: every ${SYNTHETIC_TICK_MS / 1000} s → ${useLocalFallback ? 'IN-MEMORY MongoDB' : 'MongoDB Atlas'}.`);
   }
 
   const cleanup = async () => {

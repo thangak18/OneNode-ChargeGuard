@@ -17,6 +17,7 @@
     "test:judge:bff": "node --import tsx --test test/judge-bff.http-e2e.ts",
     "db:init": "tsx scripts/init-db.ts",
     "db:seed": "tsx scripts/seed-virtual.ts",
+    "db:seed-telemetry": "tsx scripts/seed-telemetry-once.ts",
     "replay:acn": "tsx scripts/replay-acn.ts",
     "smoke:atlas": "tsx scripts/smoke-atlas.ts",
     "verify:atlas": "tsx scripts/verify-atlas.ts",
